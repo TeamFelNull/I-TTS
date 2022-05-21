@@ -1,9 +1,18 @@
 plugins {
     id 'java'
+    id "com.github.johnrengelman.shadow" version "7.0.0"
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'dev.felnull'
+version '1.0'
+apply plugin: 'application'
+mainClassName = 'dev.felnull.ttsvoice.Main'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'dev.felnull.ttsvoice.Main'
+    }
+}
 
 repositories {
     mavenCentral()
