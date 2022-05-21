@@ -1,11 +1,11 @@
-package dev.felnull.ttsvoice.inm;
+package dev.felnull.ttsvoice.voice.inm;
 
 import dev.felnull.fnjl.util.FNURLUtil;
 import dev.felnull.ttsvoice.tts.IVoiceType;
 
 import java.net.URL;
 
-public class INMVoice implements IVoiceType {
+public class INMVoiceType implements IVoiceType {
     @Override
     public String getTitle() {
         return "淫夢";

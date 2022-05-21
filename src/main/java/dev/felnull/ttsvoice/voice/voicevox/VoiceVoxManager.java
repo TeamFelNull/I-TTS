@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.voicevox;
+package dev.felnull.ttsvoice.voice.voicevox;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -27,7 +27,7 @@ public class VoiceVoxManager {
     private static final Logger LOGGER = LogManager.getLogger(VoiceVoxManager.class);
     private static final Gson GSON = new Gson();
     private static final VoiceVoxManager INSTANCE = new VoiceVoxManager();
-    private List<VVSpeaker> SPEAKERS;
+    private List<VVVoiceType> SPEAKERS;
     private long lastSpeakersLoadTime;
 
     public static VoiceVoxManager getInstance() {
@@ -42,7 +42,7 @@ public class VoiceVoxManager {
         return getEngineURL() + "/speakers";
     }
 
-    public List<VVSpeaker> getSpeakers() {
+    public List<VVVoiceType> getSpeakers() {
         loadSpeakers();
         return SPEAKERS;
     }
@@ -56,7 +56,7 @@ public class VoiceVoxManager {
                 ja = GSON.fromJson(reader, JsonArray.class);
             }
 
-            ImmutableList.Builder<VVSpeaker> speakers = new ImmutableList.Builder<>();
+            ImmutableList.Builder<VVVoiceType> speakers = new ImmutableList.Builder<>();
 
             for (JsonElement element : ja) {
                 var jo = (JsonObject) element;
@@ -64,7 +64,7 @@ public class VoiceVoxManager {
                 var styles = jo.getAsJsonArray("styles");
                 for (JsonElement style : styles) {
                     var sjo = (JsonObject) style;
-                    speakers.add(new VVSpeaker(sjo.get("id").getAsInt(), name, sjo.get("name").getAsString()));
+                    speakers.add(new VVVoiceType(sjo.get("id").getAsInt(), name, sjo.get("name").getAsString()));
                 }
             }
 

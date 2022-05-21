@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.inm;
+package dev.felnull.ttsvoice.voice.inm;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -23,7 +23,7 @@ public class INMManager {
     private static final Gson GSON = new Gson();
     private static final String INC_URL = "https://www.morimori0317.net/inc-sounds-search";
     private static final Random RANDOM = new Random();
-    private final INMVoice VOICE = new INMVoice();
+    private final INMVoiceType VOICE = new INMVoiceType();
 
     public static INMManager getInstance() {
         return INSTANCE;
@@ -85,7 +85,7 @@ public class INMManager {
         return INC_URL + "/link/" + uuid;
     }
 
-    public INMVoice getVoice() {
+    public INMVoiceType getVoice() {
         return VOICE;
     }
 }

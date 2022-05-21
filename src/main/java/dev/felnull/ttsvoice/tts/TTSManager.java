@@ -3,10 +3,11 @@ package dev.felnull.ttsvoice.tts;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
-import dev.felnull.ttsvoice.inm.INMManager;
+import dev.felnull.ttsvoice.voice.inm.INMManager;
 import dev.felnull.ttsvoice.util.DiscordUtil;
 import dev.felnull.ttsvoice.util.URLUtil;
-import dev.felnull.ttsvoice.voicevox.VoiceVoxManager;
+import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
+import dev.felnull.ttsvoice.voice.voicevox.VoiceVoxManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,6 +108,7 @@ public class TTSManager {
     public List<IVoiceType> getVoiceTypes() {
         ImmutableList.Builder<IVoiceType> builder = new ImmutableList.Builder<>();
         builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
+        builder.add(VTVoiceTypes.values());
         builder.add(INMManager.getInstance().getVoice());
         return builder.build();
     }
@@ -126,6 +128,7 @@ public class TTSManager {
     }
 
     public void onText(long guildId, IVoiceType voiceType, String text) {
+        text = voiceType.replace(text);
         getTTSQueue(guildId).add(new TTSVoice(text, voiceType));
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
         if (!sc.isLoadingOrPlaying())

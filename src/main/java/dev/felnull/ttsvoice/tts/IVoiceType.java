@@ -6,4 +6,8 @@ public interface IVoiceType {
     String getId();
 
     byte[] getSound(String text) throws Exception;
+
+    default String replace(String text) {
+        return text;
+    }
 }

@@ -1,11 +1,9 @@
 package dev.felnull.ttsvoice.tts;
 
 import dev.felnull.ttsvoice.util.DiscordUtil;
+import dev.felnull.ttsvoice.util.TextUtil;
 import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.AudioChannel;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -15,6 +13,7 @@ import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class TTSListener extends ListenerAdapter {
@@ -65,7 +64,7 @@ public class TTSListener extends ListenerAdapter {
                 e.reply(DiscordUtil.createChannelMention(chn) + "に再接続します").queue();
                 audioManager.closeAudioConnection();
                 TTSManager.getInstance().removeTTSChanel(e.getGuild().getIdLong());
-                var rt = new ReconnectThread(audioManager, e.getGuild(), chn);
+                var rt = new ReconnectThread(audioManager, e.getGuild(), chn, e.getChannel());
                 rt.start();
             } else {
                 e.reply("現在VCに接続していません").queue();
@@ -126,6 +125,25 @@ public class TTSListener extends ListenerAdapter {
                 choices.addAll(TTSManager.getInstance().getVoiceTypes());
             }
 
+            choices = choices.stream().sorted(Comparator.comparingInt(n -> {
+                if (str == null) return 0;
+                int i = TextUtil.getComplementPoint(n.getId(), str) * 2;
+                int t = TextUtil.getComplementPoint(n.getTitle(), str);
+                return i + t;
+            })).toList();
+
+            if (choices.size() > 25) {
+                List<IVoiceType> nc = new ArrayList<>();
+                int ct = 0;
+                for (IVoiceType choice : choices) {
+                    nc.add(choice);
+                    ct++;
+                    if (ct >= 25)
+                        break;
+                }
+                choices = nc;
+            }
+
             e.replyChoices(choices.stream().map(n -> new Command.Choice(n.getTitle(), n.getId())).toList()).queue();
         }
     }
@@ -136,7 +154,8 @@ public class TTSListener extends ListenerAdapter {
         if (tm.getTTSChanel(e.getGuild().getIdLong()) == e.getChannel().getIdLong() && !e.getMember().getUser().isBot()) {
             tm.onChat(e.getGuild().getIdLong(), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw());
             for (Message.Attachment attachment : e.getMessage().getAttachments()) {
-                tm.onText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong()), attachment.getFileName());
+                if (!attachment.isImage() && !attachment.isVideo())
+                    tm.onText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong()), attachment.getFileName());
             }
         }
     }
@@ -145,11 +164,13 @@ public class TTSListener extends ListenerAdapter {
         private final AudioManager manager;
         private final Guild guild;
         private final AudioChannel channel;
+        private final Channel textChannel;
 
-        private ReconnectThread(AudioManager manager, Guild guild, AudioChannel channel) {
+        private ReconnectThread(AudioManager manager, Guild guild, AudioChannel channel, Channel textChannel) {
             this.manager = manager;
             this.guild = guild;
             this.channel = channel;
+            this.textChannel = textChannel;
         }
 
         @Override
@@ -159,7 +180,7 @@ public class TTSListener extends ListenerAdapter {
             } catch (InterruptedException ignored) {
             }
             this.manager.openAudioConnection(this.channel);
-            TTSManager.getInstance().setTTSChanel(guild.getIdLong(), channel.getIdLong());
+            TTSManager.getInstance().setTTSChanel(guild.getIdLong(), textChannel.getIdLong());
         }
     }
 }

@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.inm;
+package dev.felnull.ttsvoice.voice.inm;
 
 import java.util.UUID;
 
