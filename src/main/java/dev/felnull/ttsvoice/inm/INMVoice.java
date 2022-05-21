@@ -1,0 +1,28 @@
+package dev.felnull.ttsvoice.inm;
+
+import dev.felnull.fnjl.util.FNURLUtil;
+import dev.felnull.ttsvoice.tts.IVoiceType;
+
+import java.net.URL;
+
+public class INMVoice implements IVoiceType {
+    @Override
+    public String getTitle() {
+        return "淫夢";
+    }
+
+    @Override
+    public String getId() {
+        return "inm";
+    }
+
+    @Override
+    public byte[] getSound(String text) throws Exception {
+        var im = INMManager.getInstance();
+        var ret = im.search(text);
+        var most = im.getMost(ret);
+        if (most == null)
+            return null;
+        return FNURLUtil.getStream(new URL(most.getURL())).readAllBytes();
+    }
+}
