@@ -1,7 +1,10 @@
 package dev.felnull.ttsvoice.tts;
 
+import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.util.DiscordUtil;
 import dev.felnull.ttsvoice.util.TextUtil;
+import dev.felnull.ttsvoice.voice.inm.INMEntry;
+import dev.felnull.ttsvoice.voice.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -72,39 +75,118 @@ public class TTSListener extends ListenerAdapter {
         } else if ("voice".equals(e.getName()) && "list".equals(e.getSubcommandName())) {
             var msg = new MessageBuilder().append("読み上げ音声タイプ一覧\n");
             StringBuilder sb = new StringBuilder();
-            for (IVoiceType voiceType : TTSManager.getInstance().getVoiceTypes()) {
+            for (IVoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
                 sb.append(voiceType.getId()).append(" ").append(voiceType.getTitle()).append("\n");
             }
             msg.appendCodeLine(sb.toString());
-            e.reply(msg.build()).queue();
+            e.reply(msg.build()).setEphemeral(true).queue();
         } else if ("voice".equals(e.getName()) && "change".equals(e.getSubcommandName())) {
             var uop = e.getOption("user");
-            if (uop != null && DiscordUtil.canEdit(e.getMember().getRoles())) {
+            if (uop != null && DiscordUtil.hasPermission(e.getMember())) {
                 e.reply("他ユーザーを編集するための権限がありません").queue();
                 return;
             }
             User user = uop == null ? e.getUser() : uop.getAsUser();
 
             if (user.isBot()) {
-                e.reply(e.getGuild().getMember(user).getEffectiveName() + "はBOTです").queue();
+                e.reply(DiscordUtil.getName(e.getGuild(), user) + "はBOTです").queue();
                 return;
             }
 
             var op = e.getOption("voice_type");
             String id = op == null ? null : op.getAsString();
-            var type = TTSManager.getInstance().getVoiceTypeById(id);
+            var type = TTSManager.getInstance().getVoiceTypeById(id, e.getUser().getIdLong(), e.getGuild().getIdLong());
             if (type == null) {
                 e.reply("存在しない読み上げタイプです").queue();
                 return;
             }
-            var pre = TTSManager.getInstance().getUserVoiceType(user.getIdLong());
+            var pre = TTSManager.getInstance().getUserVoiceType(user.getIdLong(), e.getGuild().getIdLong());
             if (pre == type) {
                 e.reply("読み上げ音声タイプは変更されませんでした").queue();
                 return;
             }
 
             TTSManager.getInstance().setUserVoceTypes(user.getIdLong(), type);
-            e.reply(e.getGuild().getMember(user).getEffectiveName() + "の読み上げ音声タイプを[" + type.getTitle() + "]に変更しました").queue();
+            e.reply(DiscordUtil.getName(e.getGuild(), user) + "の読み上げ音声タイプを[" + type.getTitle() + "]に変更しました").queue();
+        } else if ("voice".equals(e.getName()) && "check".equals(e.getSubcommandName())) {
+            var uop = e.getOption("user");
+            if (uop != null && DiscordUtil.hasPermission(e.getMember())) {
+                e.reply("他ユーザーを確認するための権限がありません").queue();
+                return;
+            }
+            User user = uop == null ? e.getUser() : uop.getAsUser();
+            if (user.isBot()) {
+                e.reply(DiscordUtil.getName(e.getGuild(), user) + "はBOTです").queue();
+                return;
+            }
+            var type = TTSManager.getInstance().getUserVoiceType(user.getIdLong(), e.getGuild().getIdLong());
+            e.reply(DiscordUtil.getName(e.getGuild(), user) + "の現在の読み上げタイプは[" + type.getTitle() + "]です").setEphemeral(true).queue();
+        } else if ("deny".equals(e.getName()) && "list".equals(e.getSubcommandName())) {
+            if (!DiscordUtil.hasPermission(e.getMember())) {
+                e.reply("読み上げ拒否をされているユーザ一覧を見る権限がありません").setEphemeral(true).queue();
+                return;
+            }
+            var lst = Main.SAVE_DATA.getDenyUsers(e.getGuild().getIdLong());
+            if (lst.isEmpty()) {
+                e.reply("読み上げ拒否されたユーザは存在しません").setEphemeral(true).queue();
+                return;
+            }
+
+            var msg = new MessageBuilder().append("読み上げ拒否されたユーザ一覧\n");
+            StringBuilder sb = new StringBuilder();
+            for (Long deny : lst) {
+                sb.append(DiscordUtil.getName(e.getGuild(), Main.JDA.getUserById(deny))).append("\n");
+            }
+            msg.appendCodeLine(sb.toString());
+            e.reply(msg.build()).setEphemeral(true).queue();
+        } else if ("deny".equals(e.getName()) && "add".equals(e.getSubcommandName())) {
+            if (!DiscordUtil.hasPermission(e.getMember())) {
+                e.reply("ユーザを読み上げ拒否する権限がありません").setEphemeral(true).queue();
+                return;
+            }
+            var uop = e.getOption("user");
+            if (uop == null) {
+                e.reply("ユーザを指定してください").setEphemeral(true).queue();
+                return;
+            }
+            if (uop.getAsUser().isBot()) {
+                e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser()) + "はBOTです").setEphemeral(true).queue();
+                return;
+            }
+
+            if (Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
+                e.reply("すでに読み上げ拒否をされているユーザです").setEphemeral(true).queue();
+                return;
+            }
+            Main.SAVE_DATA.addDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
+            e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser()) + "の読み上げ拒否します").setEphemeral(true).queue();
+        } else if ("deny".equals(e.getName()) && "remove".equals(e.getSubcommandName())) {
+            if (!DiscordUtil.hasPermission(e.getMember())) {
+                e.reply("ユーザの読み上げ拒否を解除する権限がありません").setEphemeral(true).queue();
+                return;
+            }
+            var uop = e.getOption("user");
+            if (uop == null) {
+                e.reply("ユーザを指定してください").setEphemeral(true).queue();
+                return;
+            }
+            if (uop.getAsUser().isBot()) {
+                e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser()) + "はBOTです").setEphemeral(true).queue();
+                return;
+            }
+            if (!Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
+                e.reply("読み上げ拒否をされていないユーザです").setEphemeral(true).queue();
+                return;
+            }
+            Main.SAVE_DATA.removeDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
+            e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser()) + "の読み上げ拒否を解除します").setEphemeral(true).queue();
+        } else if ("inm".equals(e.getName())) {
+            var op = e.getOption("search");
+            if (op != null && TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong()).contains(INMManager.getInstance().getVoice())) {
+                TTSManager.getInstance().onText(e.getGuild().getIdLong(), INMManager.getInstance().getVoice(), op.getAsString());
+            }
+            e.deferReply().queue();
+            e.getHook().deleteOriginal().queue();
         }
     }
 
@@ -116,13 +198,13 @@ public class TTSListener extends ListenerAdapter {
 
             List<IVoiceType> choices = new ArrayList<>();
 
-            for (IVoiceType voiceType : TTSManager.getInstance().getVoiceTypes()) {
+            for (IVoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
                 if (str != null && (voiceType.getId().contains(str) || voiceType.getTitle().contains(str)))
                     choices.add(voiceType);
             }
 
             if (choices.isEmpty()) {
-                choices.addAll(TTSManager.getInstance().getVoiceTypes());
+                choices.addAll(TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong()));
             }
 
             choices = choices.stream().sorted(Comparator.comparingInt(n -> {
@@ -145,6 +227,30 @@ public class TTSListener extends ListenerAdapter {
             }
 
             e.replyChoices(choices.stream().map(n -> new Command.Choice(n.getTitle(), n.getId())).toList()).queue();
+        } else if ("inm".equals(e.getName())) {
+            var op = e.getInteraction().getOption("search");
+            List<INMEntry> entries = new ArrayList<>();
+            if (op != null && TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong()).contains(INMManager.getInstance().getVoice())) {
+                var im = INMManager.getInstance();
+                try {
+                    var scr = im.search(op.getAsString());
+                    scr = im.sort(scr);
+                    entries.addAll(scr);
+                } catch (Exception ignored) {
+                }
+            }
+            if (entries.size() > 25) {
+                List<INMEntry> nc = new ArrayList<>();
+                int ct = 0;
+                for (INMEntry entry : entries) {
+                    nc.add(entry);
+                    ct++;
+                    if (ct >= 25)
+                        break;
+                }
+                entries = nc;
+            }
+            e.replyChoices(entries.stream().map(n -> new Command.Choice(n.name(), n.name())).toList()).queue();
         }
     }
 
@@ -155,7 +261,7 @@ public class TTSListener extends ListenerAdapter {
             tm.onChat(e.getGuild().getIdLong(), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw());
             for (Message.Attachment attachment : e.getMessage().getAttachments()) {
                 if (!attachment.isImage() && !attachment.isVideo())
-                    tm.onText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong()), attachment.getFileName());
+                    tm.onText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong(), e.getGuild().getIdLong()), attachment.getFileName());
             }
         }
     }

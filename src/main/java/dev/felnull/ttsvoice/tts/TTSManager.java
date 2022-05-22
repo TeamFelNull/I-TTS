@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Pattern;
 
 public class TTSManager {
     private static final Logger LOGGER = LogManager.getLogger(TTSManager.class);
@@ -25,6 +26,7 @@ public class TTSManager {
     private final Map<TTSVoice, VoiceCashData> VOICE_CASH = new HashMap<>();
     private final Map<Long, Long> TTS_CHANEL = new HashMap<>();
     private final Map<Long, Queue<TTSVoice>> TTS_QUEUE = new HashMap<>();
+    private Pattern ignorePattern;
 
     public static TTSManager getInstance() {
         return INSTANCE;
@@ -90,47 +92,68 @@ public class TTSManager {
         TTS_QUEUE.remove(guildId);
     }
 
-    public IVoiceType getUserVoiceType(long userId) {
-        var uvt = Main.SAVE_DATA.getVoiceType(userId);
+    public IVoiceType getUserVoiceType(long userId, long guildId) {
+        var uvt = Main.SAVE_DATA.getVoiceType(userId, guildId);
         if (uvt != null)
             return uvt;
-        return getVoiceTypeById("voicevox-2");
+        return getVoiceTypeById("voicevox-2", userId, guildId);
     }
 
-    public IVoiceType getVoiceTypeById(String id) {
-        return getVoiceTypes().stream().filter(n -> n.getId().equals(id)).findFirst().orElse(null);
+    public IVoiceType getVoiceTypeById(String id, long userId, long guildId) {
+        return getVoiceTypes(userId, guildId).stream().filter(n -> n.getId().equals(id)).findFirst().orElse(null);
     }
 
     public void setUserVoceTypes(long userId, IVoiceType type) {
         Main.SAVE_DATA.setVoiceType(userId, type);
     }
 
-    public List<IVoiceType> getVoiceTypes() {
+    public List<IVoiceType> getVoiceTypes(long userId, long guildId) {
         ImmutableList.Builder<IVoiceType> builder = new ImmutableList.Builder<>();
         builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
         builder.add(VTVoiceTypes.values());
-        builder.add(INMManager.getInstance().getVoice());
+
+        boolean flg1 = Main.CONFIG.inmAllowServers().contains(guildId);
+        boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
+
+        if (flg1 && flg2)
+            builder.add(INMManager.getInstance().getVoice());
+
         return builder.build();
     }
 
     public void onChat(long guildId, long userId, String text) {
+        if (ignorePattern == null)
+            ignorePattern = Pattern.compile(Main.CONFIG.ignoreRegex());
+
+        if (ignorePattern.matcher(text).matches())
+            return;
+
         text = DiscordUtil.replaceMentionToText(Main.JDA.getGuildById(guildId), text);
         text = URLUtil.replaceURLToText(text);
         int pl = text.length();
+        var vt = getUserVoiceType(userId, guildId);
 
-        if (text.length() >= 200)
-            text = text.substring(0, 200);
+        int max = vt.getMaxTextLength();
+        if (text.length() >= max)
+            text = text.substring(0, max);
 
         if (pl - text.length() > 0)
             text += "、以下" + (pl - text.length()) + "文字を省略";
 
-        onText(guildId, getUserVoiceType(userId), text);
+        onText(guildId, vt, text);
     }
 
     public void onText(long guildId, IVoiceType voiceType, String text) {
         text = voiceType.replace(text);
-        getTTSQueue(guildId).add(new TTSVoice(text, voiceType));
+
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
+        var q = getTTSQueue(guildId);
+        if (Main.CONFIG.overwriteAloud()) {
+            q.clear();
+            sc.stop();
+        }
+
+        q.add(new TTSVoice(text, voiceType));
         if (!sc.isLoadingOrPlaying())
             sc.next();
     }
@@ -155,7 +178,8 @@ public class TTSManager {
                     return null;
                 }
             } catch (Exception ex) {
-                LOGGER.error("Failed to get audio data", ex);
+                if (voice.voiceType() != INMManager.getInstance().getVoice())
+                    LOGGER.error("Failed to get audio data", ex);
                 VOICE_CASH.put(voice, new VoiceCashData(null));
                 return null;
             }
@@ -171,5 +195,9 @@ public class TTSManager {
                 return null;
             }
         }
+    }
+
+    public int getTTSCount() {
+        return TTS_CHANEL.size();
     }
 }

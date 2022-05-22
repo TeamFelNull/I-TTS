@@ -1,24 +1,29 @@
 package dev.felnull.ttsvoice.util;
 
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Channel;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.Role;
-
-import java.util.List;
+import net.dv8tion.jda.api.entities.*;
 
 public class DiscordUtil {
     public static String createChannelMention(Channel channel) {
         return "<#" + channel.getId() + ">";
     }
 
-    public static boolean canEdit(List<Role> role) {
-        return role.stream().anyMatch(DiscordUtil::canEdit);
+    public static String getName(Guild guild, User user) {
+        var member = guild.getMember(user);
+        if (member == null)
+            return user.getName();
+        return getName(member);
     }
 
-    public static boolean canEdit(Role role) {
-        return role.getPermissions().contains(Permission.ADMINISTRATOR);
+    public static String getName(Member member) {
+        var nick = member.getNickname();
+        if (nick == null)
+            return member.getUser().getName();
+        return nick;
+    }
+
+    public static boolean hasPermission(Member member) {
+        return member.isOwner() || member.hasPermission(Permission.MANAGE_SERVER);
     }
 
     public static String replaceMentionToText(Guild guild, String text) {
@@ -48,7 +53,7 @@ public class DiscordUtil {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
             var m = guild.getMemberById(mentionText);
             if (m != null)
-                return m.getEffectiveName();
+                return getName(m);
         }
         return mentionText;
     }

@@ -24,6 +24,11 @@ public record VVVoiceType(int vvId, String name, String styleName) implements IV
 
     @Override
     public String replace(String text) {
-        return TextUtil.replaceLatinToHiragana(text);
+        return TextUtil.replaceLatinToHiragana(IVoiceType.super.replace(text));
+    }
+
+    @Override
+    public float getVolume() {
+        return 1.5f;
     }
 }

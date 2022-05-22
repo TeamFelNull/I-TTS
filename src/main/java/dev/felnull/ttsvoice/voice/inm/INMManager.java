@@ -48,11 +48,15 @@ public class INMManager {
         return builder.build();
     }
 
-    public INMEntry getMost(List<INMEntry> entries) {
-        if (entries.isEmpty()) return null;
+    public List<INMEntry> sort(List<INMEntry> entries) {
         Comparator<INMEntry> cp = Comparator.comparingInt(this::getMostPoint);
         cp = cp.reversed();
-        List<INMEntry> sorted = entries.stream().sorted(cp).toList();
+        return entries.stream().sorted(cp).toList();
+    }
+
+    public INMEntry getMost(List<INMEntry> entries) {
+        if (entries.isEmpty()) return null;
+        List<INMEntry> sorted = sort(entries);
         int mostP = getMostPoint(sorted.get(0));
         List<INMEntry> rets = sorted.stream().filter(n -> getMostPoint(n) == mostP).toList();
         return rets.get(RANDOM.nextInt(rets.size()));
@@ -71,11 +75,11 @@ public class INMManager {
     private int getMostNumber(String text) {
         if (text.contains("野獣先輩") || text.contains("４章") || text.contains("野獣インタビュー"))
             return 3;
-        if (text.contains("課長") || text.contains("ラビリンス") || text.contains("サムソン") || text.contains("野獣") || text.contains("鈴木") || text.contains("先輩") || text.contains("ゆうさく") || text.contains("KMR") || text.contains("MUR") || text.contains("木村") || text.contains("三浦"))
+        if (text.contains("レストラン") || text.contains("現場監督") || text.contains("いなり") || text.contains("課長") || text.contains("ラビリンス") || text.contains("サムソン") || text.contains("野獣") || text.contains("鈴木") || text.contains("先輩") || text.contains("ゆうさく") || text.contains("KMR") || text.contains("MUR") || text.contains("木村") || text.contains("三浦"))
             return 2;
-        if (text.contains("アツイ") || text.contains("肉") || text.contains("土方") || text.contains("相撲部") || text.contains("空手部") || text.contains("真夏の夜の淫夢") || text.contains("章") || text.contains("インタビュー"))
+        if (text.contains("清野") || text.contains("関西") || text.contains("アツイ") || text.contains("肉") || text.contains("土方") || text.contains("相撲部") || text.contains("空手部") || text.contains("真夏の夜の淫夢") || text.contains("章") || text.contains("インタビュー"))
             return 1;
-        if (text.contains("偽") || text.contains("風評被害") || text.contains("ツイキャス") || text.contains("両成敗") || text.contains("サイヤ") || text.contains("最強雄筋肉") || text.contains("雄") || text.contains("両方"))
+        if (text.contains("マイナー") || text.contains("偽") || text.contains("風評") || text.contains("ツイキャス") || text.contains("両成敗") || text.contains("サイヤ") || text.contains("最強雄筋肉") || text.contains("雄") || text.contains("両方"))
             return -2;
         return 0;
     }

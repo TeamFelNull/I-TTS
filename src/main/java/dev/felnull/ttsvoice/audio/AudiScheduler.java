@@ -11,6 +11,7 @@ public class AudiScheduler extends AudioEventAdapter {
     private final AudioPlayer player;
     private final long guildId;
     private boolean loading;
+    private Thread loadThread;
     private CoolDownThread coolDownThread;
 
     public AudiScheduler(AudioPlayer player, long guildId) {
@@ -34,12 +35,26 @@ public class AudiScheduler extends AudioEventAdapter {
         coolDownThread.start();
     }
 
-    public void play(AudioTrack track) {
+    public void play(AudioTrack track, float volume) {
         player.startTrack(track, false);
+        player.setVolume((int) (100 * volume));
     }
 
     public boolean isLoadingOrPlaying() {
         return (coolDownThread != null && coolDownThread.isAlive()) || player.getPlayingTrack() != null || loading;
+    }
+
+    public synchronized void stop() {
+        if (loadThread != null) {
+            loadThread.interrupt();
+            loadThread = null;
+            loading = false;
+        }
+        player.stopTrack();
+        if (coolDownThread != null) {
+            coolDownThread.interrupt();
+            coolDownThread = null;
+        }
     }
 
     public synchronized boolean next() {
@@ -47,10 +62,12 @@ public class AudiScheduler extends AudioEventAdapter {
         var next = tm.getTTSQueue(guildId).poll();
         if (next == null) return false;
         loading = true;
+        loadThread = Thread.currentThread();
         var file = tm.getVoiceFile(next);
         if (file == null) {
             startCoolDown();
             loading = false;
+            loadThread = null;
             return true;
         }
         synchronized (tm.getVoiceCash()) {
@@ -61,11 +78,13 @@ public class AudiScheduler extends AudioEventAdapter {
             } catch (Exception ex) {
                 startCoolDown();
                 loading = false;
+                loadThread = null;
                 return true;
             }
-            sc.play(track);
+            sc.play(track, next.voiceType().getVolume());
         }
         loading = false;
+        loadThread = null;
         return true;
     }
 

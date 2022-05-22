@@ -40,4 +40,9 @@ public enum VTVoiceTypes implements IVoiceType {
     public byte[] getSound(String text) throws Exception {
         return VoiceTextManager.getInstance().getVoice(text, this);
     }
+
+    @Override
+    public int getMaxTextLength() {
+        return 180;
+    }
 }

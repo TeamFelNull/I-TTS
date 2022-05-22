@@ -10,4 +10,12 @@ public interface IVoiceType {
     default String replace(String text) {
         return text;
     }
+
+    default int getMaxTextLength() {
+        return 200;
+    }
+
+    default float getVolume() {
+        return 1f;
+    }
 }
