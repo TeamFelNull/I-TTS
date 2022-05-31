@@ -8,7 +8,8 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey, int cashTime, String ignoreRegex,
-                     boolean overwriteAloud, List<Long> inmAllowServers, List<Long> inmDenyUser) {
+                     boolean overwriteAloud, List<Long> inmAllowServers, List<Long> inmDenyUser,
+                     List<Long> adminRoles, List<Long> needAdminServers) {
 
     public static Config of(JsonObject jo) {
         ImmutableList.Builder<Long> inmAllowBuilder = new ImmutableList.Builder<>();
@@ -21,11 +22,23 @@ public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey
         for (JsonElement entry : idbja) {
             inmDenyBuilder.add(entry.getAsLong());
         }
-        return new Config(jo.get("BotToken").getAsString(), jo.get("VoiceVoxURL").getAsString(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), jo.get("OverwriteAloud").getAsBoolean(), inmAllowBuilder.build(), inmDenyBuilder.build());
+        ImmutableList.Builder<Long> adminRolesBuilder = new ImmutableList.Builder<>();
+        var arja = jo.getAsJsonArray("AdminRoles");
+        for (JsonElement entry : arja) {
+            adminRolesBuilder.add(entry.getAsLong());
+        }
+
+        ImmutableList.Builder<Long> needAdminServersBuilder = new ImmutableList.Builder<>();
+        var naja = jo.getAsJsonArray("NeedAdminServers");
+        for (JsonElement entry : naja) {
+            needAdminServersBuilder.add(entry.getAsLong());
+        }
+
+        return new Config(jo.get("BotToken").getAsString(), jo.get("VoiceVoxURL").getAsString(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), jo.get("OverwriteAloud").getAsBoolean(), inmAllowBuilder.build(), inmDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
     }
 
     public static Config createDefault() {
-        return new Config("", "http://localhost:50021", "", 3, "(!|/|\\$|`).*", true, ImmutableList.of(600929948529590272L, 436404936151007241L, 949532003093577739L), ImmutableList.of());
+        return new Config("", "http://localhost:50021", "", 3, "(!|/|\\$|`).*", true, ImmutableList.of(600929948529590272L, 436404936151007241L, 949532003093577739L), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
     }
 
     public void check() {
@@ -57,6 +70,17 @@ public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey
             idja.add(entry);
         }
         jo.add("InmDenyUser", idja);
+        var arja = new JsonArray();
+        for (Long entry : adminRoles) {
+            arja.add(entry);
+        }
+        jo.add("AdminRoles", arja);
+
+        var naja = new JsonArray();
+        for (Long entry : needAdminServers) {
+            naja.add(entry);
+        }
+        jo.add("NeedAdminServers", naja);
         return jo;
     }
 }

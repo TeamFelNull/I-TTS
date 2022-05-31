@@ -1,5 +1,6 @@
 package dev.felnull.ttsvoice.util;
 
+import dev.felnull.ttsvoice.Main;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
@@ -23,7 +24,14 @@ public class DiscordUtil {
     }
 
     public static boolean hasPermission(Member member) {
-        return member.isOwner() || member.hasPermission(Permission.MANAGE_SERVER);
+        boolean flg = member.getRoles().stream().anyMatch(n -> Main.CONFIG.adminRoles().contains(n.getIdLong()));
+        return flg || member.isOwner() || member.hasPermission(Permission.MANAGE_SERVER);
+    }
+
+    public static boolean hasNeedAdminPermission(Member member) {
+        if (Main.CONFIG.needAdminServers().contains(member.getGuild().getIdLong()))
+            return hasPermission(member);
+        return true;
     }
 
     public static String replaceMentionToText(Guild guild, String text) {

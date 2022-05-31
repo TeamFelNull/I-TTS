@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,8 @@ public class TTSListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent e) {
         if ("join".equals(e.getName())) {
+            if (!checkNeedAdmin(e.getMember(), e))
+                return;
             var channel = e.getInteraction().getOption("channel");
             AudioChannel audioChannel;
             if (channel != null) {
@@ -51,6 +54,8 @@ public class TTSListener extends ListenerAdapter {
 
             e.reply(DiscordUtil.createChannelMention(audioChannel) + "に接続しました").queue();
         } else if ("leave".equals(e.getName())) {
+            if (!checkNeedAdmin(e.getMember(), e))
+                return;
             var audioManager = e.getGuild().getAudioManager();
             if (audioManager.isConnected()) {
                 var chn = audioManager.getConnectedChannel();
@@ -61,6 +66,8 @@ public class TTSListener extends ListenerAdapter {
                 e.reply("現在VCに接続していません").queue();
             }
         } else if ("reconnect".equals(e.getName())) {
+            if (!checkNeedAdmin(e.getMember(), e))
+                return;
             var audioManager = e.getGuild().getAudioManager();
             if (audioManager.isConnected()) {
                 var chn = audioManager.getConnectedChannel();
@@ -140,6 +147,8 @@ public class TTSListener extends ListenerAdapter {
             msg.appendCodeLine(sb.toString());
             e.reply(msg.build()).setEphemeral(true).queue();
         } else if ("deny".equals(e.getName()) && "add".equals(e.getSubcommandName())) {
+            if (!checkNeedAdmin(e.getMember(), e))
+                return;
             if (!DiscordUtil.hasPermission(e.getMember())) {
                 e.reply("ユーザを読み上げ拒否する権限がありません").setEphemeral(true).queue();
                 return;
@@ -161,6 +170,8 @@ public class TTSListener extends ListenerAdapter {
             Main.SAVE_DATA.addDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
             e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser()) + "の読み上げ拒否します").setEphemeral(true).queue();
         } else if ("deny".equals(e.getName()) && "remove".equals(e.getSubcommandName())) {
+            if (!checkNeedAdmin(e.getMember(), e))
+                return;
             if (!DiscordUtil.hasPermission(e.getMember())) {
                 e.reply("ユーザの読み上げ拒否を解除する権限がありません").setEphemeral(true).queue();
                 return;
@@ -264,6 +275,14 @@ public class TTSListener extends ListenerAdapter {
                     tm.onText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong(), e.getGuild().getIdLong()), attachment.getFileName());
             }
         }
+    }
+
+    private boolean checkNeedAdmin(Member member, IReplyCallback callback) {
+        if (!DiscordUtil.hasNeedAdminPermission(member)) {
+            callback.reply("コマンドを実行する権限がありません").setEphemeral(true).queue();
+            return false;
+        }
+        return true;
     }
 
     private static class ReconnectThread extends Thread {
