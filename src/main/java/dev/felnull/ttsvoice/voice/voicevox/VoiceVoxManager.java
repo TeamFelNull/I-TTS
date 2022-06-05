@@ -83,7 +83,7 @@ public class VoiceVoxManager {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
         var ret = FNURLUtil.getResponseByPOST(new URL(String.format(Main.CONFIG.voiceVoxURL() + "/audio_query?text=%s&speaker=2", text)), "", "", "");
-        return GSON.fromJson(ret.getKey(), JsonObject.class);
+        return GSON.fromJson(ret.getResponseString(), JsonObject.class);
     }
 
     public byte[] getVoce(JsonObject query, int speakerId) throws IOException, InterruptedException {

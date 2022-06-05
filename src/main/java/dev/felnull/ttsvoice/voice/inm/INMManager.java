@@ -30,9 +30,13 @@ public class INMManager {
     }
 
     public List<INMEntry> search(String text) throws URISyntaxException, IOException {
+        return search(text, 150);
+    }
+
+    public List<INMEntry> search(String text, int max) throws URISyntaxException, IOException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
-        var ret = FNURLUtil.getResponse(new URL(INC_URL + "/search?s=" + text + "&t=inm"));
+        var ret = FNURLUtil.getResponse(new URL(INC_URL + "/search?s=" + text + "&t=inm&m=" + max));
         var jo = GSON.fromJson(ret, JsonObject.class);
         if (!jo.has("result"))
             return ImmutableList.of();
@@ -41,8 +45,8 @@ public class INMManager {
         for (JsonElement entry : ja) {
             var ejo = entry.getAsJsonObject();
             var path = ejo.get("path").getAsString();
-            if (!path.startsWith("/淫夢"))
-                continue;
+            //  if (!path.startsWith("/淫夢"))
+            //     continue;
             builder.add(new INMEntry(ejo.get("name").getAsString(), path, FNStringUtil.getUUIDFromStringNonThrow(ejo.get("uuid").getAsString())));
         }
         return builder.build();
@@ -75,7 +79,7 @@ public class INMManager {
     private int getMostNumber(String text) {
         if (text.contains("野獣先輩") || text.contains("４章") || text.contains("野獣インタビュー"))
             return 3;
-        if (text.contains("レストラン") || text.contains("現場監督") || text.contains("いなり") || text.contains("課長") || text.contains("ラビリンス") || text.contains("サムソン") || text.contains("野獣") || text.contains("鈴木") || text.contains("先輩") || text.contains("ゆうさく") || text.contains("KMR") || text.contains("MUR") || text.contains("木村") || text.contains("三浦"))
+        if (text.contains("オークション") || text.contains("レストラン") || text.contains("現場監督") || text.contains("いなり") || text.contains("課長") || text.contains("ラビリンス") || text.contains("サムソン") || text.contains("野獣") || text.contains("鈴木") || text.contains("先輩") || text.contains("ゆうさく") || text.contains("KMR") || text.contains("MUR") || text.contains("木村") || text.contains("三浦"))
             return 2;
         if (text.contains("清野") || text.contains("関西") || text.contains("アツイ") || text.contains("肉") || text.contains("土方") || text.contains("相撲部") || text.contains("空手部") || text.contains("真夏の夜の淫夢") || text.contains("章") || text.contains("インタビュー"))
             return 1;

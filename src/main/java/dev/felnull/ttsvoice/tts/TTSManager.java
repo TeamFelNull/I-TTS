@@ -3,9 +3,9 @@ package dev.felnull.ttsvoice.tts;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
-import dev.felnull.ttsvoice.voice.inm.INMManager;
 import dev.felnull.ttsvoice.util.DiscordUtil;
 import dev.felnull.ttsvoice.util.URLUtil;
+import dev.felnull.ttsvoice.voice.inm.INMManager;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
 import dev.felnull.ttsvoice.voice.voicevox.VoiceVoxManager;
 import org.apache.commons.io.FileUtils;
@@ -178,8 +178,8 @@ public class TTSManager {
                     return null;
                 }
             } catch (Exception ex) {
-                if (voice.voiceType() != INMManager.getInstance().getVoice())
-                    LOGGER.error("Failed to get audio data", ex);
+                //     if (voice.voiceType() != INMManager.getInstance().getVoice())
+                LOGGER.error("Failed to get audio data", ex);
                 VOICE_CASH.put(voice, new VoiceCashData(null));
                 return null;
             }

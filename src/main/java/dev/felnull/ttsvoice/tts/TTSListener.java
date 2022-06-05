@@ -244,7 +244,7 @@ public class TTSListener extends ListenerAdapter {
             if (op != null && TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong()).contains(INMManager.getInstance().getVoice())) {
                 var im = INMManager.getInstance();
                 try {
-                    var scr = im.search(op.getAsString());
+                    var scr = im.search(op.getAsString(), 25);
                     scr = im.sort(scr);
                     entries.addAll(scr);
                 } catch (Exception ignored) {
