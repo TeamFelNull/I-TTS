@@ -11,6 +11,7 @@ mainClassName = 'dev.felnull.ttsvoice.Main'
 jar {
     manifest {
         attributes 'Main-Class': 'dev.felnull.ttsvoice.Main'
+        attributes 'Implementation-Version': project.version
     }
 }
 
@@ -50,11 +51,5 @@ test {
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-jar {
-    manifest {
-        attributes 'Implementation-Version': project.version
     }
 }
