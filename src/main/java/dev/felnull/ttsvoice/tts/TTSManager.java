@@ -148,7 +148,7 @@ public class TTSManager {
 
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
         var q = getTTSQueue(guildId);
-        if (Main.CONFIG.overwriteAloud()) {
+        if (Main.CONFIG.overwriteAloudServers().contains(guildId)) {
             q.clear();
             sc.stop();
         }

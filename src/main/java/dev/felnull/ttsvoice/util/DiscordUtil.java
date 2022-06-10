@@ -9,7 +9,9 @@ public class DiscordUtil {
         return "<#" + channel.getId() + ">";
     }
 
-    public static String getName(Guild guild, User user) {
+    public static String getName(Guild guild, User user, long userId) {
+        if (user == null)
+            return String.valueOf(userId);
         var member = guild.getMember(user);
         if (member == null)
             return user.getName();

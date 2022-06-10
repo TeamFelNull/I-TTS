@@ -29,8 +29,13 @@ public class Main {
     public static final SaveData SAVE_DATA = new SaveData();
     public static Config CONFIG;
     public static JDA JDA;
+    public static String VERSION;
 
     public static void main(String[] args) throws Exception {
+        VERSION = Main.class.getPackage().getImplementationVersion();
+        if (VERSION == null)
+            VERSION = "NONE";
+        LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
         LOGGER.info("Start!");
 
         var configFile = new File("./config.json");

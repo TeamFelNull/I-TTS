@@ -4,7 +4,9 @@ import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.ttsvoice.Main;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;

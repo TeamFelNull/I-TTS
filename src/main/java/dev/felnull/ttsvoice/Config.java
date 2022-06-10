@@ -8,7 +8,7 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey, int cashTime, String ignoreRegex,
-                     boolean overwriteAloud, List<Long> inmAllowServers, List<Long> inmDenyUser,
+                     List<Long> overwriteAloudServers, List<Long> inmAllowServers, List<Long> inmDenyUser,
                      List<Long> adminRoles, List<Long> needAdminServers) {
 
     public static Config of(JsonObject jo) {
@@ -34,11 +34,17 @@ public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey
             needAdminServersBuilder.add(entry.getAsLong());
         }
 
-        return new Config(jo.get("BotToken").getAsString(), jo.get("VoiceVoxURL").getAsString(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), jo.get("OverwriteAloud").getAsBoolean(), inmAllowBuilder.build(), inmDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
+        ImmutableList.Builder<Long> overwriteAloudServersBuilder = new ImmutableList.Builder<>();
+        var oasja = jo.getAsJsonArray("OverwriteAloudServers");
+        for (JsonElement entry : oasja) {
+            overwriteAloudServersBuilder.add(entry.getAsLong());
+        }
+
+        return new Config(jo.get("BotToken").getAsString(), jo.get("VoiceVoxURL").getAsString(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), overwriteAloudServersBuilder.build(), inmAllowBuilder.build(), inmDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
     }
 
     public static Config createDefault() {
-        return new Config("", "http://localhost:50021", "", 3, "(!|/|\\$|`).*", true, ImmutableList.of(600929948529590272L, 436404936151007241L, 949532003093577739L), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
+        return new Config("", "http://localhost:50021", "", 3, "(!|/|\\$|`).*", ImmutableList.of(600929948529590272L), ImmutableList.of(600929948529590272L, 436404936151007241L, 949532003093577739L), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
     }
 
     public void check() {
@@ -59,7 +65,6 @@ public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey
         jo.addProperty("VoiceTextAPIKey", voiceTextAPIKey);
         jo.addProperty("CashTime", cashTime);
         jo.addProperty("IgnoreRegex", ignoreRegex);
-        jo.addProperty("OverwriteAloud", overwriteAloud);
         var imja = new JsonArray();
         for (Long allow : inmAllowServers) {
             imja.add(allow);
@@ -81,6 +86,13 @@ public record Config(String botToken, String voiceVoxURL, String voiceTextAPIKey
             naja.add(entry);
         }
         jo.add("NeedAdminServers", naja);
+
+        var oasja = new JsonArray();
+        for (Long entry : overwriteAloudServers) {
+            oasja.add(entry);
+        }
+        jo.add("OverwriteAloudServers", oasja);
+
         return jo;
     }
 }
