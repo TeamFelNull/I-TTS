@@ -5,6 +5,7 @@ import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.util.DiscordUtil;
 import dev.felnull.ttsvoice.util.URLUtil;
+import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
 import dev.felnull.ttsvoice.voice.voicevox.VoiceVoxManager;
@@ -111,6 +112,7 @@ public class TTSManager {
         ImmutableList.Builder<IVoiceType> builder = new ImmutableList.Builder<>();
         builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
         builder.add(VTVoiceTypes.values());
+        builder.add(GoogleTranslateTTSType.values());
 
         boolean flg1 = Main.CONFIG.inmAllowServers().contains(guildId);
         boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
