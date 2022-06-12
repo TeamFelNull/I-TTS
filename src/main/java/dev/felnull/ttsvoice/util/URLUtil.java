@@ -12,9 +12,13 @@ public class URLUtil {
             + "{2,256}\\.[a-z]"
             + "{2,6}\\b([-a-zA-Z0-9@:%"
             + "._\\+~#?&//=]*)");
+    private static final String urlSyoryaku = "ユーアールエル省略";
 
     public static String replaceURLToText(String text) {
-        return urlPattern.matcher(text).replaceAll(n -> getURLText(n.group()));
+        return urlPattern.matcher(text).replaceAll(n -> {
+            return urlSyoryaku;
+            //   return getURLText(n.group());
+        });
     }
 
     public static String getURLText(String url) {
@@ -29,7 +33,7 @@ public class URLUtil {
             return spls[2] + "のURL";
         } catch (Exception ignored) {
         }
-        return "URL省略";
+        return urlSyoryaku;
     }
 
     public static String getURLTitle(String url) throws IOException {
