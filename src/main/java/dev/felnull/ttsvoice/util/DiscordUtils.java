@@ -4,7 +4,7 @@ import dev.felnull.ttsvoice.Main;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
-public class DiscordUtil {
+public class DiscordUtils {
     public static String createChannelMention(Channel channel) {
         return "<#" + channel.getId() + ">";
     }
@@ -95,5 +95,9 @@ public class DiscordUtil {
             mentionText = mentionText.replaceAll("_", " ");
         }
         return mentionText;
+    }
+
+    public static boolean isNonAllowInm(long guildId) {
+        return guildId == 930083398691733565L;
     }
 }

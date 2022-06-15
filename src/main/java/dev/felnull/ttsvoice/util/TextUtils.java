@@ -7,7 +7,7 @@ import com.mariten.kanatools.KanaConverter;
 
 import java.util.List;
 
-public class TextUtil {
+public class TextUtils {
     public static String replaceLatinToHiragana(String text) {
         var kataToHira = Transliterator.getInstance("Latin-Hiragana");
         return kataToHira.transliterate(text);

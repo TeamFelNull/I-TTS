@@ -1,7 +1,7 @@
 package dev.felnull.ttsvoice.voice.voicevox;
 
 import dev.felnull.ttsvoice.tts.IVoiceType;
-import dev.felnull.ttsvoice.util.TextUtil;
+import dev.felnull.ttsvoice.util.TextUtils;
 
 public record VVVoiceType(int vvId, String name, String styleName) implements IVoiceType {
 
@@ -24,7 +24,7 @@ public record VVVoiceType(int vvId, String name, String styleName) implements IV
 
     @Override
     public String replace(String text) {
-        return TextUtil.replaceLatinToHiragana(IVoiceType.super.replace(text));
+        return TextUtils.replaceLatinToHiragana(IVoiceType.super.replace(text));
     }
 
     @Override

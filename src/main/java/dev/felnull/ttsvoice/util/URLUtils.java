@@ -6,7 +6,7 @@ import org.jsoup.nodes.Document;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-public class URLUtil {
+public class URLUtils {
     private static final Pattern urlPattern = Pattern.compile("((http|https)://)(www.)?"
             + "[a-zA-Z0-9@:%._\\+~#?&//=]"
             + "{2,256}\\.[a-z]"

@@ -1,8 +1,8 @@
 package dev.felnull.ttsvoice.tts;
 
 import dev.felnull.ttsvoice.Main;
-import dev.felnull.ttsvoice.util.DiscordUtil;
-import dev.felnull.ttsvoice.util.TextUtil;
+import dev.felnull.ttsvoice.util.DiscordUtils;
+import dev.felnull.ttsvoice.util.TextUtils;
 import dev.felnull.ttsvoice.voice.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
@@ -19,8 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 public class TTSListener extends ListenerAdapter {
+    private static final Random rand = new Random();
+
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent e) {
         if ("join".equals(e.getName())) {
@@ -52,14 +55,14 @@ public class TTSListener extends ListenerAdapter {
             audioManager.openAudioConnection(audioChannel);
             TTSManager.getInstance().setTTSChanel(e.getGuild().getIdLong(), e.getChannel().getIdLong());
 
-            e.reply(DiscordUtil.createChannelMention(audioChannel) + "に接続しました").queue();
+            e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続しました").queue();
         } else if ("leave".equals(e.getName())) {
             if (!checkNeedAdmin(e.getMember(), e))
                 return;
             var audioManager = e.getGuild().getAudioManager();
             if (audioManager.isConnected()) {
                 var chn = audioManager.getConnectedChannel();
-                e.reply(DiscordUtil.createChannelMention(chn) + "から切断します").queue();
+                e.reply(DiscordUtils.createChannelMention(chn) + "から切断します").queue();
                 audioManager.closeAudioConnection();
                 TTSManager.getInstance().removeTTSChanel(e.getGuild().getIdLong());
             } else {
@@ -71,7 +74,7 @@ public class TTSListener extends ListenerAdapter {
             var audioManager = e.getGuild().getAudioManager();
             if (audioManager.isConnected()) {
                 var chn = audioManager.getConnectedChannel();
-                e.reply(DiscordUtil.createChannelMention(chn) + "に再接続します").queue();
+                e.reply(DiscordUtils.createChannelMention(chn) + "に再接続します").queue();
                 audioManager.closeAudioConnection();
                 TTSManager.getInstance().removeTTSChanel(e.getGuild().getIdLong());
                 var rt = new ReconnectThread(audioManager, e.getGuild(), chn, e.getChannel());
@@ -89,14 +92,14 @@ public class TTSListener extends ListenerAdapter {
             e.reply(msg.build()).setEphemeral(true).queue();
         } else if ("voice".equals(e.getName()) && "change".equals(e.getSubcommandName())) {
             var uop = e.getOption("user");
-            if (uop != null && DiscordUtil.hasPermission(e.getMember())) {
+            if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
                 e.reply("他ユーザーを編集するための権限がありません").queue();
                 return;
             }
             User user = uop == null ? e.getUser() : uop.getAsUser();
 
             if (user.isBot()) {
-                e.reply(DiscordUtil.getName(e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
+                e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
                 return;
             }
 
@@ -114,22 +117,22 @@ public class TTSListener extends ListenerAdapter {
             }
 
             TTSManager.getInstance().setUserVoceTypes(user.getIdLong(), type);
-            e.reply(DiscordUtil.getName(e.getGuild(), user, user.getIdLong()) + "の読み上げ音声タイプを[" + type.getTitle() + "]に変更しました").queue();
+            e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "の読み上げ音声タイプを[" + type.getTitle() + "]に変更しました").queue();
         } else if ("voice".equals(e.getName()) && "check".equals(e.getSubcommandName())) {
             var uop = e.getOption("user");
-            if (uop != null && DiscordUtil.hasPermission(e.getMember())) {
+            if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
                 e.reply("他ユーザーを確認するための権限がありません").queue();
                 return;
             }
             User user = uop == null ? e.getUser() : uop.getAsUser();
             if (user.isBot()) {
-                e.reply(DiscordUtil.getName(e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
+                e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
                 return;
             }
             var type = TTSManager.getInstance().getUserVoiceType(user.getIdLong(), e.getGuild().getIdLong());
-            e.reply(DiscordUtil.getName(e.getGuild(), user, user.getIdLong()) + "の現在の読み上げタイプは[" + type.getTitle() + "]です").setEphemeral(true).queue();
+            e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "の現在の読み上げタイプは[" + type.getTitle() + "]です").setEphemeral(true).queue();
         } else if ("deny".equals(e.getName()) && "list".equals(e.getSubcommandName())) {
-            if (!DiscordUtil.hasPermission(e.getMember())) {
+            if (!DiscordUtils.hasPermission(e.getMember())) {
                 e.reply("読み上げ拒否をされているユーザ一覧を見る権限がありません").setEphemeral(true).queue();
                 return;
             }
@@ -142,14 +145,14 @@ public class TTSListener extends ListenerAdapter {
             var msg = new MessageBuilder().append("読み上げ拒否されたユーザ一覧\n");
             StringBuilder sb = new StringBuilder();
             for (Long deny : lst) {
-                sb.append(DiscordUtil.getName(e.getGuild(), Main.JDA.getUserById(deny), deny)).append("\n");
+                sb.append(DiscordUtils.getName(e.getGuild(), Main.JDA.getUserById(deny), deny)).append("\n");
             }
             msg.appendCodeLine(sb.toString());
             e.reply(msg.build()).setEphemeral(true).queue();
         } else if ("deny".equals(e.getName()) && "add".equals(e.getSubcommandName())) {
             if (!checkNeedAdmin(e.getMember(), e))
                 return;
-            if (!DiscordUtil.hasPermission(e.getMember())) {
+            if (!DiscordUtils.hasPermission(e.getMember())) {
                 e.reply("ユーザを読み上げ拒否する権限がありません").setEphemeral(true).queue();
                 return;
             }
@@ -159,7 +162,7 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
             if (uop.getAsUser().isBot()) {
-                e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "はBOTです").setEphemeral(true).queue();
+                e.reply(DiscordUtils.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "はBOTです").setEphemeral(true).queue();
                 return;
             }
 
@@ -168,11 +171,11 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
             Main.SAVE_DATA.addDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
-            e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "の読み上げ拒否します").setEphemeral(true).queue();
+            e.reply(DiscordUtils.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "の読み上げ拒否します").setEphemeral(true).queue();
         } else if ("deny".equals(e.getName()) && "remove".equals(e.getSubcommandName())) {
             if (!checkNeedAdmin(e.getMember(), e))
                 return;
-            if (!DiscordUtil.hasPermission(e.getMember())) {
+            if (!DiscordUtils.hasPermission(e.getMember())) {
                 e.reply("ユーザの読み上げ拒否を解除する権限がありません").setEphemeral(true).queue();
                 return;
             }
@@ -182,7 +185,7 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
             if (uop.getAsUser().isBot()) {
-                e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "はBOTです").setEphemeral(true).queue();
+                e.reply(DiscordUtils.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "はBOTです").setEphemeral(true).queue();
                 return;
             }
             if (!Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
@@ -190,7 +193,7 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
             Main.SAVE_DATA.removeDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
-            e.reply(DiscordUtil.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "の読み上げ拒否を解除します").setEphemeral(true).queue();
+            e.reply(DiscordUtils.getName(e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "の読み上げ拒否を解除します").setEphemeral(true).queue();
         } else if ("inm".equals(e.getName())) {
             var op = e.getOption("search");
             if (op != null && TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong()).contains(INMManager.getInstance().getVoice())) {
@@ -198,6 +201,69 @@ public class TTSListener extends ListenerAdapter {
             }
             e.deferReply().queue();
             e.getHook().deleteOriginal().queue();
+        } else if ("config".equals(e.getName())) {
+            if (!checkNeedAdmin(e.getMember(), e))
+                return;
+            var sb = e.getSubcommandName();
+            if (sb == null || sb.isEmpty()) {
+                e.reply("コンフィグが未指定です").setEphemeral(true).queue();
+                return;
+            }
+            var sc = Main.getServerConfig(e.getGuild().getIdLong());
+            if ("show".equals(sb)) {
+                var msg = new MessageBuilder().append("現在のコンフィグ\n");
+                StringBuilder sbr = new StringBuilder();
+
+                sbr.append("VCに参加時のみ読み上げ").append(" ").append(sc.isNeedJoin() ? "有効" : "無効").append("\n");
+                sbr.append("読み上げの上書き").append(" ").append(sc.isOverwriteAloud() ? "有効" : "無効").append("\n");
+                if (!DiscordUtils.isNonAllowInm(e.getGuild().getIdLong()))
+                    sbr.append("INMモード").append(" ").append(sc.isInmMode(e.getGuild().getIdLong()) ? "有効" : "無効").append("\n");
+
+                msg.appendCodeLine(sbr.toString());
+                e.reply(msg.build()).setEphemeral(true).queue();
+            } else {
+                var en = e.getOption("enable");
+                if (en == null) {
+                    e.reply("コンフィグ設定内容が未指定です").setEphemeral(true).queue();
+                    return;
+                }
+                boolean ena = en.getAsBoolean();
+                String enStr = ena ? "有効" : "無効";
+                switch (sb) {
+                    case "need-join" -> {
+                        if (sc.isNeedJoin() == ena) {
+                            e.reply("すでにVCに参加時のみ読み上げは" + enStr + "です").setEphemeral(true).queue();
+                            return;
+                        }
+                        sc.setNeedJoin(ena);
+                        e.reply("VCに参加時のみ読み上げを" + enStr + "にしました").queue();
+                    }
+                    case "overwrite-aloud" -> {
+                        if (sc.isOverwriteAloud() == ena) {
+                            e.reply("すでに読み上げの上書きは" + enStr + "です").setEphemeral(true).queue();
+                            return;
+                        }
+                        sc.setOverwriteAloud(ena);
+                        e.reply("読み上げの上書きを" + enStr + "にしました").queue();
+                    }
+                    case "inm-mode" -> {
+                        if (ena && DiscordUtils.isNonAllowInm(e.getGuild().getIdLong())) {
+                            if (rand.nextInt(114) == 0) {
+                                e.reply("ｲﾔｰキツイッス（素）").queue();
+                            } else {
+                                e.reply("ダメみたいですね").queue();
+                            }
+                            return;
+                        }
+                        if (sc.isInmMode(e.getGuild().getIdLong()) == ena) {
+                            e.reply("すでにINMモードは" + enStr + "です").setEphemeral(true).queue();
+                            return;
+                        }
+                        sc.setInmMode(ena);
+                        e.reply("INMモードを" + enStr + "にしました").queue();
+                    }
+                }
+            }
         }
     }
 
@@ -220,8 +286,8 @@ public class TTSListener extends ListenerAdapter {
 
             choices = choices.stream().sorted(Comparator.comparingInt(n -> {
                 if (str == null) return 0;
-                int i = TextUtil.getComplementPoint(n.getId(), str) * 2;
-                int t = TextUtil.getComplementPoint(n.getTitle(), str);
+                int i = TextUtils.getComplementPoint(n.getId(), str) * 2;
+                int t = TextUtils.getComplementPoint(n.getTitle(), str);
                 return i + t;
             })).toList();
 
@@ -270,6 +336,14 @@ public class TTSListener extends ListenerAdapter {
         var tm = TTSManager.getInstance();
         if (tm.getTTSChanel(e.getGuild().getIdLong()) == e.getChannel().getIdLong() && !e.getMember().getUser().isBot()) {
             if (Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), e.getMember().getIdLong())) return;
+            if (Main.getServerConfig(e.getGuild().getIdLong()).isNeedJoin()) {
+                var vs = e.getMember().getVoiceState();
+                if (vs == null) return;
+                var vc = vs.getChannel();
+                if (vc == null) return;
+                if (vc.getIdLong() != TTSManager.getInstance().getTTSVoiceChanel(e.getGuild()))
+                    return;
+            }
             tm.onChat(e.getGuild().getIdLong(), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw());
             for (Message.Attachment attachment : e.getMessage().getAttachments()) {
                 if (!attachment.isImage() && !attachment.isVideo())
@@ -279,7 +353,7 @@ public class TTSListener extends ListenerAdapter {
     }
 
     private boolean checkNeedAdmin(Member member, IReplyCallback callback) {
-        if (!DiscordUtil.hasNeedAdminPermission(member)) {
+        if (!DiscordUtils.hasNeedAdminPermission(member)) {
             callback.reply("コマンドを実行する権限がありません").setEphemeral(true).queue();
             return false;
         }

@@ -19,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -26,7 +28,9 @@ public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File SAVE_FILE = new File("./save.json");
+    private static final File SERVER_CONFIG_FOLDER = new File("./server_config");
     public static final SaveData SAVE_DATA = new SaveData();
+    private static final Map<Long, ServerConfig> SERVER_CONFIGS = new HashMap<>();
     public static Config CONFIG;
     public static JDA JDA;
     public static String VERSION;
@@ -70,6 +74,32 @@ public class Main {
             LOGGER.info("Completed load data");
         }
 
+        if (SERVER_CONFIG_FOLDER.exists() && SERVER_CONFIG_FOLDER.isDirectory()) {
+            var files = SERVER_CONFIG_FOLDER.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.getName().endsWith(".json")) {
+                        var name = file.getName();
+                        name = name.substring(0, name.length() - ".json".length());
+                        try {
+                            long id = Long.parseLong(name);
+                            JsonObject jo;
+                            try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)))) {
+                                jo = GSON.fromJson(reader, JsonObject.class);
+                            }
+                            var sc = new ServerConfig();
+                            sc.load(jo);
+                            synchronized (SERVER_CONFIGS) {
+                                SERVER_CONFIGS.put(id, sc);
+                            }
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
+            }
+            LOGGER.info("Completed load server config");
+        }
+
         Timer timer = new Timer();
         TimerTask saveTask = new TimerTask() {
             public void run() {
@@ -82,6 +112,24 @@ public class Main {
                         LOGGER.error("Failed to save data", ex);
                     }
                     SAVE_DATA.setDirty(false);
+                }
+                synchronized (SERVER_CONFIGS) {
+                    SERVER_CONFIGS.forEach((id, config) -> {
+                        if (config.isDirty()) {
+                            var jo = new JsonObject();
+                            config.save(jo);
+                            if (!SERVER_CONFIG_FOLDER.exists() && !SERVER_CONFIG_FOLDER.mkdirs()) {
+                                LOGGER.error("Failed to create server config folder");
+                            }
+                            try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(SERVER_CONFIG_FOLDER.toPath().resolve(id + ".json").toFile())))) {
+                                GSON.toJson(jo, writer);
+                                LOGGER.info("Completed to server config");
+                            } catch (Exception ex) {
+                                LOGGER.error("Failed to server config", ex);
+                            }
+                            config.setDirty(false);
+                        }
+                    });
                 }
             }
         };
@@ -97,8 +145,13 @@ public class Main {
         var voice = Commands.slash("voice", "読み上げ音声タイプ関係").addSubcommands(new SubcommandData("check", "現在の読み上げ音声タイプを表示").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"))).addSubcommands(new SubcommandData("list", "読み上げ音声タイプ一覧を表示")).addSubcommands(new SubcommandData("change", "読み上げ音声タイプを変更").addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げる声タイプ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")));
         var deny = Commands.slash("deny", "読み上げ拒否関係").addSubcommands(new SubcommandData("list", "読み上げ拒否一覧")).addSubcommands(new SubcommandData("add", "読み上げ拒否に追加").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true))).addSubcommands(new SubcommandData("remove", "読み上げ拒否を解除").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true)));
         var inm = Commands.slash("inm", "INM補完").addOptions(new OptionData(OptionType.STRING, "search", "検索").setAutoComplete(true).setRequired(true));
+        var config = Commands.slash("config", "読み上げ設定")
+                .addSubcommands(new SubcommandData("need-join", "VCに参加時のみ読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
+                .addSubcommands(new SubcommandData("overwrite-aloud", "読み上げの上書き").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
+                .addSubcommands(new SubcommandData("inm-mode", "INMモード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
+                .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
 
-        JDA.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm).queue();
+        JDA.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, config).queue();
 
         TimerTask updatePresenceTask = new TimerTask() {
             public void run() {
@@ -111,5 +164,13 @@ public class Main {
             }
         };
         timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
+    }
+
+    public static ServerConfig getServerConfig(long guildId) {
+        ServerConfig cfg;
+        synchronized (SERVER_CONFIGS) {
+            cfg = SERVER_CONFIGS.computeIfAbsent(guildId, n -> new ServerConfig());
+        }
+        return cfg;
     }
 }

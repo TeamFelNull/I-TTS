@@ -3,12 +3,13 @@ package dev.felnull.ttsvoice.tts;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
-import dev.felnull.ttsvoice.util.DiscordUtil;
-import dev.felnull.ttsvoice.util.URLUtil;
+import dev.felnull.ttsvoice.util.DiscordUtils;
+import dev.felnull.ttsvoice.util.URLUtils;
 import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
 import dev.felnull.ttsvoice.voice.voicevox.VoiceVoxManager;
+import net.dv8tion.jda.api.entities.Guild;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,6 +81,12 @@ public class TTSManager {
         return -1;
     }
 
+    public long getTTSVoiceChanel(Guild guild) {
+        var cv = guild.getAudioManager().getConnectedChannel();
+        if (cv == null) return -1;
+        return cv.getIdLong();
+    }
+
     public Queue<TTSVoice> getTTSQueue(long guildId) {
         return TTS_QUEUE.computeIfAbsent(guildId, n -> new LinkedBlockingQueue<>());
     }
@@ -114,10 +121,10 @@ public class TTSManager {
         builder.add(VTVoiceTypes.values());
         builder.add(GoogleTranslateTTSType.values());
 
-        boolean flg1 = Main.CONFIG.inmAllowServers().contains(guildId);
+        boolean flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
         boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
 
-        if (flg1 && flg2)
+        if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId))
             builder.add(INMManager.getInstance().getVoice());
 
         return builder.build();
@@ -130,8 +137,8 @@ public class TTSManager {
         if (ignorePattern.matcher(text).matches())
             return;
 
-        text = DiscordUtil.replaceMentionToText(Main.JDA.getGuildById(guildId), text);
-        text = URLUtil.replaceURLToText(text);
+        text = DiscordUtils.replaceMentionToText(Main.JDA.getGuildById(guildId), text);
+        text = URLUtils.replaceURLToText(text);
         int pl = text.length();
         var vt = getUserVoiceType(userId, guildId);
 
@@ -150,7 +157,7 @@ public class TTSManager {
 
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
         var q = getTTSQueue(guildId);
-        if (Main.CONFIG.overwriteAloudServers().contains(guildId)) {
+        if (Main.getServerConfig(guildId).isOverwriteAloud()) {
             q.clear();
             sc.stop();
         }
