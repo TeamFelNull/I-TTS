@@ -1,12 +1,6 @@
 package dev.felnull.ttsvoice.tts.sayvoice;
 
-public class LiteralSayVoice implements ISayVoice {
-    private final String text;
-
-    public LiteralSayVoice(String text) {
-        this.text = text;
-    }
-
+public record LiteralSayVoice(String text) implements ISayVoice {
     @Override
     public String getSayVoiceText() {
         return text;

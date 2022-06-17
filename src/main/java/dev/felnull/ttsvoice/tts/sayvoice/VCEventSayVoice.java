@@ -4,6 +4,8 @@ import dev.felnull.ttsvoice.util.DiscordUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 
+import java.util.Objects;
+
 public class VCEventSayVoice implements ISayVoice {
     private final EventType eventType;
     private final Guild guild;
@@ -36,5 +38,18 @@ public class VCEventSayVoice implements ISayVoice {
 
     private static interface EventText {
         String getText(Guild guild, User user);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VCEventSayVoice that = (VCEventSayVoice) o;
+        return eventType == that.eventType && Objects.equals(guild, that.guild) && Objects.equals(user, that.user);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(eventType, guild, user);
     }
 }

@@ -26,4 +26,8 @@ public interface IVoiceType {
     default float getVolume() {
         return 1f;
     }
+
+    default boolean isCached(ISayVoice sayVoice) {
+        return true;
+    }
 }

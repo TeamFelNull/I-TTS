@@ -4,10 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.fnjl.util.FNURLUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -95,5 +97,19 @@ public class INMManager {
 
     public INMVoiceType getVoice() {
         return VOICE;
+    }
+
+    public InputStream getJoinSound() {
+        int num = RANDOM.nextInt(4) + 1;
+        return getInmResource("join" + num + ".mp3");
+    }
+
+    public InputStream getLeaveSound() {
+        int num = RANDOM.nextInt(4) + 1;
+        return getInmResource("leave" + num + ".mp3");
+    }
+
+    private InputStream getInmResource(String name) {
+        return FNDataUtil.resourceExtractor(INMManager.class, "inm/" + name);
     }
 }

@@ -187,11 +187,19 @@ public class TTSManager {
 
     public File getVoiceFile(TTSVoice voice) {
         synchronized (VOICE_CASH) {
+            boolean cached = voice.voiceType().isCached(voice.sayVoice());
             var c = getVoiceCashData(voice);
             if (c != null) {
-                if (c.isInvalid())
-                    return null;
-                return getCashFile(c.getId());
+                if (cached) {
+                    if (c.isInvalid())
+                        return null;
+                    return getCashFile(c.getId());
+                } else {
+                    VOICE_CASH.remove(voice);
+                    var fil = getCashFile(c.getId());
+                    if (fil.exists())
+                        fil.delete();
+                }
             }
             InputStream voiceStream;
             try {
