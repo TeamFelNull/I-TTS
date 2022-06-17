@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
@@ -48,7 +49,11 @@ public class VoiceVoxManager {
     }
 
     private synchronized void loadSpeakers() {
-        if (System.currentTimeMillis() - lastSpeakersLoadTime < 1000 * 60 * 10)
+        long tim = 1000 * 60 * 10;
+        if (SPEAKERS == null)
+            tim = 1000 * 60;
+
+        if (System.currentTimeMillis() - lastSpeakersLoadTime < tim)
             return;
         try {
             JsonArray ja;
@@ -86,10 +91,10 @@ public class VoiceVoxManager {
         return GSON.fromJson(ret.getResponseString(), JsonObject.class);
     }
 
-    public byte[] getVoce(JsonObject query, int speakerId) throws IOException, InterruptedException {
+    public InputStream getVoce(JsonObject query, int speakerId) throws IOException, InterruptedException {
         var hc = HttpClient.newHttpClient();
         var request = HttpRequest.newBuilder(URI.create(Main.CONFIG.voiceVoxURL() + "/synthesis?speaker=" + speakerId)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(query))).version(HttpClient.Version.HTTP_1_1).build();
-        var res = hc.send(request, HttpResponse.BodyHandlers.ofByteArray());
+        var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
         return res.body();
     }
 }

@@ -1,4 +1,6 @@
 package dev.felnull.ttsvoice.tts;
 
-public record TTSVoice(String text, IVoiceType voiceType) {
+import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
+
+public record TTSVoice(ISayVoice sayVoice, IVoiceType voiceType) {
 }

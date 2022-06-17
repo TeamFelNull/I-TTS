@@ -1,14 +1,22 @@
 package dev.felnull.ttsvoice.tts;
 
+import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
+
+import java.io.InputStream;
+
 public interface IVoiceType {
     String getTitle();
 
     String getId();
 
-    byte[] getSound(String text) throws Exception;
+    InputStream getSound(String text) throws Exception;
 
     default String replace(String text) {
         return text;
+    }
+
+    default InputStream getSayVoiceSound(ISayVoice sayVoice) throws Exception {
+        return getSound(replace(sayVoice.getSayVoiceText()));
     }
 
     default int getMaxTextLength() {

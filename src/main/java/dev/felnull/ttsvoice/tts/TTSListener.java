@@ -1,12 +1,15 @@
 package dev.felnull.ttsvoice.tts;
 
 import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.TextUtils;
 import dev.felnull.ttsvoice.voice.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -197,7 +200,7 @@ public class TTSListener extends ListenerAdapter {
         } else if ("inm".equals(e.getName())) {
             var op = e.getOption("search");
             if (op != null && TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong()).contains(INMManager.getInstance().getVoice())) {
-                TTSManager.getInstance().onText(e.getGuild().getIdLong(), INMManager.getInstance().getVoice(), op.getAsString());
+                TTSManager.getInstance().sayText(e.getGuild().getIdLong(), INMManager.getInstance().getVoice(), op.getAsString());
             }
             e.deferReply().queue();
             e.getHook().deleteOriginal().queue();
@@ -248,7 +251,7 @@ public class TTSListener extends ListenerAdapter {
                     }
                     case "inm-mode" -> {
                         if (ena && DiscordUtils.isNonAllowInm(e.getGuild().getIdLong())) {
-                            if (rand.nextInt(114) == 0) {
+                            if (rand.nextInt() == 0) {
                                 e.reply("ｲﾔｰキツイッス（素）").queue();
                             } else {
                                 e.reply("ダメみたいですね").queue();
@@ -262,8 +265,40 @@ public class TTSListener extends ListenerAdapter {
                         sc.setInmMode(ena);
                         e.reply("INMモードを" + enStr + "にしました").queue();
                     }
+                    case "join-say-name" -> {
+                        if (sc.isJoinSayName() == ena) {
+                            e.reply("すでにVCに参加時に名前を読み上げは" + enStr + "です").setEphemeral(true).queue();
+                            return;
+                        }
+                        sc.setJoinSayName(ena);
+                        e.reply("VCに参加時に名前を読み上げを" + enStr + "にしました").queue();
+                    }
                 }
             }
+        } else if ("vnick".equals(e.getName())) {
+            var uop = e.getOption("user");
+            if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
+                e.reply("他ユーザーの読み上げユーザ名を変更するための権限がありません").queue();
+                return;
+            }
+            User user = uop == null ? e.getUser() : uop.getAsUser();
+            if (user.isBot()) {
+                e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
+                return;
+            }
+
+            var nm = e.getOption("name");
+            if (nm != null) {
+                var name = nm.getAsString();
+                if ("reset".equals(name)) {
+                    Main.SAVE_DATA.removeUserNickName(user.getIdLong());
+                    e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "のニックネームをリセットしました").queue();
+                } else {
+                    Main.SAVE_DATA.setUserNickName(user.getIdLong(), name);
+                    e.reply(DiscordUtils.getName(e.getGuild(), user, user.getIdLong()) + "のニックネームを変更しました").queue();
+                }
+            }
+
         }
     }
 
@@ -344,12 +379,34 @@ public class TTSListener extends ListenerAdapter {
                 if (vc.getIdLong() != TTSManager.getInstance().getTTSVoiceChanel(e.getGuild()))
                     return;
             }
-            tm.onChat(e.getGuild().getIdLong(), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw());
+            tm.sayChat(e.getGuild().getIdLong(), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw());
             for (Message.Attachment attachment : e.getMessage().getAttachments()) {
                 if (!attachment.isImage() && !attachment.isVideo())
-                    tm.onText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong(), e.getGuild().getIdLong()), attachment.getFileName());
+                    tm.sayText(e.getGuild().getIdLong(), tm.getUserVoiceType(e.getMember().getUser().getIdLong(), e.getGuild().getIdLong()), attachment.getFileName());
             }
         }
+    }
+
+    @Override
+    public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
+        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+
+        var tm = TTSManager.getInstance();
+        long vc = tm.getTTSVoiceChanel(event.getGuild());
+        if (vc != event.getChannelJoined().getIdLong()) return;
+
+        tm.sayText(event.getGuild().getIdLong(), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.JOIN, event.getGuild(), event.getMember().getUser()));
+    }
+
+    @Override
+    public void onGuildVoiceLeave(@NotNull GuildVoiceLeaveEvent event) {
+        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+
+        var tm = TTSManager.getInstance();
+        long vc = tm.getTTSVoiceChanel(event.getGuild());
+        if (vc != event.getChannelLeft().getIdLong()) return;
+
+        tm.sayText(event.getGuild().getIdLong(), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.LEAVE, event.getGuild(), event.getMember().getUser()));
     }
 
     private boolean checkNeedAdmin(Member member, IReplyCallback callback) {

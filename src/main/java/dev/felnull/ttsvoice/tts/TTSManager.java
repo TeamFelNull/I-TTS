@@ -1,8 +1,11 @@
 package dev.felnull.ttsvoice.tts;
 
 import com.google.common.collect.ImmutableList;
+import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
+import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
+import dev.felnull.ttsvoice.tts.sayvoice.LiteralSayVoice;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.URLUtils;
 import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
@@ -15,8 +18,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
@@ -130,7 +134,7 @@ public class TTSManager {
         return builder.build();
     }
 
-    public void onChat(long guildId, long userId, String text) {
+    public void sayChat(long guildId, long userId, String text) {
         if (ignorePattern == null)
             ignorePattern = Pattern.compile(Main.CONFIG.ignoreRegex());
 
@@ -149,12 +153,22 @@ public class TTSManager {
         if (pl - text.length() > 0)
             text += "、以下" + (pl - text.length()) + "文字を省略";
 
-        onText(guildId, vt, text);
+        sayText(guildId, vt, text);
     }
 
-    public void onText(long guildId, IVoiceType voiceType, String text) {
-        text = voiceType.replace(text);
+    public void sayText(long guildId, IVoiceType voiceType, String text) {
+        sayText(guildId, voiceType, new LiteralSayVoice(text));
+    }
 
+    public void sayText(long guildId, long userId, String text) {
+        sayText(guildId, getUserVoiceType(userId, guildId), text);
+    }
+
+    public void sayText(long guildId, long userId, ISayVoice sayVoice) {
+        sayText(guildId, getUserVoiceType(userId, guildId), sayVoice);
+    }
+
+    public void sayText(long guildId, IVoiceType voiceType, ISayVoice sayVoice) {
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
         var q = getTTSQueue(guildId);
         if (Main.getServerConfig(guildId).isOverwriteAloud()) {
@@ -162,7 +176,7 @@ public class TTSManager {
             sc.stop();
         }
 
-        q.add(new TTSVoice(text, voiceType));
+        q.add(new TTSVoice(sayVoice, voiceType));
         if (!sc.isLoadingOrPlaying())
             sc.next();
     }
@@ -179,10 +193,10 @@ public class TTSManager {
                     return null;
                 return getCashFile(c.getId());
             }
-            byte[] data;
+            InputStream voiceStream;
             try {
-                data = voice.voiceType().getSound(voice.text());
-                if (data == null) {
+                voiceStream = voice.voiceType().getSayVoiceSound(voice.sayVoice());
+                if (voiceStream == null) {
                     VOICE_CASH.put(voice, new VoiceCashData(null));
                     return null;
                 }
@@ -195,7 +209,7 @@ public class TTSManager {
             try {
                 var uuid = UUID.randomUUID();
                 var file = CASH_FOLDER.toPath().resolve(uuid.toString());
-                Files.write(file, data);
+                FNDataUtil.bufInputToOutput(voiceStream, new FileOutputStream(file.toFile()));
                 VOICE_CASH.put(voice, new VoiceCashData(uuid));
                 return file.toFile();
             } catch (IOException ex) {

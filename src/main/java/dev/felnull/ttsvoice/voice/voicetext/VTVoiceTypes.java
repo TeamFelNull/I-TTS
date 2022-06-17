@@ -3,6 +3,8 @@ package dev.felnull.ttsvoice.voice.voicetext;
 import com.google.common.base.CaseFormat;
 import dev.felnull.ttsvoice.tts.IVoiceType;
 
+import java.io.InputStream;
+
 public enum VTVoiceTypes implements IVoiceType {
     SHOW("show", "男性"),
     HARUKA("haruka", "女性"),
@@ -37,7 +39,7 @@ public enum VTVoiceTypes implements IVoiceType {
     }
 
     @Override
-    public byte[] getSound(String text) throws Exception {
+    public InputStream getSound(String text) throws Exception {
         return VoiceTextManager.getInstance().getVoice(text, this);
     }
 

@@ -3,6 +3,7 @@ package dev.felnull.ttsvoice.voice.googletranslate;
 import dev.felnull.fnjl.util.FNURLUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -17,12 +18,10 @@ public class GoogleTranslateTTSManager {
         return INSTANCE;
     }
 
-    public byte[] getVoice(String text, String lang) throws IOException, InterruptedException, URISyntaxException {
+    public InputStream getVoice(String text, String lang) throws IOException, InterruptedException, URISyntaxException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
         var url = String.format(TTS_URL, text, lang);
-        try (var st = FNURLUtil.getStream(new URL(url))) {
-            return st.readAllBytes();
-        }
+        return FNURLUtil.getStream(new URL(url));
     }
 }

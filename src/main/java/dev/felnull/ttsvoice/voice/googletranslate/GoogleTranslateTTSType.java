@@ -3,6 +3,8 @@ package dev.felnull.ttsvoice.voice.googletranslate;
 import dev.felnull.ttsvoice.tts.IVoiceType;
 import dev.felnull.ttsvoice.util.TextUtils;
 
+import java.io.InputStream;
+
 public enum GoogleTranslateTTSType implements IVoiceType {
     JA("ja", "日本語"),
     EN("en", "英語"),
@@ -38,7 +40,7 @@ public enum GoogleTranslateTTSType implements IVoiceType {
     }
 
     @Override
-    public byte[] getSound(String text) throws Exception {
+    public InputStream getSound(String text) throws Exception {
         if (text.isEmpty()) return null;
         return GoogleTranslateTTSManager.getInstance().getVoice(text, lang);
     }

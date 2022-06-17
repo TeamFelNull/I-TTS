@@ -8,6 +8,7 @@ public class ServerConfig {
     private boolean needJoin = false;
     private boolean overwriteAloud = true;
     private boolean inmMode = false;
+    private boolean joinSayName = false;
     private boolean dirty;
 
     public void load(JsonObject jo) {
@@ -22,12 +23,17 @@ public class ServerConfig {
         var im = JsonUtils.getBoolean(jo, "inm_mode");
         if (im != null)
             inmMode = im;
+
+        var jsn = JsonUtils.getBoolean(jo, "join_say_name");
+        if (jsn != null)
+            joinSayName = jsn;
     }
 
     public void save(JsonObject jo) {
         jo.addProperty("need_join", needJoin);
         jo.addProperty("overwrite_aloud", overwriteAloud);
         jo.addProperty("inm_mode", inmMode);
+        jo.addProperty("join_say_name", joinSayName);
     }
 
     public boolean isInmMode(long guildId) {
@@ -42,6 +48,10 @@ public class ServerConfig {
 
     public boolean isNeedJoin() {
         return needJoin;
+    }
+
+    public boolean isJoinSayName() {
+        return joinSayName;
     }
 
     public boolean isDirty() {
@@ -64,6 +74,11 @@ public class ServerConfig {
 
     public void setOverwriteAloud(boolean overwriteAloud) {
         this.overwriteAloud = overwriteAloud;
+        dirty = true;
+    }
+
+    public void setJoinSayName(boolean joinSayName) {
+        this.joinSayName = joinSayName;
         dirty = true;
     }
 }

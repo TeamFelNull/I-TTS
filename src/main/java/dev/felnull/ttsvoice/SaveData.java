@@ -15,25 +15,27 @@ import java.util.Map;
 public class SaveData {
     private final Map<Long, String> userVoiceTypes = new HashMap<>();
     private final Map<Long, List<Long>> denyUsers = new HashMap<>();
+    private final Map<Long, String> userNickNames = new HashMap<>();
     private boolean dirty;
 
     public void load(JsonObject jo) {
-        userVoiceTypes.clear();
+        synchronized (userVoiceTypes) {
+            userVoiceTypes.clear();
 
-        if (jo.has("UserVoiceTypes")) {
-            var juvt = jo.getAsJsonObject("UserVoiceTypes");
-            synchronized (userVoiceTypes) {
+            if (jo.has("UserVoiceTypes")) {
+                var juvt = jo.getAsJsonObject("UserVoiceTypes");
+
                 for (Map.Entry<String, JsonElement> entry : juvt.entrySet()) {
                     userVoiceTypes.put(Long.parseLong(entry.getKey()), entry.getValue().getAsString());
                 }
             }
         }
 
-        denyUsers.clear();
+        synchronized (denyUsers) {
+            denyUsers.clear();
+            if (jo.has("DenyUsers")) {
+                var dus = jo.getAsJsonObject("DenyUsers");
 
-        if (jo.has("DenyUsers")) {
-            var dus = jo.getAsJsonObject("DenyUsers");
-            synchronized (denyUsers) {
                 for (Map.Entry<String, JsonElement> entry : dus.entrySet()) {
                     var ja = entry.getValue().getAsJsonArray();
                     List<Long> lst = new ArrayList<>();
@@ -44,6 +46,17 @@ public class SaveData {
                 }
             }
         }
+
+        synchronized (userNickNames) {
+            userNickNames.clear();
+            if (jo.has("UserNickNames")) {
+                var unn = jo.getAsJsonObject("UserNickNames");
+                for (Map.Entry<String, JsonElement> entry : unn.entrySet()) {
+                    userNickNames.put(Long.parseLong(entry.getKey()), entry.getValue().getAsString());
+                }
+            }
+        }
+
     }
 
     public JsonObject save() {
@@ -63,6 +76,13 @@ public class SaveData {
             });
         }
         jo.add("DenyUsers", jdu);
+
+        var unn = new JsonObject();
+        synchronized (userNickNames) {
+            userNickNames.forEach((n, m) -> unn.addProperty(n.toString(), m));
+        }
+        jo.add("UserNickNames", unn);
+
         return jo;
     }
 
@@ -106,6 +126,26 @@ public class SaveData {
             denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).remove(userId);
         }
         dirty = true;
+    }
+
+    public void setUserNickName(long userId, String name) {
+        synchronized (userNickNames) {
+            userNickNames.put(userId, name);
+        }
+        dirty = true;
+    }
+
+    public void removeUserNickName(long userId) {
+        synchronized (userNickNames) {
+            userNickNames.remove(userId);
+        }
+        dirty = true;
+    }
+
+    public String getUserNickName(long userId) {
+        synchronized (userNickNames) {
+            return userNickNames.get(userId);
+        }
     }
 
     public void setDirty(boolean dirty) {

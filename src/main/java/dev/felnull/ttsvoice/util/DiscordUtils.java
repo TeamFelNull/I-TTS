@@ -10,6 +10,16 @@ public class DiscordUtils {
     }
 
     public static String getName(Guild guild, User user, long userId) {
+        var unn = Main.SAVE_DATA.getUserNickName(userId);
+        if (unn != null)
+            return unn;
+
+        if (user == null)
+            user = Main.JDA.getUserById(userId);
+
+        if (user == null)
+            user = Main.JDA.retrieveUserById(userId).complete();
+
         if (user == null)
             return String.valueOf(userId);
         var member = guild.getMember(user);
@@ -19,6 +29,10 @@ public class DiscordUtils {
     }
 
     public static String getName(Member member) {
+        var unn = Main.SAVE_DATA.getUserNickName(member.getIdLong());
+        if (unn != null)
+            return unn;
+
         var nick = member.getNickname();
         if (nick == null)
             return member.getUser().getName();
@@ -61,9 +75,21 @@ public class DiscordUtils {
     private static String toUserMentionToText(Guild guild, String mentionText) {
         if (Message.MentionType.USER.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
-            var m = guild.getMemberById(mentionText);
+            long id = Long.parseLong(mentionText);
+            var nick = Main.SAVE_DATA.getUserNickName(id);
+            if (nick != null)
+                return nick;
+
+            var m = guild.getMemberById(id);
             if (m != null)
                 return getName(m);
+            var user = Main.JDA.getUserById(id);
+            if (user != null)
+                return getName(guild, user, id);
+
+            var user2 = Main.JDA.retrieveUserById(id).complete();
+            if (user2 != null)
+                return getName(guild, user2, id);
         }
         return mentionText;
     }
