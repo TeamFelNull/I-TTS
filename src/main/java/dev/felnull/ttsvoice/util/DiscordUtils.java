@@ -23,6 +23,10 @@ public class DiscordUtils {
         if (user == null)
             return String.valueOf(userId);
         var member = guild.getMember(user);
+
+        if (member == null)
+            member = guild.retrieveMemberById(user.getIdLong()).complete();
+
         if (member == null)
             return user.getName();
         return getName(member);
