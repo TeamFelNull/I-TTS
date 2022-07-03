@@ -1,6 +1,7 @@
 package dev.felnull.ttsvoice.voice.voicetext;
 
 import com.google.common.base.CaseFormat;
+import dev.felnull.fnjl.util.FNMath;
 import dev.felnull.ttsvoice.tts.IVoiceType;
 
 import java.io.InputStream;
@@ -44,7 +45,7 @@ public enum VTVoiceTypes implements IVoiceType {
     }
 
     @Override
-    public int getMaxTextLength() {
-        return 180;
+    public int getMaxTextLength(long guildId) {
+        return FNMath.clamp(IVoiceType.super.getMaxTextLength(guildId), 1, 180);
     }
 }

@@ -1,5 +1,6 @@
 package dev.felnull.ttsvoice.tts;
 
+import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 
 import java.io.InputStream;
@@ -19,8 +20,8 @@ public interface IVoiceType {
         return getSound(replace(sayVoice.getSayVoiceText()));
     }
 
-    default int getMaxTextLength() {
-        return 200;
+    default int getMaxTextLength(long guildId) {
+        return Main.getServerConfig(guildId).getMaxReadAroundCharacterLimit();
     }
 
     default float getVolume() {

@@ -141,12 +141,14 @@ public class TTSManager {
         if (ignorePattern.matcher(text).matches())
             return;
 
+        text = DiscordUtils.toCodeBlockSyoryaku(text);
         text = DiscordUtils.replaceMentionToText(Main.JDA.getGuildById(guildId), text);
         text = URLUtils.replaceURLToText(text);
+
         int pl = text.length();
         var vt = getUserVoiceType(userId, guildId);
 
-        int max = vt.getMaxTextLength();
+        int max = vt.getMaxTextLength(guildId);
         if (text.length() >= max)
             text = text.substring(0, max);
 

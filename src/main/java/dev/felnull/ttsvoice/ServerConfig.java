@@ -9,6 +9,7 @@ public class ServerConfig {
     private boolean overwriteAloud = true;
     private boolean inmMode = false;
     private boolean joinSayName = false;
+    private int maxReadAroundCharacterLimit = 200;
     private boolean dirty;
 
     public void load(JsonObject jo) {
@@ -27,6 +28,10 @@ public class ServerConfig {
         var jsn = JsonUtils.getBoolean(jo, "join_say_name");
         if (jsn != null)
             joinSayName = jsn;
+
+        var mracl = JsonUtils.getInteger(jo, "max_read_around_character_limit");
+        if (mracl != null)
+            maxReadAroundCharacterLimit = mracl;
     }
 
     public void save(JsonObject jo) {
@@ -34,6 +39,7 @@ public class ServerConfig {
         jo.addProperty("overwrite_aloud", overwriteAloud);
         jo.addProperty("inm_mode", inmMode);
         jo.addProperty("join_say_name", joinSayName);
+        jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
     }
 
     public boolean isInmMode(long guildId) {
@@ -52,6 +58,10 @@ public class ServerConfig {
 
     public boolean isJoinSayName() {
         return joinSayName;
+    }
+
+    public int getMaxReadAroundCharacterLimit() {
+        return maxReadAroundCharacterLimit;
     }
 
     public boolean isDirty() {
@@ -79,6 +89,11 @@ public class ServerConfig {
 
     public void setJoinSayName(boolean joinSayName) {
         this.joinSayName = joinSayName;
+        dirty = true;
+    }
+
+    public void setMaxReadAroundCharacterLimit(int maxReadAroundCharacterLimit) {
+        this.maxReadAroundCharacterLimit = maxReadAroundCharacterLimit;
         dirty = true;
     }
 }

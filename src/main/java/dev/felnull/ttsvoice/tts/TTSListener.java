@@ -10,12 +10,14 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -226,52 +228,68 @@ public class TTSListener extends ListenerAdapter {
                 e.reply(msg.build()).setEphemeral(true).queue();
             } else {
                 var en = e.getOption("enable");
+                if (en == null)
+                    en = e.getOption("max-count");
                 if (en == null) {
                     e.reply("コンフィグ設定内容が未指定です").setEphemeral(true).queue();
                     return;
                 }
-                boolean ena = en.getAsBoolean();
-                String enStr = ena ? "有効" : "無効";
-                switch (sb) {
-                    case "need-join" -> {
-                        if (sc.isNeedJoin() == ena) {
-                            e.reply("すでにVCに参加時のみ読み上げは" + enStr + "です").setEphemeral(true).queue();
-                            return;
-                        }
-                        sc.setNeedJoin(ena);
-                        e.reply("VCに参加時のみ読み上げを" + enStr + "にしました").queue();
-                    }
-                    case "overwrite-aloud" -> {
-                        if (sc.isOverwriteAloud() == ena) {
-                            e.reply("すでに読み上げの上書きは" + enStr + "です").setEphemeral(true).queue();
-                            return;
-                        }
-                        sc.setOverwriteAloud(ena);
-                        e.reply("読み上げの上書きを" + enStr + "にしました").queue();
-                    }
-                    case "inm-mode" -> {
-                        if (ena && DiscordUtils.isNonAllowInm(e.getGuild().getIdLong())) {
-                            if (rand.nextInt() == 0) {
-                                e.reply("ｲﾔｰキツイッス（素）").queue();
-                            } else {
-                                e.reply("ダメみたいですね").queue();
+                if (en.getType() == OptionType.BOOLEAN) {
+                    boolean ena = en.getAsBoolean();
+                    String enStr = ena ? "有効" : "無効";
+                    switch (sb) {
+                        case "need-join" -> {
+                            if (sc.isNeedJoin() == ena) {
+                                e.reply("すでにVCに参加時のみ読み上げは" + enStr + "です").setEphemeral(true).queue();
+                                return;
                             }
-                            return;
+                            sc.setNeedJoin(ena);
+                            e.reply("VCに参加時のみ読み上げを" + enStr + "にしました").queue();
                         }
-                        if (sc.isInmMode(e.getGuild().getIdLong()) == ena) {
-                            e.reply("すでにINMモードは" + enStr + "です").setEphemeral(true).queue();
-                            return;
+                        case "overwrite-aloud" -> {
+                            if (sc.isOverwriteAloud() == ena) {
+                                e.reply("すでに読み上げの上書きは" + enStr + "です").setEphemeral(true).queue();
+                                return;
+                            }
+                            sc.setOverwriteAloud(ena);
+                            e.reply("読み上げの上書きを" + enStr + "にしました").queue();
                         }
-                        sc.setInmMode(ena);
-                        e.reply("INMモードを" + enStr + "にしました").queue();
+                        case "inm-mode" -> {
+                            if (ena && DiscordUtils.isNonAllowInm(e.getGuild().getIdLong())) {
+                                if (rand.nextInt() == 0) {
+                                    e.reply("ｲﾔｰキツイッス（素）").queue();
+                                } else {
+                                    e.reply("ダメみたいですね").queue();
+                                }
+                                return;
+                            }
+                            if (sc.isInmMode(e.getGuild().getIdLong()) == ena) {
+                                e.reply("すでにINMモードは" + enStr + "です").setEphemeral(true).queue();
+                                return;
+                            }
+                            sc.setInmMode(ena);
+                            e.reply("INMモードを" + enStr + "にしました").queue();
+                        }
+                        case "join-say-name" -> {
+                            if (sc.isJoinSayName() == ena) {
+                                e.reply("すでにVCに参加時に名前を読み上げは" + enStr + "です").setEphemeral(true).queue();
+                                return;
+                            }
+                            sc.setJoinSayName(ena);
+                            e.reply("VCに参加時に名前を読み上げを" + enStr + "にしました").queue();
+                        }
                     }
-                    case "join-say-name" -> {
-                        if (sc.isJoinSayName() == ena) {
-                            e.reply("すでにVCに参加時に名前を読み上げは" + enStr + "です").setEphemeral(true).queue();
-                            return;
+                } else if (en.getType() == OptionType.INTEGER) {
+                    int iv = en.getAsInt();
+                    switch (sb) {
+                        case "read-around-limit" -> {
+                            if (sc.getMaxReadAroundCharacterLimit() == iv) {
+                                e.reply("すでに最大読み上げ文字数は" + iv + "です").setEphemeral(true).queue();
+                                return;
+                            }
+                            sc.setMaxReadAroundCharacterLimit(iv);
+                            e.reply("VCに参加時に名前を読み上げを" + iv + "にしました").queue();
                         }
-                        sc.setJoinSayName(ena);
-                        e.reply("VCに参加時に名前を読み上げを" + enStr + "にしました").queue();
                     }
                 }
             }
@@ -407,6 +425,19 @@ public class TTSListener extends ListenerAdapter {
         if (vc != event.getChannelLeft().getIdLong()) return;
 
         tm.sayText(event.getGuild().getIdLong(), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.LEAVE, event.getGuild(), event.getMember().getUser()));
+    }
+
+    @Override
+    public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
+        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+
+        var tm = TTSManager.getInstance();
+        long vc = tm.getTTSVoiceChanel(event.getGuild());
+        if (vc == event.getChannelLeft().getIdLong()) {
+            tm.sayText(event.getGuild().getIdLong(), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_TO, event.getGuild(), event.getMember().getUser(), DiscordUtils.getChannelName(event.getChannelJoined(), event.getMember(), "別のチャンネル")));
+        } else if (vc == event.getChannelJoined().getIdLong()) {
+            tm.sayText(event.getGuild().getIdLong(), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_FROM, event.getGuild(), event.getMember().getUser(), DiscordUtils.getChannelName(event.getChannelLeft(), event.getMember(), "別のチャンネル")));
+        }
     }
 
     private boolean checkNeedAdmin(Member member, IReplyCallback callback) {

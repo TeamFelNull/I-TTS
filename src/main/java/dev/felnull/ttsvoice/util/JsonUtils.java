@@ -11,4 +11,13 @@ public class JsonUtils {
         }
         return null;
     }
+
+    public static Integer getInteger(JsonObject jo, String name) {
+        if (jo.has(name) && jo.get(name).isJsonPrimitive()) {
+            var jp = jo.get(name).getAsJsonPrimitive();
+            if (jp.isNumber())
+                return jp.getAsInt();
+        }
+        return null;
+    }
 }

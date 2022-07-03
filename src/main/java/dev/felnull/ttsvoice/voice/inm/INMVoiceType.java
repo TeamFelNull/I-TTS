@@ -33,9 +33,9 @@ public class INMVoiceType implements IVoiceType {
     public InputStream getSayVoiceSound(ISayVoice sayVoice) throws Exception {
         if (sayVoice instanceof VCEventSayVoice vcEventSayVoice) {
             var in = INMManager.getInstance();
-            if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.JOIN)
+            if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.JOIN || vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.MOVE_FROM)
                 return in.getJoinSound();
-            if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.LEAVE)
+            if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.LEAVE || vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.MOVE_TO)
                 return in.getLeaveSound();
         }
         return IVoiceType.super.getSayVoiceSound(sayVoice);

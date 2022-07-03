@@ -4,7 +4,22 @@ import dev.felnull.ttsvoice.Main;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
+import java.util.regex.Pattern;
+
 public class DiscordUtils {
+    private static final Pattern codeBlockPattern = Pattern.compile("```(.|\n)*```");
+    private static final String codeBlockSyoryaku = "コードブロック省略";
+
+    public static String getChannelName(GuildChannel channel, Member member, String other) {
+        if (member.hasPermission(channel, Permission.VIEW_CHANNEL))
+            return channel.getName();
+        return other;
+    }
+
+    public static String toCodeBlockSyoryaku(String text) {
+        return codeBlockPattern.matcher(text).replaceAll(codeBlockSyoryaku);
+    }
+
     public static String createChannelMention(Channel channel) {
         return "<#" + channel.getId() + ">";
     }
