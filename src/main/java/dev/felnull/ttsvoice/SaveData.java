@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.tts.IVoiceType;
 import dev.felnull.ttsvoice.tts.TTSManager;
+import dev.felnull.ttsvoice.util.DiscordUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -144,7 +145,7 @@ public class SaveData {
 
     public String getUserNickName(long userId) {
         synchronized (userNickNames) {
-            return userNickNames.get(userId);
+            return DiscordUtils.toNoMention(userNickNames.get(userId));
         }
     }
 

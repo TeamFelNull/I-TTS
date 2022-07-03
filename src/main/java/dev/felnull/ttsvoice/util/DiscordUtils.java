@@ -24,7 +24,20 @@ public class DiscordUtils {
         return "<#" + channel.getId() + ">";
     }
 
+    public static String toNoMention(String txt) {
+        if (txt == null) return null;
+        txt = Message.MentionType.EVERYONE.getPattern().matcher(txt).replaceAll(n -> "everyone");
+        txt = Message.MentionType.HERE.getPattern().matcher(txt).replaceAll(n -> "here");
+        txt = Message.MentionType.USER.getPattern().matcher(txt).replaceAll(n -> n.group().substring(2, n.group().length() - 1));
+        txt = Message.MentionType.ROLE.getPattern().matcher(txt).replaceAll(n -> n.group().substring(2, n.group().length() - 1));
+        return txt;
+    }
+
     public static String getName(Guild guild, User user, long userId) {
+        return toNoMention(getName_(guild, user, userId));
+    }
+
+    private static String getName_(Guild guild, User user, long userId) {
         var unn = Main.SAVE_DATA.getUserNickName(userId);
         if (unn != null)
             return unn;
@@ -44,10 +57,14 @@ public class DiscordUtils {
 
         if (member == null)
             return user.getName();
-        return getName(member);
+        return getName_(member);
     }
 
     public static String getName(Member member) {
+        return toNoMention(getName_(member));
+    }
+
+    private static String getName_(Member member) {
         var unn = Main.SAVE_DATA.getUserNickName(member.getIdLong());
         if (unn != null)
             return unn;
