@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.felnull.fnjl.tuple.FNPair;
 import dev.felnull.fnjl.util.FNURLUtil;
 import dev.felnull.ttsvoice.Main;
 import org.apache.logging.log4j.LogManager;
@@ -22,12 +23,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.*;
 
 public class VoiceVoxManager {
     private static final Logger LOGGER = LogManager.getLogger(VoiceVoxManager.class);
     private static final Gson GSON = new Gson();
     private static final VoiceVoxManager INSTANCE = new VoiceVoxManager();
+    private final Map<String, Integer> LOADING_ENGINES = new HashMap<>();
+    private final Map<String, Long> LAST_LOAD_ENGINE_TIMES = new HashMap<>();
     private List<VVVoiceType> SPEAKERS;
     private long lastSpeakersLoadTime;
 
@@ -36,11 +39,50 @@ public class VoiceVoxManager {
     }
 
     public String getEngineURL() {
-        return Main.CONFIG.voiceVoxURL();
+        List<String> mostEngines = new ArrayList<>();
+        int mct = Integer.MAX_VALUE;
+        for (String voiceVoxURL : Main.CONFIG.voiceVoxURLs()) {
+            int ct = getLoadingEnginesCount(voiceVoxURL);
+            if (ct < mct) {
+                mostEngines.clear();
+                mostEngines.add(voiceVoxURL);
+                mct = ct;
+            } else if (ct == mct) {
+                mostEngines.add(voiceVoxURL);
+            }
+        }
+
+        var ky = mostEngines.stream().map(n -> {
+            synchronized (LAST_LOAD_ENGINE_TIMES) {
+                return FNPair.of(n, LAST_LOAD_ENGINE_TIMES.computeIfAbsent(n, v -> 0L));
+            }
+        }).sorted(Comparator.comparingLong(FNPair::getRight)).toList();
+
+        return ky.get(0).getKey();
     }
 
-    public String getSpeakersURL() {
-        return getEngineURL() + "/speakers";
+    private int getLoadingEnginesCount(String engineURL) {
+        synchronized (LOADING_ENGINES) {
+            return LOADING_ENGINES.computeIfAbsent(engineURL, n -> 0);
+        }
+    }
+
+    private void loadStartEngine(String engineURL) {
+        synchronized (LAST_LOAD_ENGINE_TIMES) {
+            LAST_LOAD_ENGINE_TIMES.put(engineURL, System.currentTimeMillis());
+        }
+        synchronized (LOADING_ENGINES) {
+            int pl = getLoadingEnginesCount(engineURL);
+            LOADING_ENGINES.put(engineURL, pl + 1);
+        }
+    }
+
+    private void loadEndEngine(String engineURL) {
+        synchronized (LOADING_ENGINES) {
+            int pl = getLoadingEnginesCount(engineURL);
+            if (pl > 0)
+                LOADING_ENGINES.put(engineURL, pl - 1);
+        }
     }
 
     public List<VVVoiceType> getSpeakers() {
@@ -55,10 +97,16 @@ public class VoiceVoxManager {
 
         if (System.currentTimeMillis() - lastSpeakersLoadTime < tim)
             return;
+
         try {
             JsonArray ja;
-            try (Reader reader = new InputStreamReader(FNURLUtil.getStream(new URL(getSpeakersURL())))) {
+
+            var url = getEngineURL();
+            loadStartEngine(url);
+            try (Reader reader = new InputStreamReader(FNURLUtil.getStream(new URL(url + "/speakers")))) {
                 ja = GSON.fromJson(reader, JsonArray.class);
+            } finally {
+                loadEndEngine(url);
             }
 
             ImmutableList.Builder<VVVoiceType> speakers = new ImmutableList.Builder<>();
@@ -87,14 +135,27 @@ public class VoiceVoxManager {
     public JsonObject getQuery(String text) throws URISyntaxException, IOException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
-        var ret = FNURLUtil.getResponseByPOST(new URL(String.format(Main.CONFIG.voiceVoxURL() + "/audio_query?text=%s&speaker=2", text)), "", "", "");
-        return GSON.fromJson(ret.getResponseString(), JsonObject.class);
+
+        var url = getEngineURL();
+        loadStartEngine(url);
+        try {
+            var ret = FNURLUtil.getResponseByPOST(new URL(String.format(url + "/audio_query?text=%s&speaker=2", text)), "", "", "");
+            return GSON.fromJson(ret.getResponseString(), JsonObject.class);
+        } finally {
+            loadEndEngine(url);
+        }
     }
 
     public InputStream getVoce(JsonObject query, int speakerId) throws IOException, InterruptedException {
-        var hc = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(URI.create(Main.CONFIG.voiceVoxURL() + "/synthesis?speaker=" + speakerId)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(query))).version(HttpClient.Version.HTTP_1_1).build();
-        var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
-        return res.body();
+        var url = getEngineURL();
+        loadStartEngine(url);
+        try {
+            var hc = HttpClient.newHttpClient();
+            var request = HttpRequest.newBuilder(URI.create(url + "/synthesis?speaker=" + speakerId)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(query))).version(HttpClient.Version.HTTP_1_1).build();
+            var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            return res.body();
+        } finally {
+            loadEndEngine(url);
+        }
     }
 }

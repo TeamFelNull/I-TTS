@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 
 import java.util.List;
 
-public record Config(List<String> botTokens, String voiceVoxURL, String voiceTextAPIKey, int cashTime,
+public record Config(List<String> botTokens, List<String> voiceVoxURLs, String voiceTextAPIKey, int cashTime,
                      String ignoreRegex,
                      List<Long> inmDenyUser, List<Long> adminRoles, List<Long> needAdminServers) {
 
@@ -21,6 +21,17 @@ public record Config(List<String> botTokens, String voiceVoxURL, String voiceTex
             var btja = btje.getAsJsonArray();
             for (JsonElement je : btja) {
                 botTokensBuilder.add(je.getAsString());
+            }
+        }
+
+        ImmutableList.Builder<String> voiceVoxURLsBuilder = new ImmutableList.Builder<>();
+        var vvuje = jo.get("VoiceVoxURL");
+        if (vvuje.isJsonPrimitive() && vvuje.getAsJsonPrimitive().isString()) {
+            voiceVoxURLsBuilder.add(vvuje.getAsString());
+        } else if (vvuje.isJsonArray()) {
+            var vvja = vvuje.getAsJsonArray();
+            for (JsonElement je : vvja) {
+                voiceVoxURLsBuilder.add(je.getAsString());
             }
         }
 
@@ -42,17 +53,17 @@ public record Config(List<String> botTokens, String voiceVoxURL, String voiceTex
             needAdminServersBuilder.add(entry.getAsLong());
         }
 
-        return new Config(botTokensBuilder.build(), jo.get("VoiceVoxURL").getAsString(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), inmDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
+        return new Config(botTokensBuilder.build(), voiceVoxURLsBuilder.build(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), inmDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
     }
 
     public static Config createDefault() {
-        return new Config(ImmutableList.of(), "http://localhost:50021", "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
+        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
     }
 
     public void check() {
         if (botTokens.isEmpty())
             throw new IllegalStateException("Bot token is empty");
-        if (voiceVoxURL.isEmpty())
+        if (voiceVoxURLs.isEmpty())
             throw new IllegalStateException("VoiceVox url is empty");
         if (voiceTextAPIKey.isEmpty())
             throw new IllegalStateException("VoiceText api key is empty");
@@ -69,7 +80,14 @@ public record Config(List<String> botTokens, String voiceVoxURL, String voiceTex
         }
 
         jo.add("BotToken", btja);
-        jo.addProperty("VoiceVoxURL", voiceVoxURL);
+
+        var vvja = new JsonArray();
+        for (String voiceVoxURL : voiceVoxURLs) {
+            vvja.add(voiceVoxURL);
+        }
+
+        jo.add("VoiceVoxURL", vvja);
+
         jo.addProperty("VoiceTextAPIKey", voiceTextAPIKey);
         jo.addProperty("CashTime", cashTime);
         jo.addProperty("IgnoreRegex", ignoreRegex);
