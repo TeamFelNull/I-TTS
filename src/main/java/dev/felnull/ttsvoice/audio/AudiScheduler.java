@@ -4,22 +4,22 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.tts.BotAndGuild;
 import dev.felnull.ttsvoice.tts.TTSManager;
 
 public class AudiScheduler extends AudioEventAdapter {
     private final AudioPlayer player;
-    private final long guildId;
+    private final BotAndGuild botAndGuild;
     private boolean loading;
     private Thread loadThread;
     private CoolDownThread coolDownThread;
 
-    public AudiScheduler(AudioPlayer player, long guildId) {
+    public AudiScheduler(AudioPlayer player, BotAndGuild bag) {
         this.player = player;
         this.player.addListener(this);
-        var guild = Main.JDA.getGuildById(guildId);
+        var guild = bag.getGuild();
         guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(player));
-        this.guildId = guildId;
+        this.botAndGuild = bag;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AudiScheduler extends AudioEventAdapter {
 
     public synchronized boolean next() {
         var tm = TTSManager.getInstance();
-        var next = tm.getTTSQueue(guildId).poll();
+        var next = tm.getTTSQueue(botAndGuild).poll();
         if (next == null) return false;
         loading = true;
         loadThread = Thread.currentThread();
@@ -71,7 +71,7 @@ public class AudiScheduler extends AudioEventAdapter {
             return true;
         }
         synchronized (tm.getVoiceCash()) {
-            var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
+            var sc = VoiceAudioPlayerManager.getInstance().getScheduler(botAndGuild);
             AudioTrack track;
             try {
                 track = VoiceAudioPlayerManager.getInstance().loadFile(file);

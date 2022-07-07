@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import dev.felnull.ttsvoice.tts.BotAndGuild;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,7 +20,9 @@ public class VoiceAudioPlayerManager {
     private static final Logger LOGGER = LogManager.getLogger(VoiceAudioPlayerManager.class);
     private static final VoiceAudioPlayerManager INSTANCE = new VoiceAudioPlayerManager();
     private final AudioPlayerManager audioPlayerManager;
-    private final Map<Long, AudiScheduler> SCHEDULERS = new HashMap<>();
+    private final Map<BotAndGuild, AudiScheduler> SCHEDULERS = new HashMap<>();
+
+
 
     public VoiceAudioPlayerManager() {
         this.audioPlayerManager = new DefaultAudioPlayerManager();
@@ -30,8 +33,8 @@ public class VoiceAudioPlayerManager {
         return INSTANCE;
     }
 
-    public synchronized AudiScheduler getScheduler(long guildId) {
-        return SCHEDULERS.computeIfAbsent(guildId, n -> new AudiScheduler(audioPlayerManager.createPlayer(), guildId));
+    public synchronized AudiScheduler getScheduler(BotAndGuild bag) {
+        return SCHEDULERS.computeIfAbsent(bag, n -> new AudiScheduler(audioPlayerManager.createPlayer(), bag));
     }
 
     public AudioTrack loadFile(File file) throws ExecutionException, InterruptedException {

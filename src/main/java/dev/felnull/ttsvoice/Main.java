@@ -19,10 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
@@ -31,8 +28,8 @@ public class Main {
     private static final File SERVER_CONFIG_FOLDER = new File("./server_config");
     public static final SaveData SAVE_DATA = new SaveData();
     private static final Map<Long, ServerConfig> SERVER_CONFIGS = new HashMap<>();
+    private static final List<JDA> JDAs = new ArrayList<>();
     public static Config CONFIG;
-    public static JDA JDA;
     public static String VERSION;
 
     public static void main(String[] args) throws Exception {
@@ -137,7 +134,11 @@ public class Main {
 
         TTSManager.getInstance().init();
 
-        JDA = JDABuilder.createDefault(CONFIG.botToken()).addEventListeners(new TTSListener()).build();
+        int num = 0;
+        for (String botToken : CONFIG.botTokens()) {
+            JDAs.add(JDABuilder.createDefault(botToken).addEventListeners(new TTSListener(num)).build());
+            num++;
+        }
 
         var join = Commands.slash("join", "読み上げBOTをVCに呼び出す").addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定").setChannelTypes(ImmutableList.of(ChannelType.VOICE, ChannelType.STAGE)));
         var leave = Commands.slash("leave", "読み上げBOTをVCから切断");
@@ -154,16 +155,18 @@ public class Main {
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
         var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"));
 
-        JDA.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, config, vnick).queue();
+        JDAs.forEach(jda -> jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, config, vnick).queue());
 
         TimerTask updatePresenceTask = new TimerTask() {
             public void run() {
-                int ct = TTSManager.getInstance().getTTSCount();
-                if (ct > 0) {
-                    JDA.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(ct + "個のサーバーで読み上げ"));
-                } else {
-                    JDA.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing("待機"));
-                }
+                long ct = TTSManager.getInstance().getTTSCount();
+                JDAs.forEach(jda -> {
+                    if (ct > 0) {
+                        jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(ct + "個のチャンネルで読み上げ"));
+                    } else {
+                        jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing("待機"));
+                    }
+                });
             }
         };
         timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
@@ -175,5 +178,9 @@ public class Main {
             cfg = SERVER_CONFIGS.computeIfAbsent(guildId, n -> new ServerConfig());
         }
         return cfg;
+    }
+
+    public static JDA getJDA(int botNumber) {
+        return JDAs.get(botNumber);
     }
 }

@@ -11,9 +11,10 @@ public class DiscordUtils {
     private static final String codeBlockSyoryaku = "コードブロック省略";
 
     public static String getChannelName(GuildChannel channel, Member member, String other) {
-        if (member.hasPermission(channel, Permission.VIEW_CHANNEL))
-            return channel.getName();
         return other;
+        /*if (member.hasPermission(channel, Permission.VIEW_CHANNEL))
+            return channel.getName();
+        return other;*/
     }
 
     public static String toCodeBlockSyoryaku(String text) {
@@ -33,20 +34,20 @@ public class DiscordUtils {
         return txt;
     }
 
-    public static String getName(Guild guild, User user, long userId) {
-        return toNoMention(getName_(guild, user, userId));
+    public static String getName(int botNumber, Guild guild, User user, long userId) {
+        return toNoMention(getName_(botNumber, guild, user, userId));
     }
 
-    private static String getName_(Guild guild, User user, long userId) {
+    private static String getName_(int botNumber, Guild guild, User user, long userId) {
         var unn = Main.SAVE_DATA.getUserNickName(userId);
         if (unn != null)
             return unn;
 
         if (user == null)
-            user = Main.JDA.getUserById(userId);
+            user = Main.getJDA(botNumber).getUserById(userId);
 
         if (user == null)
-            user = Main.JDA.retrieveUserById(userId).complete();
+            user = Main.getJDA(botNumber).retrieveUserById(userId).complete();
 
         if (user == null)
             return String.valueOf(userId);
@@ -86,18 +87,18 @@ public class DiscordUtils {
         return true;
     }
 
-    public static String replaceMentionToText(Guild guild, String text) {
+    public static String replaceMentionToText(int botNumber, Guild guild, String text) {
         for (Message.MentionType mentionType : Message.MentionType.values()) {
-            text = replaceMentionToText(guild, mentionType, text);
+            text = replaceMentionToText(botNumber, guild, mentionType, text);
         }
         return text;
     }
 
-    public static String replaceMentionToText(Guild guild, Message.MentionType mention, String text) {
+    public static String replaceMentionToText(int botNumber, Guild guild, Message.MentionType mention, String text) {
         return mention.getPattern().matcher(text).replaceAll(n -> {
             var p = n.group();
             if (mention == Message.MentionType.USER)
-                return toUserMentionToText(guild, p);
+                return toUserMentionToText(botNumber, guild, p);
             if (mention == Message.MentionType.CHANNEL)
                 return toChannelMentionToText(guild, p);
             if (mention == Message.MentionType.ROLE)
@@ -108,7 +109,7 @@ public class DiscordUtils {
         });
     }
 
-    private static String toUserMentionToText(Guild guild, String mentionText) {
+    private static String toUserMentionToText(int botNumber, Guild guild, String mentionText) {
         if (Message.MentionType.USER.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
             long id = Long.parseLong(mentionText);
@@ -119,13 +120,13 @@ public class DiscordUtils {
             var m = guild.getMemberById(id);
             if (m != null)
                 return getName(m);
-            var user = Main.JDA.getUserById(id);
+            var user = Main.getJDA(botNumber).getUserById(id);
             if (user != null)
-                return getName(guild, user, id);
+                return getName(botNumber, guild, user, id);
 
-            var user2 = Main.JDA.retrieveUserById(id).complete();
+            var user2 = Main.getJDA(botNumber).retrieveUserById(id).complete();
             if (user2 != null)
-                return getName(guild, user2, id);
+                return getName(botNumber, guild, user2, id);
         }
         return mentionText;
     }

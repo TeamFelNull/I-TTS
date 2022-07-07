@@ -30,8 +30,8 @@ public class TTSManager {
     private static final TTSManager INSTANCE = new TTSManager();
     private static final File CASH_FOLDER = new File("./cash");
     private final Map<TTSVoice, VoiceCashData> VOICE_CASH = new HashMap<>();
-    private final Map<Long, Long> TTS_CHANEL = new HashMap<>();
-    private final Map<Long, Queue<TTSVoice>> TTS_QUEUE = new HashMap<>();
+    private final Map<BotAndGuild, Long> TTS_CHANEL = new HashMap<>();
+    private final Map<BotAndGuild, Queue<TTSVoice>> TTS_QUEUE = new HashMap<>();
     private Pattern ignorePattern;
 
     public static TTSManager getInstance() {
@@ -79,9 +79,9 @@ public class TTSManager {
         return data;
     }
 
-    public long getTTSChanel(long guildId) {
-        if (TTS_CHANEL.containsKey(guildId))
-            return TTS_CHANEL.get(guildId);
+    public long getTTSChanel(BotAndGuild bag) {
+        if (TTS_CHANEL.containsKey(bag))
+            return TTS_CHANEL.get(bag);
         return -1;
     }
 
@@ -91,17 +91,17 @@ public class TTSManager {
         return cv.getIdLong();
     }
 
-    public Queue<TTSVoice> getTTSQueue(long guildId) {
-        return TTS_QUEUE.computeIfAbsent(guildId, n -> new LinkedBlockingQueue<>());
+    public Queue<TTSVoice> getTTSQueue(BotAndGuild bag) {
+        return TTS_QUEUE.computeIfAbsent(bag, n -> new LinkedBlockingQueue<>());
     }
 
-    public void setTTSChanel(long guildId, long chanelId) {
-        TTS_CHANEL.put(guildId, chanelId);
+    public void setTTSChanel(BotAndGuild bag, long chanelId) {
+        TTS_CHANEL.put(bag, chanelId);
     }
 
-    public void removeTTSChanel(long guildId) {
-        TTS_CHANEL.remove(guildId);
-        TTS_QUEUE.remove(guildId);
+    public void removeTTSChanel(BotAndGuild bag) {
+        TTS_CHANEL.remove(bag);
+        TTS_QUEUE.remove(bag);
     }
 
     public IVoiceType getUserVoiceType(long userId, long guildId) {
@@ -134,7 +134,7 @@ public class TTSManager {
         return builder.build();
     }
 
-    public void sayChat(long guildId, long userId, String text) {
+    public void sayChat(BotAndGuild bag, long userId, String text) {
         if (ignorePattern == null)
             ignorePattern = Pattern.compile(Main.CONFIG.ignoreRegex());
 
@@ -142,38 +142,38 @@ public class TTSManager {
             return;
 
         text = DiscordUtils.toCodeBlockSyoryaku(text);
-        text = DiscordUtils.replaceMentionToText(Main.JDA.getGuildById(guildId), text);
+        text = DiscordUtils.replaceMentionToText(bag.botNumber(), bag.getGuild(), text);
         text = URLUtils.replaceURLToText(text);
 
         int pl = text.length();
-        var vt = getUserVoiceType(userId, guildId);
+        var vt = getUserVoiceType(userId, bag.guildId());
 
-        int max = vt.getMaxTextLength(guildId);
+        int max = vt.getMaxTextLength(bag.guildId());
         if (text.length() >= max)
             text = text.substring(0, max);
 
         if (pl - text.length() > 0)
             text += "、以下" + (pl - text.length()) + "文字を省略";
 
-        sayText(guildId, vt, text);
+        sayText(bag, vt, text);
     }
 
-    public void sayText(long guildId, IVoiceType voiceType, String text) {
-        sayText(guildId, voiceType, new LiteralSayVoice(text));
+    public void sayText(BotAndGuild bag, IVoiceType voiceType, String text) {
+        sayText(bag, voiceType, new LiteralSayVoice(text));
     }
 
-    public void sayText(long guildId, long userId, String text) {
-        sayText(guildId, getUserVoiceType(userId, guildId), text);
+    public void sayText(BotAndGuild bag, long userId, String text) {
+        sayText(bag, getUserVoiceType(userId, bag.guildId()), text);
     }
 
-    public void sayText(long guildId, long userId, ISayVoice sayVoice) {
-        sayText(guildId, getUserVoiceType(userId, guildId), sayVoice);
+    public void sayText(BotAndGuild bag, long userId, ISayVoice sayVoice) {
+        sayText(bag, getUserVoiceType(userId, bag.guildId()), sayVoice);
     }
 
-    public void sayText(long guildId, IVoiceType voiceType, ISayVoice sayVoice) {
-        var sc = VoiceAudioPlayerManager.getInstance().getScheduler(guildId);
-        var q = getTTSQueue(guildId);
-        if (Main.getServerConfig(guildId).isOverwriteAloud()) {
+    public void sayText(BotAndGuild bag, IVoiceType voiceType, ISayVoice sayVoice) {
+        var sc = VoiceAudioPlayerManager.getInstance().getScheduler(bag);
+        var q = getTTSQueue(bag);
+        if (Main.getServerConfig(bag.guildId()).isOverwriteAloud()) {
             q.clear();
             sc.stop();
         }
@@ -230,7 +230,7 @@ public class TTSManager {
         }
     }
 
-    public int getTTSCount() {
-        return TTS_CHANEL.size();
+    public long getTTSCount() {
+        return TTS_CHANEL.keySet().stream().map(n -> n.getGuild().getAudioManager()).filter(n -> n.getConnectedChannel() != null).mapToLong(n -> n.getConnectedChannel().getIdLong()).distinct().count();
     }
 }
