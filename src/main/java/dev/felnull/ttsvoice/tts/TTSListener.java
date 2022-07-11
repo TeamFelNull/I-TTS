@@ -8,6 +8,7 @@ import dev.felnull.ttsvoice.util.TextUtils;
 import dev.felnull.ttsvoice.voice.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
@@ -15,6 +16,7 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -63,7 +65,17 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
 
-            audioManager.openAudioConnection(audioChannel);
+            try {
+                audioManager.openAudioConnection(audioChannel);
+            } catch (InsufficientPermissionException ex) {
+                if (ex.getPermission() == Permission.VOICE_CONNECT) {
+                    e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続する権限がありません").setEphemeral(true).queue();
+                } else {
+                    e.reply(DiscordUtils.createChannelMention(audioChannel) + "接続に失敗しました").setEphemeral(true).queue();
+                }
+                return;
+            }
+
             TTSManager.getInstance().setTTSChanel(new BotAndGuild(botNumber, e.getGuild().getIdLong()), e.getChannel().getIdLong());
 
             e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続しました").queue();
