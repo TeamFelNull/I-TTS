@@ -1,14 +1,12 @@
 package dev.felnull.ttsvoice.voice.inm;
 
-import dev.felnull.fnjl.util.FNURLUtil;
-import dev.felnull.ttsvoice.tts.IVoiceType;
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
+import dev.felnull.ttsvoice.voice.URLVoiceType;
 
 import java.io.InputStream;
-import java.net.URL;
 
-public class INMVoiceType implements IVoiceType {
+public class INMVoiceType implements URLVoiceType {
     @Override
     public String getTitle() {
         return "淫夢";
@@ -20,13 +18,13 @@ public class INMVoiceType implements IVoiceType {
     }
 
     @Override
-    public InputStream getSound(String text) throws Exception {
+    public String getSoundURL(String text) throws Exception {
         var im = INMManager.getInstance();
         var ret = im.search(text);
         var most = im.getMost(ret);
         if (most == null)
             return null;
-        return FNURLUtil.getStream(new URL(most.getURL()));
+        return most.getURL();
     }
 
     @Override
@@ -38,7 +36,7 @@ public class INMVoiceType implements IVoiceType {
             if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.LEAVE || vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.MOVE_TO)
                 return in.getLeaveSound();
         }
-        return IVoiceType.super.getSayVoiceSound(sayVoice);
+        return URLVoiceType.super.getSayVoiceSound(sayVoice);
     }
 
     @Override

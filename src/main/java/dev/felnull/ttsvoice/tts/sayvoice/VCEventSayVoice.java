@@ -60,11 +60,11 @@ public class VCEventSayVoice implements ISayVoice {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VCEventSayVoice that = (VCEventSayVoice) o;
-        return eventType == that.eventType && Objects.equals(guildAndBotNumber, that.guildAndBotNumber) && Objects.equals(user, that.user);
+        return eventType == that.eventType && Objects.equals(guildAndBotNumber, that.guildAndBotNumber) && Objects.equals(user, that.user) && Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventType, guildAndBotNumber, user);
+        return Objects.hash(eventType, guildAndBotNumber, user, name);
     }
 }

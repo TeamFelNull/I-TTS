@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.ttsvoice.tts.IVoiceType;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import dev.felnull.ttsvoice.util.DiscordUtils;
+import dev.felnull.ttsvoice.voice.VoiceType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,7 +87,7 @@ public class SaveData {
         return jo;
     }
 
-    public IVoiceType getVoiceType(long userId, long guildId) {
+    public VoiceType getVoiceType(long userId, long guildId) {
         synchronized (userVoiceTypes) {
             var vt = userVoiceTypes.get(userId);
             if (vt != null)
@@ -96,7 +96,7 @@ public class SaveData {
         return null;
     }
 
-    public void setVoiceType(long userId, IVoiceType voiceType) {
+    public void setVoiceType(long userId, VoiceType voiceType) {
         synchronized (userVoiceTypes) {
             userVoiceTypes.put(userId, voiceType.getId());
         }

@@ -5,6 +5,7 @@ import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.TextUtils;
+import dev.felnull.ttsvoice.voice.VoiceType;
 import dev.felnull.ttsvoice.voice.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
@@ -108,7 +109,7 @@ public class TTSListener extends ListenerAdapter {
         } else if ("voice".equals(e.getName()) && "list".equals(e.getSubcommandName())) {
             var msg = new MessageBuilder().append("読み上げ音声タイプ一覧\n");
             StringBuilder sb = new StringBuilder();
-            for (IVoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
+            for (VoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
                 sb.append(voiceType.getId()).append(" ").append(voiceType.getTitle()).append("\n");
             }
             msg.appendCodeLine(sb.toString());
@@ -344,9 +345,9 @@ public class TTSListener extends ListenerAdapter {
             var op = e.getInteraction().getOption("voice_type");
             String str = op == null ? null : op.getAsString();
 
-            List<IVoiceType> choices = new ArrayList<>();
+            List<VoiceType> choices = new ArrayList<>();
 
-            for (IVoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
+            for (VoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
                 if (str != null && (voiceType.getId().contains(str) || voiceType.getTitle().contains(str)))
                     choices.add(voiceType);
             }
@@ -363,9 +364,9 @@ public class TTSListener extends ListenerAdapter {
             })).toList();
 
             if (choices.size() > 25) {
-                List<IVoiceType> nc = new ArrayList<>();
+                List<VoiceType> nc = new ArrayList<>();
                 int ct = 0;
-                for (IVoiceType choice : choices) {
+                for (VoiceType choice : choices) {
                     nc.add(choice);
                     ct++;
                     if (ct >= 25)

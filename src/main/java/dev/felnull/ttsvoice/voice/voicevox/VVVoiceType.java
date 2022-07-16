@@ -1,11 +1,11 @@
 package dev.felnull.ttsvoice.voice.voicevox;
 
-import dev.felnull.ttsvoice.tts.IVoiceType;
 import dev.felnull.ttsvoice.util.TextUtils;
+import dev.felnull.ttsvoice.voice.VoiceType;
 
 import java.io.InputStream;
 
-public record VVVoiceType(int vvId, String name, String styleName) implements IVoiceType {
+public record VVVoiceType(int vvId, String name, String styleName) implements VoiceType {
 
     @Override
     public String getTitle() {
@@ -26,7 +26,7 @@ public record VVVoiceType(int vvId, String name, String styleName) implements IV
 
     @Override
     public String replace(String text) {
-        return TextUtils.replaceLatinToHiragana(IVoiceType.super.replace(text));
+        return TextUtils.replaceLatinToHiragana(VoiceType.super.replace(text));
     }
 
     @Override

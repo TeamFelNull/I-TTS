@@ -1,11 +1,11 @@
-package dev.felnull.ttsvoice.tts;
+package dev.felnull.ttsvoice.voice;
 
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 
 import java.io.InputStream;
 
-public interface IVoiceType {
+public interface VoiceType {
     String getTitle();
 
     String getId();
@@ -17,7 +17,11 @@ public interface IVoiceType {
     }
 
     default InputStream getSayVoiceSound(ISayVoice sayVoice) throws Exception {
-        return getSound(replace(sayVoice.getSayVoiceText()));
+        return getSound(toSayVoiceText(sayVoice));
+    }
+
+    default String toSayVoiceText(ISayVoice sayVoice) {
+        return replace(sayVoice.getSayVoiceText());
     }
 
     default int getMaxTextLength(long guildId) {

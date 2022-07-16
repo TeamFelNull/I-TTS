@@ -10,6 +10,7 @@ public class ServerConfig {
     private boolean inmMode = false;
     private boolean joinSayName = false;
     private int maxReadAroundCharacterLimit = 200;
+    // private final Map<Long, Long> lastJoinChannels = new HashMap<>();
     private boolean dirty;
 
     public void load(JsonObject jo) {

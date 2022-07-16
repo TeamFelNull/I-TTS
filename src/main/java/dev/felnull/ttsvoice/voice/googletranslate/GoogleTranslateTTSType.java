@@ -1,11 +1,11 @@
 package dev.felnull.ttsvoice.voice.googletranslate;
 
-import dev.felnull.ttsvoice.tts.IVoiceType;
 import dev.felnull.ttsvoice.util.TextUtils;
+import dev.felnull.ttsvoice.voice.VoiceType;
 
 import java.io.InputStream;
 
-public enum GoogleTranslateTTSType implements IVoiceType {
+public enum GoogleTranslateTTSType implements VoiceType {
     JA("ja", "日本語"),
     EN("en", "英語"),
     ZH("zh", "中国語"),
@@ -48,7 +48,7 @@ public enum GoogleTranslateTTSType implements IVoiceType {
     @Override
     public String replace(String text) {
         if (this != JA)
-            return TextUtils.replaceJapaneseToLatin(IVoiceType.super.replace(text)).replace("~", "");
-        return IVoiceType.super.replace(text);
+            return TextUtils.replaceJapaneseToLatin(VoiceType.super.replace(text)).replace("~", "");
+        return VoiceType.super.replace(text);
     }
 }

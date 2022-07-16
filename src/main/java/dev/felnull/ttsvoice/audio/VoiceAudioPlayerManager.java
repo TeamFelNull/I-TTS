@@ -1,9 +1,11 @@
 package dev.felnull.ttsvoice.audio;
 
+import com.sedmelluq.discord.lavaplayer.container.MediaContainerRegistry;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -22,11 +24,10 @@ public class VoiceAudioPlayerManager {
     private final AudioPlayerManager audioPlayerManager;
     private final Map<BotAndGuild, AudiScheduler> SCHEDULERS = new HashMap<>();
 
-
-
     public VoiceAudioPlayerManager() {
         this.audioPlayerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerLocalSource(audioPlayerManager);
+        audioPlayerManager.registerSourceManager(new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY));
     }
 
     public static VoiceAudioPlayerManager getInstance() {
@@ -35,6 +36,10 @@ public class VoiceAudioPlayerManager {
 
     public synchronized AudiScheduler getScheduler(BotAndGuild bag) {
         return SCHEDULERS.computeIfAbsent(bag, n -> new AudiScheduler(audioPlayerManager.createPlayer(), bag));
+    }
+
+    public AudioPlayerManager getAudioPlayerManager() {
+        return audioPlayerManager;
     }
 
     public AudioTrack loadFile(File file) throws ExecutionException, InterruptedException {

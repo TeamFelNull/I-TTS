@@ -2,11 +2,11 @@ package dev.felnull.ttsvoice.voice.voicetext;
 
 import com.google.common.base.CaseFormat;
 import dev.felnull.fnjl.util.FNMath;
-import dev.felnull.ttsvoice.tts.IVoiceType;
+import dev.felnull.ttsvoice.voice.VoiceType;
 
 import java.io.InputStream;
 
-public enum VTVoiceTypes implements IVoiceType {
+public enum VTVoiceTypes implements VoiceType {
     SHOW("show", "男性"),
     HARUKA("haruka", "女性"),
     HIKARI("hikari", "女性"),
@@ -46,6 +46,6 @@ public enum VTVoiceTypes implements IVoiceType {
 
     @Override
     public int getMaxTextLength(long guildId) {
-        return FNMath.clamp(IVoiceType.super.getMaxTextLength(guildId), 1, 180);
+        return FNMath.clamp(VoiceType.super.getMaxTextLength(guildId), 1, 180);
     }
 }

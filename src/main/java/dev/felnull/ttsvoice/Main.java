@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import net.dv8tion.jda.api.JDA;
@@ -36,6 +37,7 @@ public class Main {
         VERSION = Main.class.getPackage().getImplementationVersion();
         if (VERSION == null) VERSION = "None";
         LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
+        LOGGER.info("Available Processors:" + Runtime.getRuntime().availableProcessors());
 
         var configFile = new File("./config.json");
 
@@ -132,7 +134,7 @@ public class Main {
         };
         timer.scheduleAtFixedRate(saveTask, 0, 30 * 1000);
 
-        TTSManager.getInstance().init();
+        VoiceLoaderManager.getInstance().init();
 
         int num = 0;
         for (String botToken : CONFIG.botTokens()) {
