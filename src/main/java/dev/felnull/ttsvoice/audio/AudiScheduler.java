@@ -12,8 +12,10 @@ import dev.felnull.ttsvoice.tts.BotAndGuild;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import dev.felnull.ttsvoice.tts.TTSVoiceEntry;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -21,9 +23,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AudiScheduler extends AudioEventAdapter {
-    private static final int previsionLoadCount = Runtime.getRuntime().availableProcessors();
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(previsionLoadCount, new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-%d").daemon(true).build());
-    private final Map<TTSVoiceEntry, CompletableFuture<AudioTrack>> previsionLoadTracks = new HashMap<>();
+    private final int previsionLoadCount = Runtime.getRuntime().availableProcessors();
+    private final ExecutorService executorService;
+    private final Map<TTSVoiceEntry, CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>>> previsionLoadTracks = new HashMap<>();
+    private final Map<TTSVoiceEntry, VoiceTrackLoader> loaders = new HashMap<>();
     private final AudioPlayer player;
     private final BotAndGuild botAndGuild;
     private final Object nextLock = new Object();
@@ -39,11 +42,37 @@ public class AudiScheduler extends AudioEventAdapter {
         var guild = bag.getGuild();
         guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(player));
         this.botAndGuild = bag;
+        this.executorService = Executors.newFixedThreadPool(previsionLoadCount, new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-%d").daemon(true).build());
+    }
+
+    public void dispose() {
+        executorService.shutdown();
+
+        if (coolDownThread != null)
+            coolDownThread.interrupt();
+
+        if (loading && loadThread != null)
+            loadThread.interrupt();
+
+        if (currentTrackLoader != null)
+            currentTrackLoader.end();
+
+        synchronized (loaders) {
+            for (VoiceTrackLoader value : loaders.values()) {
+                value.end();
+            }
+        }
+
+        player.destroy();
+
+        var guild = botAndGuild.getGuild();
+        guild.getAudioManager().setSendingHandler(null);
     }
 
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
-        currentTrackLoader.afterEnd();
+        if (currentTrackLoader != null)
+            currentTrackLoader.end();
         currentTrackLoader = null;
         startCoolDown();
     }
@@ -92,36 +121,52 @@ public class AudiScheduler extends AudioEventAdapter {
             if (next == null) return false;
             loading = true;
             loadThread = Thread.currentThread();
-            var loader = vlm.getTrackLoader(next.voice());
-            if (loader == null) {
-                startCoolDown();
-                loading = false;
-                loadThread = null;
-                return true;
-            }
 
             AudioTrack track;
             try {
-                CompletableFuture<AudioTrack> loaded;
+                CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>> loaded;
                 synchronized (previsionLoadTracks) {
                     loaded = previsionLoadTracks.remove(next);
                 }
+                synchronized (loaders) {
+                    loaders.remove(next);
+                }
 
-                if (loaded == null)
-                    loaded = loader.loaded();
+                if (loaded == null) {
+                    var l = vlm.getTrackLoader(next.voice());
+                    if (l != null)
+                        loaded = l.loaded().thenApply(n -> Pair.of(l, n));
+                }
 
-                track = loaded.get();
-                currentTrackLoader = loader;
+                if (loaded == null) {
+                    startCoolDown();
+                    loading = false;
+                    loadThread = null;
+                    return true;
+                }
+
+                var lg = loaded.get();
+                track = lg.getRight();
+
+                if (currentTrackLoader != null)
+                    currentTrackLoader.end();
+
+                currentTrackLoader = lg.getLeft();
 
                 if (!Main.getServerConfig(botAndGuild.guildId()).isOverwriteAloud()) {
                     synchronized (queue) {
-                        int lc = FNMath.clamp(queue.size(), 0, previsionLoadCount);
+                        List<TTSVoiceEntry> qc = queue.stream().filter(n -> !previsionLoadTracks.containsKey(n)).toList();
+                        int lc = FNMath.clamp(qc.size(), 0, previsionLoadCount);
+
                         if (lc >= 1) {
                             for (int i = 0; i < lc; i++) {
-                                var l = queue.get(queue.size() - 1 - i);
+                                var l = qc.get(i);
                                 var ll = CompletableFuture.supplyAsync(() -> vlm.getTrackLoader(l.voice()), executorService).thenApplyAsync(n -> {
                                     try {
-                                        return n.loaded().get();
+                                        synchronized (loaders) {
+                                            loaders.put(l, n);
+                                        }
+                                        return Pair.of(n, n.loaded().get());
                                     } catch (InterruptedException | ExecutionException e) {
                                         throw new RuntimeException(e);
                                     }

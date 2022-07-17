@@ -7,6 +7,6 @@ import java.util.concurrent.CompletableFuture;
 public interface VoiceTrackLoader {
     CompletableFuture<AudioTrack> loaded();
 
-    default void afterEnd() {
+    default void end() {
     }
 }

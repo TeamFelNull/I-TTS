@@ -100,7 +100,7 @@ public class INMManager {
     }
 
     public InputStream getJoinSound() {
-        int num = RANDOM.nextInt(4) + 1;
+        int num = RANDOM.nextInt(5) + 1;
         return getInmResource("join" + num + ".mp3");
     }
 

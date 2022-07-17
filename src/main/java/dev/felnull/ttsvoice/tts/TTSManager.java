@@ -30,6 +30,27 @@ public class TTSManager {
         return INSTANCE;
     }
 
+    public void reconnect(BotAndGuild bag) {
+        long pt;
+        synchronized (TTS_CHANEL) {
+            if (TTS_CHANEL.containsKey(bag))
+                pt = TTS_CHANEL.get(bag);
+            else
+                throw new IllegalArgumentException("Not set tts channel");
+        }
+        disconnect(bag);
+        connect(bag, pt);
+    }
+
+    public void connect(BotAndGuild bag, long ttsChanelId) {
+        setTTSChanel(bag, ttsChanelId);
+    }
+
+    public void disconnect(BotAndGuild bag) {
+        removeTTSChanel(bag);
+        VoiceAudioPlayerManager.getInstance().clearSchedulers(bag);
+    }
+
     public long getTTSChanel(BotAndGuild bag) {
         if (TTS_CHANEL.containsKey(bag))
             return TTS_CHANEL.get(bag);
@@ -43,16 +64,24 @@ public class TTSManager {
     }
 
     public LinkedList<TTSVoiceEntry> getTTSQueue(BotAndGuild bag) {
-        return TTS_QUEUE.computeIfAbsent(bag, n -> new LinkedList<>());
+        synchronized (TTS_QUEUE) {
+            return TTS_QUEUE.computeIfAbsent(bag, n -> new LinkedList<>());
+        }
     }
 
     public void setTTSChanel(BotAndGuild bag, long chanelId) {
-        TTS_CHANEL.put(bag, chanelId);
+        synchronized (TTS_CHANEL) {
+            TTS_CHANEL.put(bag, chanelId);
+        }
     }
 
     public void removeTTSChanel(BotAndGuild bag) {
-        TTS_CHANEL.remove(bag);
-        TTS_QUEUE.remove(bag);
+        synchronized (TTS_CHANEL) {
+            TTS_CHANEL.remove(bag);
+        }
+        synchronized (TTS_QUEUE) {
+            TTS_QUEUE.remove(bag);
+        }
     }
 
     public VoiceType getUserVoiceType(long userId, long guildId) {
@@ -135,6 +164,8 @@ public class TTSManager {
     }
 
     public long getTTSCount() {
-        return TTS_CHANEL.keySet().stream().map(n -> n.getGuild().getAudioManager()).filter(n -> n.getConnectedChannel() != null).mapToLong(n -> n.getConnectedChannel().getIdLong()).distinct().count();
+        synchronized (TTS_CHANEL) {
+            return TTS_CHANEL.keySet().stream().map(n -> n.getGuild().getAudioManager()).filter(n -> n.getConnectedChannel() != null).mapToLong(n -> n.getConnectedChannel().getIdLong()).distinct().count();
+        }
     }
 }

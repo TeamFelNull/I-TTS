@@ -162,13 +162,15 @@ public class Main {
         TimerTask updatePresenceTask = new TimerTask() {
             public void run() {
                 long ct = TTSManager.getInstance().getTTSCount();
-                JDAs.forEach(jda -> {
-                    if (ct > 0) {
-                        jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(ct + "個のチャンネルで読み上げ"));
-                    } else {
-                        jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing("待機"));
-                    }
-                });
+                synchronized (JDAs) {
+                    JDAs.forEach(jda -> {
+                        if (ct > 0) {
+                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(ct + "個のチャンネルで読み上げ"));
+                        } else {
+                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing("待機"));
+                        }
+                    });
+                }
             }
         };
         timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
@@ -183,6 +185,20 @@ public class Main {
     }
 
     public static JDA getJDA(int botNumber) {
-        return JDAs.get(botNumber);
+        synchronized (JDAs) {
+            return JDAs.get(botNumber);
+        }
+    }
+
+    public static int getJDABotNumber(JDA jda) {
+        synchronized (JDAs) {
+            return JDAs.indexOf(jda);
+        }
+    }
+
+    public static JDA getJDAByID(long userId) {
+        synchronized (JDAs) {
+            return JDAs.stream().filter(n -> n.getSelfUser().getIdLong() == userId).findFirst().orElse(null);
+        }
     }
 }

@@ -18,6 +18,13 @@ public class INMVoiceType implements URLVoiceType {
     }
 
     @Override
+    public String getSayVoiceSoundURL(ISayVoice sayVoice) throws Exception {
+        if (sayVoice instanceof VCEventSayVoice)
+            return null;
+        return URLVoiceType.super.getSayVoiceSoundURL(sayVoice);
+    }
+
+    @Override
     public String getSoundURL(String text) throws Exception {
         var im = INMManager.getInstance();
         var ret = im.search(text);

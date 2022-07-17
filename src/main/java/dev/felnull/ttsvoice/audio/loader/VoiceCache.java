@@ -24,6 +24,10 @@ public class VoiceCache {
         return System.currentTimeMillis() - lastTime >= (long) Main.CONFIG.cashTime() * 60L * 1000L;
     }
 
+    private boolean isForceTimeOut() {
+        return System.currentTimeMillis() - lastTime >= 60L * 60L * 1000L;
+    }
+
     public TmpFileVoiceTrackLoader createTrackLoader() {
         update();
         var c = originalTrackLoader.createCopy();
@@ -34,6 +38,9 @@ public class VoiceCache {
     }
 
     public boolean isUnnecessary() {
+        if (isForceTimeOut())
+            return true;
+
         if (isTimeOut() && originalTrackLoader.isAlready()) {
             synchronized (children) {
                 return children.stream().allMatch(TmpFileVoiceTrackLoader::isAlready);

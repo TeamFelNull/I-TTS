@@ -59,7 +59,7 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     }
 
     @Override
-    public void afterEnd() {
+    public void end() {
         already = true;
         if (!cached) {
             var file = VoiceLoaderManager.getInstance().getTmpFolder(uuid);
@@ -78,5 +78,9 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
 
     public boolean isAlready() {
         return already;
+    }
+
+    public void setAlready(boolean already) {
+        this.already = already;
     }
 }

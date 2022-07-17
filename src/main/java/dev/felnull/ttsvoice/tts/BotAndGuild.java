@@ -12,4 +12,11 @@ public record BotAndGuild(int botNumber, long guildId) {
     public Guild getGuild() {
         return getJDA().getGuildById(guildId);
     }
+
+    public static BotAndGuild ofId(long userId, long guildId) {
+        var jda = Main.getJDAByID(userId);
+        if (jda == null)
+            throw new IllegalArgumentException("Not IVoceTTS Bot id");
+        return new BotAndGuild(Main.getJDABotNumber(jda), guildId);
+    }
 }

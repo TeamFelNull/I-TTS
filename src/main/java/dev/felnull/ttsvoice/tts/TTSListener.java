@@ -77,7 +77,7 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
 
-            TTSManager.getInstance().setTTSChanel(new BotAndGuild(botNumber, e.getGuild().getIdLong()), e.getChannel().getIdLong());
+            TTSManager.getInstance().connect(new BotAndGuild(botNumber, e.getGuild().getIdLong()), e.getChannel().getIdLong());
 
             e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続しました").queue();
         } else if ("leave".equals(e.getName())) {
@@ -88,7 +88,7 @@ public class TTSListener extends ListenerAdapter {
                 var chn = audioManager.getConnectedChannel();
                 e.reply(DiscordUtils.createChannelMention(chn) + "から切断します").queue();
                 audioManager.closeAudioConnection();
-                TTSManager.getInstance().removeTTSChanel(new BotAndGuild(botNumber, e.getGuild().getIdLong()));
+                TTSManager.getInstance().disconnect(new BotAndGuild(botNumber, e.getGuild().getIdLong()));
             } else {
                 e.reply("現在VCに接続していません").queue();
             }
@@ -100,7 +100,7 @@ public class TTSListener extends ListenerAdapter {
                 var chn = audioManager.getConnectedChannel();
                 e.reply(DiscordUtils.createChannelMention(chn) + "に再接続します").queue();
                 audioManager.closeAudioConnection();
-                TTSManager.getInstance().removeTTSChanel(new BotAndGuild(botNumber, e.getGuild().getIdLong()));
+                TTSManager.getInstance().disconnect(new BotAndGuild(botNumber, e.getGuild().getIdLong()));
                 var rt = new ReconnectThread(audioManager, e.getGuild(), chn, e.getChannel());
                 rt.start();
             } else {
@@ -448,14 +448,17 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
+        if (event.getMember().getUser().isBot() && Main.getJDAByID(event.getMember().getIdLong()) != null)
+            TTSManager.getInstance().reconnect(BotAndGuild.ofId(event.getMember().getIdLong(), event.getGuild().getIdLong()));
+
         if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
 
         var tm = TTSManager.getInstance();
         long vc = tm.getTTSVoiceChanel(event.getGuild());
         if (vc == event.getChannelLeft().getIdLong()) {
-            tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_TO, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), DiscordUtils.getChannelName(event.getChannelJoined(), event.getMember(), "別のチャンネル")));
+            tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_TO, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
         } else if (vc == event.getChannelJoined().getIdLong()) {
-            tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_FROM, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), DiscordUtils.getChannelName(event.getChannelLeft(), event.getMember(), "別のチャンネル")));
+            tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_FROM, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
         }
     }
 
@@ -487,7 +490,7 @@ public class TTSListener extends ListenerAdapter {
             } catch (InterruptedException ignored) {
             }
             this.manager.openAudioConnection(this.channel);
-            TTSManager.getInstance().setTTSChanel(new BotAndGuild(botNumber, guild.getIdLong()), textChannel.getIdLong());
+            TTSManager.getInstance().connect(new BotAndGuild(botNumber, guild.getIdLong()), textChannel.getIdLong());
         }
     }
 }

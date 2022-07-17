@@ -23,10 +23,10 @@ import java.util.concurrent.Executors;
 public class VoiceLoaderManager {
     private static final Logger LOGGER = LogManager.getLogger(VoiceLoaderManager.class);
     private static final VoiceLoaderManager INSTANCE = new VoiceLoaderManager();
-    private static final File TMP_FOLDER = new File("./cash");
+    private static final File TMP_FOLDER = new File("./tmp");
     private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-loader-%d").daemon(true).build());
     private final Map<TTSVoice, VoiceCache> caches = new HashMap<>();
-    private final Map<TTSVoice, CompletableFuture<TmpFileVoiceTrackLoader>> tasks = new HashMap<>();
+    private final Map<TTSVoice, CompletableFuture<VoiceCache>> tasks = new HashMap<>();
 
     public static VoiceLoaderManager getInstance() {
         return INSTANCE;
@@ -71,24 +71,30 @@ public class VoiceLoaderManager {
     }
 
     private VoiceTrackLoader getTrackLoader_(TTSVoice voice) throws Exception {
-        if (!voice.isCached() && voice.voiceType() instanceof URLVoiceType urlVoiceType)
-            return new URLVoiceTrackLoader(urlVoiceType.getSayVoiceSoundURL(voice.sayVoice()));
-
+        if (!voice.isCached() && voice.voiceType() instanceof URLVoiceType urlVoiceType) {
+            var u = urlVoiceType.getSayVoiceSoundURL(voice.sayVoice());
+            if (u != null)
+                return new URLVoiceTrackLoader(u);
+        }
         synchronized (caches) {
             var c = caches.get(voice);
             if (c != null)
                 return c.createTrackLoader();
         }
 
-        CompletableFuture<TmpFileVoiceTrackLoader> cf;
+        CompletableFuture<VoiceCache> cf;
         synchronized (tasks) {
             cf = tasks.computeIfAbsent(voice, v -> {
                 var icf = CompletableFuture.supplyAsync(() -> {
                     var l = loadTmpFileVoice(v);
+                    VoiceCache c;
                     synchronized (caches) {
-                        caches.put(v, new VoiceCache(l));
+                        if (l != null)
+                            l.setAlready(true);
+                        c = new VoiceCache(l);
+                        caches.put(v, c);
                     }
-                    return l;
+                    return c;
                 }, executorService);
                 icf.thenRunAsync(() -> {
                     synchronized (tasks) {
@@ -98,8 +104,8 @@ public class VoiceLoaderManager {
                 return icf;
             });
         }
-
-        return cf.get();
+        var cg = cf.get();
+        return cg.createTrackLoader();
     }
 
     private TmpFileVoiceTrackLoader loadTmpFileVoice(TTSVoice voice) {
