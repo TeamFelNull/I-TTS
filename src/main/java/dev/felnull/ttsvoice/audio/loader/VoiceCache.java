@@ -30,6 +30,8 @@ public class VoiceCache {
 
     public TmpFileVoiceTrackLoader createTrackLoader() {
         update();
+        if (originalTrackLoader == null)
+            return null;
         var c = originalTrackLoader.createCopy();
         synchronized (children) {
             children.add(c);
@@ -39,6 +41,8 @@ public class VoiceCache {
 
     public boolean isUnnecessary() {
         if (isForceTimeOut())
+            return true;
+        if (originalTrackLoader == null)
             return true;
 
         if (isTimeOut() && originalTrackLoader.isAlready()) {
@@ -50,6 +54,8 @@ public class VoiceCache {
     }
 
     public void deleteCacheFile() {
+        if (originalTrackLoader == null) return;
+
         var f = originalTrackLoader.getTmpFile();
         if (f.exists())
             f.delete();

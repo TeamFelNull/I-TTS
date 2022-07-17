@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AudiScheduler extends AudioEventAdapter {
-    private final int previsionLoadCount = Runtime.getRuntime().availableProcessors();
+    private final int previsionLoadCount = 10;
     private final ExecutorService executorService;
     private final Map<TTSVoiceEntry, CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>>> previsionLoadTracks = new HashMap<>();
     private final Map<TTSVoiceEntry, VoiceTrackLoader> loaders = new HashMap<>();
@@ -42,7 +42,7 @@ public class AudiScheduler extends AudioEventAdapter {
         var guild = bag.getGuild();
         guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(player));
         this.botAndGuild = bag;
-        this.executorService = Executors.newFixedThreadPool(previsionLoadCount, new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-%d").daemon(true).build());
+        this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-%d").daemon(true).build());
     }
 
     public void dispose() {
@@ -157,7 +157,6 @@ public class AudiScheduler extends AudioEventAdapter {
                     synchronized (queue) {
                         List<TTSVoiceEntry> qc = queue.stream().filter(n -> !previsionLoadTracks.containsKey(n)).toList();
                         int lc = FNMath.clamp(qc.size(), 0, previsionLoadCount);
-
                         if (lc >= 1) {
                             for (int i = 0; i < lc; i++) {
                                 var l = qc.get(i);

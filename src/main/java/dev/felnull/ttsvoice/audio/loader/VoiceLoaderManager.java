@@ -87,10 +87,11 @@ public class VoiceLoaderManager {
             cf = tasks.computeIfAbsent(voice, v -> {
                 var icf = CompletableFuture.supplyAsync(() -> {
                     var l = loadTmpFileVoice(v);
+                    if (l == null)
+                        return null;
                     VoiceCache c;
                     synchronized (caches) {
-                        if (l != null)
-                            l.setAlready(true);
+                        l.setAlready(true);
                         c = new VoiceCache(l);
                         caches.put(v, c);
                     }
@@ -105,6 +106,8 @@ public class VoiceLoaderManager {
             });
         }
         var cg = cf.get();
+        if (cg == null)
+            return null;
         return cg.createTrackLoader();
     }
 
@@ -125,6 +128,8 @@ public class VoiceLoaderManager {
         try {
             FNDataUtil.bufInputToOutput(voiceStream, new FileOutputStream(file));
         } catch (IOException ex) {
+            if (file.exists())
+                file.delete();
             LOGGER.error("Failed to write audio data cash", ex);
             return null;
         }
