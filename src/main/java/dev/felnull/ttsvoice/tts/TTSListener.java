@@ -307,7 +307,7 @@ public class TTSListener extends ListenerAdapter {
                                 return;
                             }
                             sc.setMaxReadAroundCharacterLimit(iv);
-                            e.reply("VCに参加時に名前を読み上げを" + iv + "にしました").queue();
+                            e.reply("最大読み上げ文字数を" + iv + "にしました").queue();
                         }
                     }
                 }
