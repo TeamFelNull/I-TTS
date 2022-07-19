@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import dev.felnull.ttsvoice.audio.AudioScheduler;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +20,7 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     private final UUID uuid;
     private final boolean cached;
     private boolean already;
+    public AudioScheduler audioScheduler;
 
     public TmpFileVoiceTrackLoader(UUID uuid, boolean cached) {
         this.uuid = uuid;
@@ -59,6 +61,11 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     }
 
     @Override
+    public void setAudioScheduler(AudioScheduler scheduler) {
+        this.audioScheduler = scheduler;
+    }
+
+    @Override
     public void end() {
         already = true;
         if (!cached) {
@@ -77,7 +84,7 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     }
 
     public boolean isAlready() {
-        return already;
+        return already || (audioScheduler != null && this.audioScheduler.isDestroy());
     }
 
     public void setAlready(boolean already) {

@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class AudiScheduler extends AudioEventAdapter {
+public class AudioScheduler extends AudioEventAdapter {
     private final int previsionLoadCount = 10;
     private final ExecutorService executorService;
     private final Map<TTSVoiceEntry, CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>>> previsionLoadTracks = new HashMap<>();
@@ -35,8 +35,9 @@ public class AudiScheduler extends AudioEventAdapter {
     private Thread loadThread;
     private CoolDownThread coolDownThread;
     private VoiceTrackLoader currentTrackLoader;
+    protected boolean destroy;
 
-    public AudiScheduler(AudioPlayer player, BotAndGuild bag) {
+    public AudioScheduler(AudioPlayer player, BotAndGuild bag) {
         this.player = player;
         this.player.addListener(this);
         var guild = bag.getGuild();
@@ -46,6 +47,7 @@ public class AudiScheduler extends AudioEventAdapter {
     }
 
     public void dispose() {
+        this.destroy = true;
         executorService.shutdown();
 
         if (coolDownThread != null)
@@ -134,8 +136,10 @@ public class AudiScheduler extends AudioEventAdapter {
 
                 if (loaded == null) {
                     var l = vlm.getTrackLoader(next.voice());
-                    if (l != null)
+                    if (l != null) {
+                        l.setAudioScheduler(this);
                         loaded = l.loaded().thenApply(n -> Pair.of(l, n));
+                    }
                 }
 
                 if (loaded == null) {
@@ -160,7 +164,12 @@ public class AudiScheduler extends AudioEventAdapter {
                         if (lc >= 1) {
                             for (int i = 0; i < lc; i++) {
                                 var l = qc.get(i);
-                                var ll = CompletableFuture.supplyAsync(() -> vlm.getTrackLoader(l.voice()), executorService).thenApplyAsync(n -> {
+                                var ll = CompletableFuture.supplyAsync(() -> {
+                                    var tl = vlm.getTrackLoader(l.voice());
+                                    if (tl != null)
+                                        tl.setAudioScheduler(this);
+                                    return tl;
+                                }, executorService).thenApplyAsync(n -> {
                                     try {
                                         synchronized (loaders) {
                                             loaders.put(l, n);
@@ -189,6 +198,10 @@ public class AudiScheduler extends AudioEventAdapter {
             loadThread = null;
             return true;
         }
+    }
+
+    public boolean isDestroy() {
+        return destroy;
     }
 
     private class CoolDownThread extends Thread {

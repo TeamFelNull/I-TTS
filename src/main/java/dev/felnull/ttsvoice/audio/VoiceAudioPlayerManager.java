@@ -16,7 +16,7 @@ public class VoiceAudioPlayerManager {
     private static final Logger LOGGER = LogManager.getLogger(VoiceAudioPlayerManager.class);
     private static final VoiceAudioPlayerManager INSTANCE = new VoiceAudioPlayerManager();
     private final AudioPlayerManager audioPlayerManager;
-    private final Map<BotAndGuild, AudiScheduler> SCHEDULERS = new HashMap<>();
+    private final Map<BotAndGuild, AudioScheduler> SCHEDULERS = new HashMap<>();
 
     public VoiceAudioPlayerManager() {
         this.audioPlayerManager = new DefaultAudioPlayerManager();
@@ -36,9 +36,9 @@ public class VoiceAudioPlayerManager {
         return INSTANCE;
     }
 
-    public synchronized AudiScheduler getScheduler(BotAndGuild bag) {
+    public synchronized AudioScheduler getScheduler(BotAndGuild bag) {
         synchronized (SCHEDULERS) {
-            return SCHEDULERS.computeIfAbsent(bag, n -> new AudiScheduler(audioPlayerManager.createPlayer(), bag));
+            return SCHEDULERS.computeIfAbsent(bag, n -> new AudioScheduler(audioPlayerManager.createPlayer(), bag));
         }
     }
 

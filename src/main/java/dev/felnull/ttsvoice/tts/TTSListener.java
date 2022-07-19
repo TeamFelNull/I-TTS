@@ -77,7 +77,7 @@ public class TTSListener extends ListenerAdapter {
                 return;
             }
 
-            TTSManager.getInstance().connect(new BotAndGuild(botNumber, e.getGuild().getIdLong()), e.getChannel().getIdLong());
+            TTSManager.getInstance().connect(new BotAndGuild(botNumber, e.getGuild().getIdLong()), e.getChannel().getIdLong(), audioChannel.getIdLong());
 
             e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続しました").queue();
         } else if ("leave".equals(e.getName())) {
@@ -307,7 +307,7 @@ public class TTSListener extends ListenerAdapter {
                                 return;
                             }
                             sc.setMaxReadAroundCharacterLimit(iv);
-                            e.reply("VCに参加時に名前を読み上げを" + iv + "にしました").queue();
+                            e.reply("最大読み上げ文字数を" + iv + "にしました").queue();
                         }
                     }
                 }
@@ -449,7 +449,7 @@ public class TTSListener extends ListenerAdapter {
     @Override
     public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
         if (event.getMember().getUser().isBot() && Main.getJDAByID(event.getMember().getIdLong()) != null)
-            TTSManager.getInstance().reconnect(BotAndGuild.ofId(event.getMember().getIdLong(), event.getGuild().getIdLong()));
+            TTSManager.getInstance().reconnect(BotAndGuild.ofId(event.getMember().getIdLong(), event.getGuild().getIdLong()), event.getChannelJoined().getIdLong());
 
         if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
 
@@ -490,7 +490,7 @@ public class TTSListener extends ListenerAdapter {
             } catch (InterruptedException ignored) {
             }
             this.manager.openAudioConnection(this.channel);
-            TTSManager.getInstance().connect(new BotAndGuild(botNumber, guild.getIdLong()), textChannel.getIdLong());
+            TTSManager.getInstance().connect(new BotAndGuild(botNumber, guild.getIdLong()), textChannel.getIdLong(), channel.getIdLong());
         }
     }
 }

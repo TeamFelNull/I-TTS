@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.voice.voicevox;
+package dev.felnull.ttsvoice.voice.vvengine;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -7,7 +7,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.fnjl.tuple.FNPair;
 import dev.felnull.fnjl.util.FNURLUtil;
-import dev.felnull.ttsvoice.Main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,30 +24,31 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class VoiceVoxManager {
-    private static final Logger LOGGER = LogManager.getLogger(VoiceVoxManager.class);
+public abstract class VVEngineManager {
+    private static final Logger LOGGER = LogManager.getLogger(VVEngineManager.class);
     private static final Gson GSON = new Gson();
-    private static final VoiceVoxManager INSTANCE = new VoiceVoxManager();
     private final Map<String, Integer> LOADING_ENGINES = new HashMap<>();
     private final Map<String, Long> LAST_LOAD_ENGINE_TIMES = new HashMap<>();
-    private List<VVVoiceType> SPEAKERS;
+    private List<VVEVoiceType> SPEAKERS;
     private long lastSpeakersLoadTime;
 
-    public static VoiceVoxManager getInstance() {
-        return INSTANCE;
-    }
+    abstract public List<String> getEngineURLs();
+
+    abstract protected VVEVoiceType createVoiceType(JsonObject jo, String name);
+
+    abstract protected String getName();
 
     public String getEngineURL() {
         List<String> mostEngines = new ArrayList<>();
         int mct = Integer.MAX_VALUE;
-        for (String voiceVoxURL : Main.CONFIG.voiceVoxURLs()) {
-            int ct = getLoadingEnginesCount(voiceVoxURL);
+        for (String vvEngineURL : getEngineURLs()) {
+            int ct = getLoadingEnginesCount(vvEngineURL);
             if (ct < mct) {
                 mostEngines.clear();
-                mostEngines.add(voiceVoxURL);
+                mostEngines.add(vvEngineURL);
                 mct = ct;
             } else if (ct == mct) {
-                mostEngines.add(voiceVoxURL);
+                mostEngines.add(vvEngineURL);
             }
         }
 
@@ -85,8 +85,9 @@ public class VoiceVoxManager {
         }
     }
 
-    public List<VVVoiceType> getSpeakers() {
+    public List<VVEVoiceType> getSpeakers() {
         loadSpeakers();
+        if (SPEAKERS == null) return ImmutableList.of();
         return SPEAKERS;
     }
 
@@ -109,7 +110,7 @@ public class VoiceVoxManager {
                 loadEndEngine(url);
             }
 
-            ImmutableList.Builder<VVVoiceType> speakers = new ImmutableList.Builder<>();
+            ImmutableList.Builder<VVEVoiceType> speakers = new ImmutableList.Builder<>();
 
             for (JsonElement element : ja) {
                 var jo = (JsonObject) element;
@@ -117,17 +118,19 @@ public class VoiceVoxManager {
                 var styles = jo.getAsJsonArray("styles");
                 for (JsonElement style : styles) {
                     var sjo = (JsonObject) style;
-                    speakers.add(new VVVoiceType(sjo.get("id").getAsInt(), name, sjo.get("name").getAsString()));
+                    //   speakers.add(new VVVoiceType(sjo.get("id").getAsInt(), name, sjo.get("name").getAsString()));
+                    speakers.add(createVoiceType(sjo, name));
                 }
             }
 
-            SPEAKERS = speakers.build();
-            //SPEAKERS = SPEAKERS.stream().sorted(Comparator.comparingInt(Speaker::vvId)).toList();
+            if (SPEAKERS == null)
+                LOGGER.info("Successful get of " + getName() + " speakers");
 
-            LOGGER.info("Successful get of voicevox speakers");
+            SPEAKERS = speakers.build();
+
             lastSpeakersLoadTime = System.currentTimeMillis();
         } catch (Exception e) {
-            LOGGER.error("Failed to get voicevox speakers", e);
+            LOGGER.error("Failed to get " + getName() + " speakers", e);
             lastSpeakersLoadTime = System.currentTimeMillis() - 1000 * 60 * 7;
         }
     }

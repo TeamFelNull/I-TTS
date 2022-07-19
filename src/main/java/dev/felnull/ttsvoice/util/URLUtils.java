@@ -7,11 +7,7 @@ import java.io.IOException;
 import java.util.regex.Pattern;
 
 public class URLUtils {
-    private static final Pattern urlPattern = Pattern.compile("((http|https)://)?"
-            + "[a-zA-Z0-9@:%._\\+~#?&//=]"
-            + "{2,256}\\.[a-z]"
-            + "{2,6}\\b([-a-zA-Z0-9@:%"
-            + "._\\+~#?&//=]*)");
+    private static final Pattern urlPattern = Pattern.compile("http(s)?:\\/\\/([\\w-]+\\.)+[\\w-]+(\\/[\\w\\- .\\/?%&=~#:,]*)?");
     private static final String urlSyoryaku = "ユーアールエル省略";
 
     public static String replaceURLToText(String text) {

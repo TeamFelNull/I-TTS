@@ -19,4 +19,8 @@ public record BotAndGuild(int botNumber, long guildId) {
             throw new IllegalArgumentException("Not IVoceTTS Bot id");
         return new BotAndGuild(Main.getJDABotNumber(jda), guildId);
     }
+
+    public long getBotUserId() {
+        return getJDA().getSelfUser().getIdLong();
+    }
 }

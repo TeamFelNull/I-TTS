@@ -53,8 +53,13 @@ public class VoiceLoaderManager {
         synchronized (caches) {
             List<TTSVoice> rm = new ArrayList<>();
             for (Map.Entry<TTSVoice, VoiceCache> entry : caches.entrySet()) {
-                if (entry.getValue().isUnnecessary()) {
-                    entry.getValue().deleteCacheFile();
+                try {
+                    if (entry.getValue().isUnnecessary()) {
+                        entry.getValue().deleteCacheFile();
+                        rm.add(entry.getKey());
+                    }
+                } catch (Exception ex) {
+                    LOGGER.error("Failed to update cache", ex);
                     rm.add(entry.getKey());
                 }
             }

@@ -2,6 +2,7 @@ package dev.felnull.ttsvoice.tts;
 
 import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.ServerConfig;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 import dev.felnull.ttsvoice.tts.sayvoice.LiteralSayVoice;
@@ -11,7 +12,8 @@ import dev.felnull.ttsvoice.voice.VoiceType;
 import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
 import dev.felnull.ttsvoice.voice.inm.INMManager;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
-import dev.felnull.ttsvoice.voice.voicevox.VoiceVoxManager;
+import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CoeiroInkManager;
+import dev.felnull.ttsvoice.voice.vvengine.voicevox.VoiceVoxManager;
 import net.dv8tion.jda.api.entities.Guild;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,30 +32,34 @@ public class TTSManager {
         return INSTANCE;
     }
 
-    public void reconnect(BotAndGuild bag) {
-        long pt;
+    public void reconnect(BotAndGuild bag, long newAudioChannel) {
+        long pt = -1;
         synchronized (TTS_CHANEL) {
             if (TTS_CHANEL.containsKey(bag))
                 pt = TTS_CHANEL.get(bag);
-            else
-                throw new IllegalArgumentException("Not set tts channel");
         }
+
         disconnect(bag);
-        connect(bag, pt);
+
+        if (pt == -1)
+            throw new IllegalArgumentException("Not set tts channel");
+
+        connect(bag, pt, newAudioChannel);
     }
 
-    public void connect(BotAndGuild bag, long ttsChanelId) {
+    public void connect(BotAndGuild bag, long ttsChanelId, long audioChannel) {
         setTTSChanel(bag, ttsChanelId);
+        Main.getServerConfig(bag.guildId()).setLastJoinChannel(bag.getBotUserId(), new ServerConfig.TTSEntry(audioChannel, ttsChanelId));
     }
 
     public void disconnect(BotAndGuild bag) {
         removeTTSChanel(bag);
         VoiceAudioPlayerManager.getInstance().clearSchedulers(bag);
+        Main.getServerConfig(bag.guildId()).removeLastJoinChannel(bag.getBotUserId());
     }
 
     public long getTTSChanel(BotAndGuild bag) {
-        if (TTS_CHANEL.containsKey(bag))
-            return TTS_CHANEL.get(bag);
+        if (TTS_CHANEL.containsKey(bag)) return TTS_CHANEL.get(bag);
         return -1;
     }
 
@@ -86,8 +92,7 @@ public class TTSManager {
 
     public VoiceType getUserVoiceType(long userId, long guildId) {
         var uvt = Main.SAVE_DATA.getVoiceType(userId, guildId);
-        if (uvt != null)
-            return uvt;
+        if (uvt != null) return uvt;
         return getVoiceTypeById("voicevox-2", userId, guildId);
     }
 
@@ -102,24 +107,22 @@ public class TTSManager {
     public List<VoiceType> getVoiceTypes(long userId, long guildId) {
         ImmutableList.Builder<VoiceType> builder = new ImmutableList.Builder<>();
         builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
+        builder.addAll(CoeiroInkManager.getInstance().getSpeakers());
         builder.add(VTVoiceTypes.values());
         builder.add(GoogleTranslateTTSType.values());
 
         boolean flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
         boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
 
-        if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId))
-            builder.add(INMManager.getInstance().getVoice());
+        if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId)) builder.add(INMManager.getInstance().getVoice());
 
         return builder.build();
     }
 
     public void sayChat(BotAndGuild bag, long userId, String text) {
-        if (ignorePattern == null)
-            ignorePattern = Pattern.compile(Main.CONFIG.ignoreRegex());
+        if (ignorePattern == null) ignorePattern = Pattern.compile(Main.CONFIG.ignoreRegex());
 
-        if (ignorePattern.matcher(text).matches())
-            return;
+        if (ignorePattern.matcher(text).matches()) return;
 
         text = DiscordUtils.toCodeBlockSyoryaku(text);
         text = DiscordUtils.replaceMentionToText(bag.botNumber(), bag.getGuild(), text);
@@ -129,11 +132,9 @@ public class TTSManager {
         var vt = getUserVoiceType(userId, bag.guildId());
 
         int max = vt.getMaxTextLength(bag.guildId());
-        if (text.length() >= max)
-            text = text.substring(0, max);
+        if (text.length() >= max) text = text.substring(0, max);
 
-        if (pl - text.length() > 0)
-            text += "、以下" + (pl - text.length()) + "文字を省略";
+        if (pl - text.length() > 0) text += "、以下" + (pl - text.length()) + "文字を省略";
 
         sayText(bag, vt, text);
     }
@@ -159,8 +160,7 @@ public class TTSManager {
         }
 
         q.add(new TTSVoiceEntry(new TTSVoice(sayVoice, voiceType), UUID.randomUUID()));
-        if (!sc.isLoadingOrPlaying())
-            sc.next();
+        if (!sc.isLoadingOrPlaying()) sc.next();
     }
 
     public long getTTSCount() {

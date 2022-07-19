@@ -5,13 +5,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
+import dev.felnull.ttsvoice.tts.BotAndGuild;
 import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -37,7 +40,13 @@ public class Main {
         VERSION = Main.class.getPackage().getImplementationVersion();
         if (VERSION == null) VERSION = "None";
         LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
-        LOGGER.info("Available Processors:" + Runtime.getRuntime().availableProcessors());
+
+        LOGGER.info("--System info--");
+        LOGGER.info("Java version: " + System.getProperty("java.version"));
+        LOGGER.info("OS: " + System.getProperty("os.name"));
+        LOGGER.info("Arch: " + System.getProperty("os.arch"));
+        LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
+        LOGGER.info("---------------");
 
         var configFile = new File("./config.json");
 
@@ -58,7 +67,7 @@ public class Main {
         try {
             CONFIG.check();
         } catch (Exception ex) {
-            LOGGER.error("Config is incorrect", ex);
+            LOGGER.error("Config is incorrect: " + ex.getMessage());
             return;
         }
 
@@ -174,6 +183,40 @@ public class Main {
             }
         };
         timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
+
+        Thread reconecter = new Thread(() -> {
+            try {
+                Thread.sleep(1000 * 10);
+            } catch (InterruptedException ignored) {
+            }
+
+            synchronized (SERVER_CONFIGS) {
+                SERVER_CONFIGS.forEach((g, c) -> {
+                    synchronized (JDAs) {
+                        for (JDA jda : JDAs) {
+                            long id = jda.getSelfUser().getIdLong();
+                            var lj = c.getLastJoinChannel(id);
+                            if (lj != null) {
+                                try {
+                                    var guild = jda.getGuildById(g);
+                                    var audioManager = guild.getAudioManager();
+                                    var achn = guild.getChannelById(AudioChannel.class, lj.audioChannel());
+                                    if (achn == null) continue;
+                                    var tch = guild.getChannelById(TextChannel.class, lj.ttsChannel());
+                                    if (tch == null) continue;
+                                    audioManager.openAudioConnection(achn);
+                                    TTSManager.getInstance().connect(new BotAndGuild(getJDABotNumber(jda), guild.getIdLong()), tch.getIdLong(), achn.getIdLong());
+                                } catch (Exception ex) {
+                                    LOGGER.error("Reconnection failed", ex);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+        reconecter.start();
     }
 
     public static ServerConfig getServerConfig(long guildId) {

@@ -1,8 +1,12 @@
 package dev.felnull.ttsvoice;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.JsonUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerConfig {
     private boolean needJoin = false;
@@ -10,7 +14,7 @@ public class ServerConfig {
     private boolean inmMode = false;
     private boolean joinSayName = false;
     private int maxReadAroundCharacterLimit = 200;
-    // private final Map<Long, Long> lastJoinChannels = new HashMap<>();
+    private final Map<Long, TTSEntry> lastJoinChannels = new HashMap<>();
     private boolean dirty;
 
     public void load(JsonObject jo) {
@@ -33,6 +37,15 @@ public class ServerConfig {
         var mracl = JsonUtils.getInteger(jo, "max_read_around_character_limit");
         if (mracl != null)
             maxReadAroundCharacterLimit = mracl;
+
+
+        if (jo.has("last_join") && jo.get("last_join").isJsonObject()) {
+            var joe = jo.getAsJsonObject("last_join");
+            for (Map.Entry<String, JsonElement> entry : joe.entrySet()) {
+                lastJoinChannels.put(Long.parseLong(entry.getKey()), TTSEntry.of(entry.getValue().getAsJsonObject()));
+            }
+        }
+
     }
 
     public void save(JsonObject jo) {
@@ -41,6 +54,12 @@ public class ServerConfig {
         jo.addProperty("inm_mode", inmMode);
         jo.addProperty("join_say_name", joinSayName);
         jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
+
+        var ljjo = new JsonObject();
+        for (Map.Entry<Long, TTSEntry> entry : lastJoinChannels.entrySet()) {
+            ljjo.add(String.valueOf(entry.getKey()), entry.getValue().toJson());
+        }
+        jo.add("last_join", ljjo);
     }
 
     public boolean isInmMode(long guildId) {
@@ -96,5 +115,32 @@ public class ServerConfig {
     public void setMaxReadAroundCharacterLimit(int maxReadAroundCharacterLimit) {
         this.maxReadAroundCharacterLimit = maxReadAroundCharacterLimit;
         dirty = true;
+    }
+
+    public void setLastJoinChannel(long botUserId, TTSEntry ttsEntry) {
+        lastJoinChannels.put(botUserId, ttsEntry);
+        dirty = true;
+    }
+
+    public void removeLastJoinChannel(long botUserId) {
+        lastJoinChannels.remove(botUserId);
+        dirty = true;
+    }
+
+    public TTSEntry getLastJoinChannel(long botUserId) {
+        return lastJoinChannels.get(botUserId);
+    }
+
+    public static record TTSEntry(long audioChannel, long ttsChannel) {
+        public JsonObject toJson() {
+            var jo = new JsonObject();
+            jo.addProperty("audio_channel", audioChannel);
+            jo.addProperty("tts_channel", ttsChannel);
+            return jo;
+        }
+
+        public static TTSEntry of(JsonObject jo) {
+            return new TTSEntry(jo.get("audio_channel").getAsLong(), jo.get("tts_channel").getAsLong());
+        }
     }
 }
