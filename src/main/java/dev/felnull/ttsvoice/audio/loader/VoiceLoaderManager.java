@@ -70,7 +70,8 @@ public class VoiceLoaderManager {
     public VoiceTrackLoader getTrackLoader(TTSVoice voice) {
         try {
             return getTrackLoader_(voice);
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            LOGGER.error("Failed to load audio data", ex);
         }
         return null;
     }

@@ -39,10 +39,12 @@ public class Main {
     public static void main(String[] args) throws Exception {
         VERSION = Main.class.getPackage().getImplementationVersion();
         if (VERSION == null) VERSION = "None";
-        LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
 
+        LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
         LOGGER.info("--System info--");
         LOGGER.info("Java version: " + System.getProperty("java.version"));
+        LOGGER.info("Java vm name: " + System.getProperty("java.vm.name"));
+        LOGGER.info("Java vm version: " + System.getProperty("java.vm.version"));
         LOGGER.info("OS: " + System.getProperty("os.name"));
         LOGGER.info("Arch: " + System.getProperty("os.arch"));
         LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
@@ -172,11 +174,13 @@ public class Main {
             public void run() {
                 long ct = TTSManager.getInstance().getTTSCount();
                 synchronized (JDAs) {
+                    String vstr = "v" + VERSION;
+
                     JDAs.forEach(jda -> {
                         if (ct > 0) {
-                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(ct + "個のチャンネルで読み上げ"));
+                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(vstr + " - " + ct + "個のチャンネルで読み上げ"));
                         } else {
-                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing("待機"));
+                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing(vstr + " - " + "待機"));
                         }
                     });
                 }
