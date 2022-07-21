@@ -103,7 +103,7 @@ public class DiscordUtils {
                 return toChannelMentionToText(guild, p);
             if (mention == Message.MentionType.ROLE)
                 return toRoleMentionToText(guild, p);
-            if (mention == Message.MentionType.EMOTE)
+            if (mention == Message.MentionType.EMOJI)
                 return toEmojiMentionToText(guild, p);
             return p;
         });
@@ -152,7 +152,7 @@ public class DiscordUtils {
     }
 
     private static String toEmojiMentionToText(Guild guild, String mentionText) {
-        if (Message.MentionType.EMOTE.getPattern().matcher(mentionText).matches()) {
+        if (Message.MentionType.EMOJI.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(3);
             mentionText = mentionText.substring(0, mentionText.indexOf(":"));
             mentionText = mentionText.replaceAll("_", " ");

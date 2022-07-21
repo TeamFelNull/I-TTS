@@ -46,7 +46,7 @@ public class TTSListener extends ListenerAdapter {
             var channel = e.getInteraction().getOption("channel");
             AudioChannel audioChannel;
             if (channel != null) {
-                audioChannel = channel.getAsAudioChannel();
+                audioChannel = channel.getAsChannel().asAudioChannel();
             } else {
                 audioChannel = e.getMember().getVoiceState().getChannel();
                 if (audioChannel == null) {

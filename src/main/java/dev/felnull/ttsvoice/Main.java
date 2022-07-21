@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -149,7 +150,8 @@ public class Main {
 
         int num = 0;
         for (String botToken : CONFIG.botTokens()) {
-            JDAs.add(JDABuilder.createDefault(botToken).addEventListeners(new TTSListener(num)).build());
+            var jda = JDABuilder.createDefault(botToken).addEventListeners(new TTSListener(num)).enableIntents(GatewayIntent.MESSAGE_CONTENT).build();
+            JDAs.add(jda);
             num++;
         }
 
