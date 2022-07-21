@@ -118,7 +118,6 @@ public abstract class VVEngineManager {
                 var styles = jo.getAsJsonArray("styles");
                 for (JsonElement style : styles) {
                     var sjo = (JsonObject) style;
-                    //   speakers.add(new VVVoiceType(sjo.get("id").getAsInt(), name, sjo.get("name").getAsString()));
                     speakers.add(createVoiceType(sjo, name));
                 }
             }
@@ -135,14 +134,14 @@ public abstract class VVEngineManager {
         }
     }
 
-    public JsonObject getQuery(String text) throws URISyntaxException, IOException {
+    public JsonObject getQuery(String text, int speakerId) throws URISyntaxException, IOException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
 
         var url = getEngineURL();
         loadStartEngine(url);
         try {
-            var ret = FNURLUtil.getResponseByPOST(new URL(String.format(url + "/audio_query?text=%s&speaker=2", text)), "", "", "");
+            var ret = FNURLUtil.getResponseByPOST(new URL(String.format(url + "/audio_query?text=%s&speaker=" + speakerId, text)), "", "", "");
             return GSON.fromJson(ret.getResponseString(), JsonObject.class);
         } finally {
             loadEndEngine(url);

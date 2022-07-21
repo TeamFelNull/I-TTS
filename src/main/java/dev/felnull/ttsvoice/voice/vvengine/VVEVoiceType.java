@@ -50,7 +50,7 @@ public abstract class VVEVoiceType implements VoiceType {
     @Override
     public InputStream getSound(String text) throws Exception {
         var vvm = getEngineManager();
-        var q = vvm.getQuery(text);
+        var q = vvm.getQuery(text, vveId);
         return vvm.getVoce(q, vveId);
     }
 
