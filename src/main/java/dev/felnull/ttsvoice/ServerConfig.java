@@ -14,6 +14,7 @@ public class ServerConfig {
     private boolean inmMode = false;
     private boolean joinSayName = false;
     private int maxReadAroundCharacterLimit = 200;
+    private String nonReadingPrefix = ";";
     private final Map<Long, TTSEntry> lastJoinChannels = new HashMap<>();
     private boolean dirty;
 
@@ -38,6 +39,10 @@ public class ServerConfig {
         if (mracl != null)
             maxReadAroundCharacterLimit = mracl;
 
+        var nrp = JsonUtils.getString(jo, "non-reading_prefix");
+        if (nrp != null)
+            nonReadingPrefix = nrp;
+
 
         if (jo.has("last_join") && jo.get("last_join").isJsonObject()) {
             var joe = jo.getAsJsonObject("last_join");
@@ -54,6 +59,7 @@ public class ServerConfig {
         jo.addProperty("inm_mode", inmMode);
         jo.addProperty("join_say_name", joinSayName);
         jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
+        jo.addProperty("non-reading_prefix", nonReadingPrefix);
 
         var ljjo = new JsonObject();
         for (Map.Entry<Long, TTSEntry> entry : lastJoinChannels.entrySet()) {
@@ -83,6 +89,8 @@ public class ServerConfig {
     public int getMaxReadAroundCharacterLimit() {
         return maxReadAroundCharacterLimit;
     }
+
+    public String getNonReadingPrefix() {return nonReadingPrefix;}
 
     public boolean isDirty() {
         return dirty;
@@ -114,6 +122,11 @@ public class ServerConfig {
 
     public void setMaxReadAroundCharacterLimit(int maxReadAroundCharacterLimit) {
         this.maxReadAroundCharacterLimit = maxReadAroundCharacterLimit;
+        dirty = true;
+    }
+
+    public void setNonReadingPrefix(String NonReadingPrefix) {
+        this.nonReadingPrefix = NonReadingPrefix;
         dirty = true;
     }
 
