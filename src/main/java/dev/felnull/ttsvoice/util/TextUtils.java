@@ -18,7 +18,7 @@ public class TextUtils {
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             for (int j = 0; j < target.length(); j++) {
-                char tc = target.charAt(i);
+                char tc = target.charAt(j);
                 if (c == tc)
                     point++;
             }
