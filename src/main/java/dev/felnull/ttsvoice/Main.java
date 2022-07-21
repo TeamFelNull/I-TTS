@@ -219,6 +219,8 @@ public class Main {
                         }
                     }
                 });
+
+                LOGGER.info("Reconnect bot");
             }
 
         });

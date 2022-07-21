@@ -51,6 +51,7 @@ public abstract class VVEVoiceType implements VoiceType {
     public InputStream getSound(String text) throws Exception {
         var vvm = getEngineManager();
         var q = vvm.getQuery(text, vveId);
+        q.addProperty("outputSamplingRate", 20000);
         return vvm.getVoce(q, vveId);
     }
 
@@ -59,10 +60,6 @@ public abstract class VVEVoiceType implements VoiceType {
         return TextUtils.replaceLatinToHiragana(VoiceType.super.replace(text));
     }
 
-    @Override
-    public float getVolume() {
-        return 1.5f;
-    }
 
     @Override
     public boolean equals(Object o) {

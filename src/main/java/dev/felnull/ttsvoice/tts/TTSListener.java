@@ -249,6 +249,8 @@ public class TTSListener extends ListenerAdapter {
                 var en = e.getOption("enable");
                 if (en == null)
                     en = e.getOption("max-count");
+                if (en == null)
+                    en = e.getOption("prefix");
                 if (en == null) {
                     e.reply("コンフィグ設定内容が未指定です").setEphemeral(true).queue();
                     return;

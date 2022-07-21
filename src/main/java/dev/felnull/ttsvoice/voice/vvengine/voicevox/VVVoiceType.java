@@ -12,4 +12,9 @@ public class VVVoiceType extends VVEVoiceType {
     public VVEngineManager getEngineManager() {
         return VoiceVoxManager.getInstance();
     }
+
+    @Override
+    public float getVolume() {
+        return 1.5f;
+    }
 }
