@@ -312,16 +312,16 @@ public class TTSListener extends ListenerAdapter {
                             e.reply("最大読み上げ文字数を" + iv + "にしました").queue();
                         }
                     }
-                }else if(en.getType() == OptionType.STRING){
+                } else if (en.getType() == OptionType.STRING) {
                     String pre = en.getAsString();
-                    switch (sb){
+                    switch (sb) {
                         case "non-reading-prefix" -> {
-                            if (sc.getNonReadingPrefix().equals(pre)){
-                                e.reply("既に先頭につけると読み上げなくなる文字は" + pre + "です").setEphemeral(true).queue();
+                            if (sc.getNonReadingPrefix().equals(pre)) {
+                                e.reply("既に先頭につけると読み上げなくなる文字は" + DiscordUtils.toNoMention(pre) + "です").setEphemeral(true).queue();
                                 return;
                             }
                             sc.setNonReadingPrefix(pre);
-                            e.reply("先頭につけると読み上げなくなる文字を" + pre + "に設定しました").queue();
+                            e.reply("先頭につけると読み上げなくなる文字を" + DiscordUtils.toNoMention(pre) + "に設定しました").queue();
                         }
                     }
                 }
