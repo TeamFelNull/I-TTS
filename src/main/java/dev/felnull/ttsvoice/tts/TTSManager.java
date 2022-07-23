@@ -41,8 +41,10 @@ public class TTSManager {
 
         disconnect(bag);
 
-        if (pt == -1)
-            throw new IllegalArgumentException("Not set tts channel");
+        if (pt == -1) {
+//            throw new IllegalArgumentException("Not set tts channel");
+            return;
+        }
 
         connect(bag, pt, newAudioChannel);
     }
