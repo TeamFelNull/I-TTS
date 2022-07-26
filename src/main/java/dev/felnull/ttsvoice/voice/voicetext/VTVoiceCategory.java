@@ -1,8 +1,8 @@
 package dev.felnull.ttsvoice.voice.voicetext;
 
-import dev.felnull.ttsvoice.voice.VoiceEngine;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 
-public class VTVoiceEngine implements VoiceEngine {
+public class VTVoiceCategory implements VoiceCategory {
     @Override
     public String getTitle() {
         return "VoiceText";
@@ -13,7 +13,7 @@ public class VTVoiceEngine implements VoiceEngine {
         return "voicetext-";
     }
 
-    public static VTVoiceEngine getInstance(){
-        return new VTVoiceEngine();
+    public static VTVoiceCategory getInstance(){
+        return new VTVoiceCategory();
     }
 }

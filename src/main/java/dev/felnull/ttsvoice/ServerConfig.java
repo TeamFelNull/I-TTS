@@ -12,6 +12,7 @@ public class ServerConfig {
     private boolean needJoin = false;
     private boolean overwriteAloud = true;
     private boolean inmMode = false;
+    private boolean cookieMode = false;
     private boolean joinSayName = false;
     private int maxReadAroundCharacterLimit = 200;
     private String nonReadingPrefix = ";";
@@ -30,6 +31,10 @@ public class ServerConfig {
         var im = JsonUtils.getBoolean(jo, "inm_mode");
         if (im != null)
             inmMode = im;
+
+        var ck = JsonUtils.getBoolean(jo, "cookie_mode");
+        if (ck != null)
+            cookieMode = ck;
 
         var jsn = JsonUtils.getBoolean(jo, "join_say_name");
         if (jsn != null)
@@ -57,6 +62,7 @@ public class ServerConfig {
         jo.addProperty("need_join", needJoin);
         jo.addProperty("overwrite_aloud", overwriteAloud);
         jo.addProperty("inm_mode", inmMode);
+        jo.addProperty("cookie_mode", cookieMode);
         jo.addProperty("join_say_name", joinSayName);
         jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
         jo.addProperty("non-reading_prefix", nonReadingPrefix);
@@ -72,6 +78,12 @@ public class ServerConfig {
         if (DiscordUtils.isNonAllowInm(guildId))
             return false;
         return inmMode;
+    }
+
+    public boolean isCookieMode(long guildId) {
+        if (DiscordUtils.isNonAllowCookie(guildId))
+            return false;
+        return cookieMode;
     }
 
     public boolean isOverwriteAloud() {
@@ -102,6 +114,11 @@ public class ServerConfig {
 
     public void setInmMode(boolean inmMode) {
         this.inmMode = inmMode;
+        dirty = true;
+    }
+
+    public void setCookieMode(boolean cookieMode) {
+        this.cookieMode = cookieMode;
         dirty = true;
     }
 

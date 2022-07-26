@@ -163,4 +163,8 @@ public class DiscordUtils {
     public static boolean isNonAllowInm(long guildId) {
         return guildId == 930083398691733565L;
     }
+
+    public static boolean isNonAllowCookie(long guildId) {
+        return guildId == 930083398691733565L;
+    }
 }

@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.voice.cookie;
+package dev.felnull.ttsvoice.voice.reinoare.cookie;
 
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
@@ -14,7 +14,7 @@ public class CookieVoiceType implements URLVoiceType {
 
     @Override
     public String getId() {
-        return "cookie_star";
+        return "reinoare-cookie_star";
     }
 
     @Override

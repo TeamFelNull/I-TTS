@@ -5,10 +5,7 @@ import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 
 import java.io.InputStream;
 
-public interface VoiceType {
-    String getTitle();
-
-    String getId();
+public interface VoiceType extends HasTitleAndID{
 
     InputStream getSound(String text) throws Exception;
 

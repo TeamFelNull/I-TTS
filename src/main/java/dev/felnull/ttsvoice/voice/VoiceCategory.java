@@ -1,4 +1,4 @@
 package dev.felnull.ttsvoice.voice;
 
-public interface VoiceEngine extends HasTitleAndID {
+public interface VoiceCategory extends HasTitleAndID {
 }

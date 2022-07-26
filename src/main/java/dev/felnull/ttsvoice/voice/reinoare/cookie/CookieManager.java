@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.voice.cookie;
+package dev.felnull.ttsvoice.voice.reinoare.cookie;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;

@@ -8,11 +8,18 @@ import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 import dev.felnull.ttsvoice.tts.sayvoice.LiteralSayVoice;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.URLUtils;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 import dev.felnull.ttsvoice.voice.VoiceType;
+import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateVoiceCategory;
+import dev.felnull.ttsvoice.voice.reinoare.ReinoareVoiceCategory;
+import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieManager;
 import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
-import dev.felnull.ttsvoice.voice.inm.INMManager;
+import dev.felnull.ttsvoice.voice.reinoare.inm.INMManager;
+import dev.felnull.ttsvoice.voice.voicetext.VTVoiceCategory;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
+import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CIVoiceCategory;
 import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CoeiroInkManager;
+import dev.felnull.ttsvoice.voice.vvengine.voicevox.VVVoiceCategory;
 import dev.felnull.ttsvoice.voice.vvengine.voicevox.VoiceVoxManager;
 import net.dv8tion.jda.api.entities.Guild;
 import org.apache.logging.log4j.LogManager;
@@ -117,6 +124,30 @@ public class TTSManager {
         boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
 
         if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId)) builder.add(INMManager.getInstance().getVoice());
+
+        boolean flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
+        boolean flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
+
+        if (flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId)) builder.add(CookieManager.getInstance().getVoice());
+
+        return builder.build();
+    }
+
+    public List<VoiceCategory> getVoiceCategories(long userId, long guildId) {
+        var builder = new ImmutableList.Builder<VoiceCategory>()
+        .add(VVVoiceCategory.getInstance())
+        .add(CIVoiceCategory.getInstance())
+        .add(VTVoiceCategory.getInstance())
+        .add(GoogleTranslateVoiceCategory.getInstance());
+
+        var flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
+        var flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
+        var flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
+        var flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
+
+        if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId) || flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId)) {
+            builder.add(ReinoareVoiceCategory.getInstance());
+        }
 
         return builder.build();
     }

@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.voice.inm;
+package dev.felnull.ttsvoice.voice.reinoare.inm;
 
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
@@ -14,7 +14,7 @@ public class INMVoiceType implements URLVoiceType {
 
     @Override
     public String getId() {
-        return "inm";
+        return "reinoare-inm";
     }
 
     @Override

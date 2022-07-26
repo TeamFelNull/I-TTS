@@ -10,7 +10,7 @@ import java.util.List;
 public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<String> coeiroInkURLs,
                      String voiceTextAPIKey, int cashTime,
                      String ignoreRegex,
-                     List<Long> inmDenyUser, List<Long> adminRoles, List<Long> needAdminServers) {
+                     List<Long> inmDenyUser, List<Long> cookieDenyUser, List<Long> adminRoles, List<Long> needAdminServers) {
 
     public static Config of(JsonObject jo) {
 
@@ -53,6 +53,12 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
             inmDenyBuilder.add(entry.getAsLong());
         }
 
+        ImmutableList.Builder<Long> cookieDenyBuilder = new ImmutableList.Builder<>();
+        var cduja = jo.getAsJsonArray("CookieDenyUser");
+        for (JsonElement entry : cduja) {
+            cookieDenyBuilder.add(entry.getAsLong());
+        }
+
         ImmutableList.Builder<Long> adminRolesBuilder = new ImmutableList.Builder<>();
         var arja = jo.getAsJsonArray("AdminRoles");
         for (JsonElement entry : arja) {
@@ -65,11 +71,11 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
             needAdminServersBuilder.add(entry.getAsLong());
         }
 
-        return new Config(botTokensBuilder.build(), voiceVoxURLsBuilder.build(), coeiroInkURLsBuilder.build(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), inmDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
+        return new Config(botTokensBuilder.build(), voiceVoxURLsBuilder.build(), coeiroInkURLsBuilder.build(), jo.get("VoiceTextAPIKey").getAsString(), jo.get("CashTime").getAsInt(), jo.get("IgnoreRegex").getAsString(), inmDenyBuilder.build(), cookieDenyBuilder.build(), adminRolesBuilder.build(), needAdminServersBuilder.build());
     }
 
     public static Config createDefault() {
-        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://127.0.0.1:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
+        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://127.0.0.1:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
     }
 
     public void check() {
@@ -117,6 +123,12 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
             idja.add(entry);
         }
         jo.add("InmDenyUser", idja);
+
+        var cdja = new JsonArray();
+        for (Long entry : cookieDenyUser) {
+            cdja.add(entry);
+        }
+        jo.add("CookieDenyUser", cdja);
 
         var arja = new JsonArray();
         for (Long entry : adminRoles) {

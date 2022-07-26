@@ -1,8 +1,8 @@
 package dev.felnull.ttsvoice.voice.googletranslate;
 
-import dev.felnull.ttsvoice.voice.VoiceEngine;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 
-public class GoogleTranslateVoiceEngine implements VoiceEngine {
+public class GoogleTranslateVoiceCategory implements VoiceCategory {
     @Override
     public String getTitle() {
         return "Google翻訳TTS";
@@ -13,7 +13,7 @@ public class GoogleTranslateVoiceEngine implements VoiceEngine {
         return "google-translate-tts-";
     }
 
-    public static GoogleTranslateVoiceEngine getInstance(){
-        return new GoogleTranslateVoiceEngine();
+    public static GoogleTranslateVoiceCategory getInstance(){
+        return new GoogleTranslateVoiceCategory();
     }
 }

@@ -1,9 +1,8 @@
 package dev.felnull.ttsvoice.voice.reinoare;
 
-import dev.felnull.ttsvoice.voice.VoiceEngine;
-import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateVoiceEngine;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 
-public class ReinoareVoiceEngine implements VoiceEngine {
+public class ReinoareVoiceCategory implements VoiceCategory {
     @Override
     public String getTitle() {
         return "例のアレ";
@@ -14,7 +13,7 @@ public class ReinoareVoiceEngine implements VoiceEngine {
         return "reinoare-";
     }
 
-    public static  ReinoareVoiceEngine getInstance(){
-        return new ReinoareVoiceEngine();
+    public static ReinoareVoiceCategory getInstance(){
+        return new ReinoareVoiceCategory();
     }
 }

@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.voice.inm;
+package dev.felnull.ttsvoice.voice.reinoare.inm;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;

@@ -1,8 +1,8 @@
 package dev.felnull.ttsvoice.voice.vvengine.coeiroink;
 
-import dev.felnull.ttsvoice.voice.VoiceEngine;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 
-public class CIVoiceEngine implements VoiceEngine {
+public class CIVoiceCategory implements VoiceCategory {
     @Override
     public String getTitle() {
         return "COEIROINK";
@@ -13,7 +13,7 @@ public class CIVoiceEngine implements VoiceEngine {
         return CoeiroInkManager.NAME;
     }
 
-    public static CIVoiceEngine getInstance(){
-        return new CIVoiceEngine();
+    public static CIVoiceCategory getInstance(){
+        return new CIVoiceCategory();
     }
 }

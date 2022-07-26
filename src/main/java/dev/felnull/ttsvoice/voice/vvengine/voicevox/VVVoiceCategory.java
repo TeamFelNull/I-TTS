@@ -1,9 +1,8 @@
 package dev.felnull.ttsvoice.voice.vvengine.voicevox;
 
-import dev.felnull.ttsvoice.voice.VoiceEngine;
-import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CIVoiceEngine;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 
-public class VVVoiceEngine implements VoiceEngine {
+public class VVVoiceCategory implements VoiceCategory {
     @Override
     public String getTitle() {
         return "VOICEVOX";
@@ -14,7 +13,7 @@ public class VVVoiceEngine implements VoiceEngine {
         return VoiceVoxManager.NAME;
     }
 
-    public static VVVoiceEngine getInstance(){
-        return new VVVoiceEngine();
+    public static VVVoiceCategory getInstance(){
+        return new VVVoiceCategory();
     }
 }
