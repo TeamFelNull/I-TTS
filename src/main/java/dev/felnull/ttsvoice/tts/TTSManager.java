@@ -57,6 +57,9 @@ public class TTSManager {
     }
 
     public void connect(BotAndGuild bag, long ttsChanelId, long audioChannel) {
+        if (Main.getServerConfig(bag.getGuild().getIdLong()).isJoinSayName())
+            TTSListener.updateAuditLogMap(bag.getGuild());
+
         setTTSChanel(bag, ttsChanelId);
         Main.getServerConfig(bag.guildId()).setLastJoinChannel(bag.getBotUserId(), new ServerConfig.TTSEntry(audioChannel, ttsChanelId));
     }
@@ -128,17 +131,18 @@ public class TTSManager {
         boolean flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
         boolean flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
 
-        if (flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId)) builder.add(CookieManager.getInstance().getVoice());
+        if (flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId))
+            builder.add(CookieManager.getInstance().getVoice());
 
         return builder.build();
     }
 
     public List<VoiceCategory> getVoiceCategories(long userId, long guildId) {
         var builder = new ImmutableList.Builder<VoiceCategory>()
-        .add(VVVoiceCategory.getInstance())
-        .add(CIVoiceCategory.getInstance())
-        .add(VTVoiceCategory.getInstance())
-        .add(GoogleTranslateVoiceCategory.getInstance());
+                .add(VVVoiceCategory.getInstance())
+                .add(CIVoiceCategory.getInstance())
+                .add(VTVoiceCategory.getInstance())
+                .add(GoogleTranslateVoiceCategory.getInstance());
 
         var flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
         var flg2 = !Main.CONFIG.inmDenyUser().contains(userId);

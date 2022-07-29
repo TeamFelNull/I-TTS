@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.fnjl.util.FNURLUtil;
+import dev.felnull.ttsvoice.voice.reinoare.ReinoareManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,16 +16,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
-public class INMManager {
+public class INMManager extends ReinoareManager {
     private static final INMManager INSTANCE = new INMManager();
-    private static final Gson GSON = new Gson();
-    private static final String INC_URL = "https://www.morimori0317.net/inc-sounds-search";
-    private static final Random RANDOM = new Random();
     private final INMVoiceType VOICE = new INMVoiceType();
 
     public static INMManager getInstance() {
@@ -90,26 +85,12 @@ public class INMManager {
         return 0;
     }
 
-    public String getFileURL(UUID uuid) {
-        if (uuid == null) return null;
-        return INC_URL + "/link/" + uuid;
-    }
-
     public INMVoiceType getVoice() {
         return VOICE;
     }
 
-    public InputStream getJoinSound() {
-        int num = RANDOM.nextInt(8) + 1;
-        return getInmResource("join" + num + ".mp3");
-    }
-
-    public InputStream getLeaveSound() {
-        int num = RANDOM.nextInt(5) + 1;
-        return getInmResource("leave" + num + ".mp3");
-    }
-
-    private InputStream getInmResource(String name) {
-        return FNDataUtil.resourceExtractor(INMManager.class, "inm/" + name);
+    @Override
+    public InputStream getMP3(String name) {
+        return super.getMP3("inm/", name);
     }
 }

@@ -5,6 +5,7 @@ import dev.felnull.ttsvoice.util.DiscordUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.voice.GenericGuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -14,13 +15,15 @@ public class VCEventSayVoice implements ISayVoice {
     private final FNPair<Guild, Integer> guildAndBotNumber;
     private final User user;
     @Nullable
-    private final GenericGuildVoiceUpdateEvent event;
+    private final GuildVoiceUpdateEvent event;
+
+
 
     public VCEventSayVoice(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user) {
         this(eventType, guildAndBotNumber, user, null);
     }
 
-    public VCEventSayVoice(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user, @Nullable GenericGuildVoiceUpdateEvent event) {
+    public VCEventSayVoice(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user, @Nullable GuildVoiceUpdateEvent event) {
         this.eventType = eventType;
         this.guildAndBotNumber = guildAndBotNumber;
         this.user = user;
@@ -36,15 +39,19 @@ public class VCEventSayVoice implements ISayVoice {
         return eventType;
     }
 
-    public GenericGuildVoiceUpdateEvent getEvent() {
+    public GuildVoiceUpdateEvent getEvent() {
         return event;
     }
 
     public static enum EventType {
         JOIN((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が参加しました"),
+        MOVE_FROM((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelLeft(), e.getMember(), "別のチャンネル") + "から移動してきました"),
+        FORCE_MOVE_FROM((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelLeft(), e.getMember(), "別のチャンネル") + "から移動させられました"),
         LEAVE((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が退出しました"),
+        FORCE_LEAVE((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が切断されました"),
         MOVE_TO((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelJoined(), e.getMember(), "別のチャンネル") + "へ移動しました"),
-        MOVE_FROM((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelLeft(), e.getMember(), "別のチャンネル") + "から移動してきました");
+        FORCE_MOVE_TO((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelJoined(), e.getMember(), "別のチャンネル") + "へ移動させられました");
+
         private final EventText eventText;
 
         EventType(EventText eventText) {
@@ -53,7 +60,7 @@ public class VCEventSayVoice implements ISayVoice {
     }
 
     private static interface EventText {
-        String getText(FNPair<Guild, Integer> guildAndBotNumber, User user, GenericGuildVoiceUpdateEvent event);
+        String getText(FNPair<Guild, Integer> guildAndBotNumber, User user, GuildVoiceUpdateEvent event);
     }
 
     @Override

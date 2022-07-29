@@ -12,10 +12,9 @@ import dev.felnull.ttsvoice.voice.reinoare.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.reinoare.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.audit.*;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
+import net.dv8tion.jda.api.events.guild.voice.*;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -27,13 +26,13 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.IntStream;
 
 public class TTSListener extends ListenerAdapter {
     private static final Random rand = new Random();
     private final int botNumber;
+    public static HashMap<Long, List<AuditLogEntry>> auditLogs = new HashMap<>();
 
     public TTSListener(int botNumber) {
         this.botNumber = botNumber;
@@ -124,16 +123,16 @@ public class TTSListener extends ListenerAdapter {
                     }
                     case "change" -> {
                         var uop = e.getOption("user");
-                        if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
+                        if (uop != null && !DiscordUtils.hasPermission(e.getMember())) {
                             e.reply("他ユーザーを編集するための権限がありません").queue();
                             return;
                         }
                         User user = uop == null ? e.getUser() : uop.getAsUser();
 
-                        if (user.isBot()) {
+/*                        if (user.isBot()) {
                             e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
                             return;
-                        }
+                        }*/
 
                         var op = e.getOption("voice_type");
                         String id = op == null ? null : op.getAsString();
@@ -150,7 +149,7 @@ public class TTSListener extends ListenerAdapter {
 
                         TTSManager.getInstance().setUserVoceTypes(user.getIdLong(), type);
                         e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "の読み上げ音声タイプを[" + type.getTitle() + "]に変更しました").queue();
-                   }
+                    }
                     case "check" -> {
                         var uop = e.getOption("user");
                         if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
@@ -343,6 +342,9 @@ public class TTSListener extends ListenerAdapter {
                                     return;
                                 }
                                 sc.setJoinSayName(ena);
+                                if (ena) {
+                                    updateAuditLogMap(e.getGuild());
+                                }
                                 e.reply("VCに参加時に名前を読み上げを" + enStr + "にしました").queue();
                             }
                         }
@@ -414,7 +416,7 @@ public class TTSListener extends ListenerAdapter {
             if (strc.equals("")) {
                 choices.addAll(TTSManager.getInstance().getVoiceCategories(e.getUser().getIdLong(), e.getGuild().getIdLong()));
             }
-            if(op != null){
+            if (op != null) {
                 for (VoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
                     if (voiceType.getId().contains(strc) && (voiceType.getId().contains(str) || voiceType.getTitle().contains(str)))
                         choices.add(voiceType);
@@ -487,39 +489,86 @@ public class TTSListener extends ListenerAdapter {
     @Override
     public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
         if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+        if (vc == null) return;
 
-        var tm = TTSManager.getInstance();
-        long vc = tm.getTTSVoiceChanel(event.getGuild());
-        if (vc != event.getChannelJoined().getIdLong()) return;
-
-        tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.JOIN, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser()));
+        if (vc == event.getChannelJoined())
+            tmSayText(event, VCEventSayVoice.EventType.JOIN);
     }
 
     @Override
     public void onGuildVoiceLeave(@NotNull GuildVoiceLeaveEvent event) {
         if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+        if (vc == null) return;
 
-        var tm = TTSManager.getInstance();
-        long vc = tm.getTTSVoiceChanel(event.getGuild());
-        if (vc != event.getChannelLeft().getIdLong()) return;
-
-        tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.LEAVE, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser()));
+        if (vc == event.getChannelLeft()) {
+            boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
+            if (wasKicked) tmSayText(event, VCEventSayVoice.EventType.FORCE_LEAVE);
+            else tmSayText(event, VCEventSayVoice.EventType.LEAVE);
+        }
+        updateAuditLogMap(event.getGuild());
     }
 
     @Override
     public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
+        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+        if (vc == null) return;
+
         if (event.getMember().getUser().isBot() && Main.getJDAByID(event.getMember().getIdLong()) != null)
             TTSManager.getInstance().reconnect(BotAndGuild.ofId(event.getMember().getIdLong(), event.getGuild().getIdLong()), event.getChannelJoined().getIdLong());
 
-        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
-
-        var tm = TTSManager.getInstance();
-        long vc = tm.getTTSVoiceChanel(event.getGuild());
-        if (vc == event.getChannelLeft().getIdLong()) {
-            tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_TO, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
-        } else if (vc == event.getChannelJoined().getIdLong()) {
-            tm.sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(VCEventSayVoice.EventType.MOVE_FROM, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
+        if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
+            boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
+            if (vc == event.getChannelLeft()) {
+                if (wasMoved) tmSayText(event, VCEventSayVoice.EventType.FORCE_MOVE_TO);
+                else tmSayText(event, VCEventSayVoice.EventType.MOVE_TO);
+            } else if (vc == event.getChannelJoined()) {
+                if (wasMoved) tmSayText(event, VCEventSayVoice.EventType.FORCE_MOVE_FROM);
+                else tmSayText(event, VCEventSayVoice.EventType.MOVE_FROM);
+            }
         }
+        updateAuditLogMap(event.getGuild());
+    }
+
+    public static boolean wasAuditLogChanged(Guild guild, ActionType type) {
+        var logNew = getCurrentAuditLogEntries(guild, type);
+        var logOld = getPreviousAuditLogEntries(guild, type);
+        return !isEqualAuditLog(logNew, logOld);
+    }
+
+    public static List<AuditLogEntry> getCurrentAuditLogEntries(Guild guild, ActionType type) {
+        return guild.retrieveAuditLogs().stream().filter(l -> l.getType() == type).toList();
+    }
+
+    public static List<AuditLogEntry> getPreviousAuditLogEntries(Guild guild, ActionType type) {
+        return auditLogs.get(guild.getIdLong()).stream().filter(l -> l.getType() == type).toList();
+    }
+
+    public static boolean isEqualAuditLog(List<AuditLogEntry> log1, List<AuditLogEntry> log2) {
+        var largerLog = new ArrayList<>(log1.size() > log2.size() ? log1 : log2);
+        var smallerLog = new ArrayList<>(log1.size() < log2.size() ? log1 : log2);
+        IntStream.range(smallerLog.size(), largerLog.size()).forEach(i -> largerLog.remove(smallerLog.size()));
+
+        if (!largerLog.equals(smallerLog))
+            return false;
+        for (int i = 0; i < largerLog.size(); i++) {
+            var a = largerLog.get(i).getOptions();
+            for (String key : a.keySet()) {
+                if (!largerLog.get(i).getOptionByName(key).equals(smallerLog.get(i).getOptionByName(key)))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public void tmSayText(GuildVoiceUpdateEvent event, VCEventSayVoice.EventType type) {
+        TTSManager.getInstance().sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(type, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
+    }
+
+    public static void updateAuditLogMap(Guild guild) {
+        auditLogs.put(guild.getIdLong(), guild.retrieveAuditLogs().complete());
     }
 
     private boolean checkNeedAdmin(Member member, IReplyCallback callback) {
@@ -530,10 +579,10 @@ public class TTSListener extends ListenerAdapter {
         return true;
     }
 
-    public static ArrayList<?> reduceChoices(ArrayList<?> choices){
+    public static ArrayList<?> reduceChoices(ArrayList<?> choices) {
         if (choices.size() > 25) {
             var nc = new ArrayList<>();
-            for (int i =0; i<25; i++) {
+            for (int i = 0; i < 25; i++) {
                 nc.add(choices.get(i));
             }
             return nc;

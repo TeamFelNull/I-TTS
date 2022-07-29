@@ -2,6 +2,7 @@ package dev.felnull.ttsvoice;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.JsonUtils;
 

@@ -38,10 +38,15 @@ public class CookieVoiceType implements URLVoiceType {
     public InputStream getSayVoiceSound(ISayVoice sayVoice) throws Exception {
         if (sayVoice instanceof VCEventSayVoice vcEventSayVoice) {
             var in = CookieManager.getInstance();
-            if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.JOIN || vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.MOVE_FROM)
-                return in.getJoinSound();
-            if (vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.LEAVE || vcEventSayVoice.getEventType() == VCEventSayVoice.EventType.MOVE_TO)
-                return in.getLeaveSound();
+            return switch (vcEventSayVoice.getEventType()) {
+                case JOIN -> in.getJoinSound();
+                case MOVE_FROM -> in.getMoveFromSound();
+                case FORCE_MOVE_FROM -> in.getForceMoveFromSound();
+                case LEAVE -> in.getLeaveSound();
+                case FORCE_LEAVE -> in.getForceLeaveSound();
+                case MOVE_TO -> in.getMoveToSound();
+                case FORCE_MOVE_TO -> in.getForceMoveToSound();
+            };
         }
         return URLVoiceType.super.getSayVoiceSound(sayVoice);
     }
