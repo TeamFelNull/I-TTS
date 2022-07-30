@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
+import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.fnjl.util.FNMath;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
@@ -21,10 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 public class AudioScheduler extends AudioEventAdapter {
+    private static final Function<BotAndGuild, ExecutorService> EXECUTOR_SERVICES = FNDataUtil.memoize(bag -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-" + bag.botNumber() + "-%d").daemon(true).build()));
     private final int previsionLoadCount = 10;
-    private final ExecutorService executorService;
     private final Map<TTSVoiceEntry, CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>>> previsionLoadTracks = new HashMap<>();
     private final Map<TTSVoiceEntry, VoiceTrackLoader> loaders = new HashMap<>();
     private final AudioPlayer player;
@@ -43,12 +45,16 @@ public class AudioScheduler extends AudioEventAdapter {
         var guild = bag.getGuild();
         guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(player));
         this.botAndGuild = bag;
-        this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-%d").daemon(true).build());
+    }
+
+    private ExecutorService getExecutorService() {
+        synchronized (EXECUTOR_SERVICES) {
+            return EXECUTOR_SERVICES.apply(botAndGuild);
+        }
     }
 
     public void dispose() {
         this.destroy = true;
-        executorService.shutdown();
 
         if (coolDownThread != null)
             coolDownThread.interrupt();
@@ -169,7 +175,7 @@ public class AudioScheduler extends AudioEventAdapter {
                                     if (tl != null)
                                         tl.setAudioScheduler(this);
                                     return tl;
-                                }, executorService).thenApplyAsync(n -> {
+                                }, getExecutorService()).thenApplyAsync(n -> {
                                     try {
                                         synchronized (loaders) {
                                             loaders.put(l, n);
@@ -178,7 +184,7 @@ public class AudioScheduler extends AudioEventAdapter {
                                     } catch (InterruptedException | ExecutionException e) {
                                         throw new RuntimeException(e);
                                     }
-                                }, executorService);
+                                }, getExecutorService());
                                 synchronized (previsionLoadTracks) {
                                     previsionLoadTracks.put(l, ll);
                                 }
