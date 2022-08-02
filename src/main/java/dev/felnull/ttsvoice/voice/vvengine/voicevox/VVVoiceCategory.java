@@ -3,6 +3,8 @@ package dev.felnull.ttsvoice.voice.vvengine.voicevox;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
 
 public class VVVoiceCategory implements VoiceCategory {
+    private static final VVVoiceCategory INSTANCE = new VVVoiceCategory();
+
     @Override
     public String getTitle() {
         return "VOICEVOX";
@@ -13,7 +15,7 @@ public class VVVoiceCategory implements VoiceCategory {
         return VoiceVoxManager.NAME;
     }
 
-    public static VVVoiceCategory getInstance(){
-        return new VVVoiceCategory();
+    public static VVVoiceCategory getInstance() {
+        return INSTANCE;
     }
 }

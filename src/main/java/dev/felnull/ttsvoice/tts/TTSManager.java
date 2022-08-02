@@ -2,8 +2,8 @@ package dev.felnull.ttsvoice.tts;
 
 import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
-import dev.felnull.ttsvoice.ServerConfig;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
+import dev.felnull.ttsvoice.data.ServerConfig;
 import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
 import dev.felnull.ttsvoice.tts.sayvoice.LiteralSayVoice;
 import dev.felnull.ttsvoice.util.DiscordUtils;
@@ -129,21 +129,32 @@ public class TTSManager {
 
     public List<VoiceType> getVoiceTypes(long userId, long guildId) {
         ImmutableList.Builder<VoiceType> builder = new ImmutableList.Builder<>();
-        builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
-        builder.addAll(CoeiroInkManager.getInstance().getSpeakers());
-        builder.add(VTVoiceTypes.values());
-        builder.add(GoogleTranslateTTSType.values());
+        var vc = Main.CONFIG.voiceConfig();
 
-        boolean flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
-        boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
+        if (vc.enableVoiceVox())
+            builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
+        if (vc.enableCoeiroInk())
+            builder.addAll(CoeiroInkManager.getInstance().getSpeakers());
+        if (vc.enableVoiceText())
+            builder.add(VTVoiceTypes.values());
+        if (vc.enableGoogleTranslateTts())
+            builder.add(GoogleTranslateTTSType.values());
 
-        if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId)) builder.add(INMManager.getInstance().getVoice());
+        if (vc.enableInm()) {
+            boolean flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
+            boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
 
-        boolean flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
-        boolean flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
+            if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId))
+                builder.add(INMManager.getInstance().getVoice());
+        }
 
-        if (flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId))
-            builder.add(CookieManager.getInstance().getVoice());
+        if (vc.enableCookie()) {
+            boolean flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
+            boolean flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
+
+            if (flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId))
+                builder.add(CookieManager.getInstance().getVoice());
+        }
 
         return builder.build();
     }
@@ -163,8 +174,8 @@ public class TTSManager {
         if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId) || flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId)) {
             builder.add(ReinoareVoiceCategory.getInstance());
         }
-
-        return builder.build();
+        var types = getVoiceTypes(userId, guildId);
+        return builder.build().stream().filter(c -> types.stream().anyMatch(t -> t.getId().startsWith(c.getId()))).toList();
     }
 
     public void sayChat(BotAndGuild bag, long userId, String text) {

@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice;
+package dev.felnull.ttsvoice.data;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

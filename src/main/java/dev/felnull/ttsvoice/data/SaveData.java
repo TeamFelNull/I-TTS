@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice;
+package dev.felnull.ttsvoice.data;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonArray;

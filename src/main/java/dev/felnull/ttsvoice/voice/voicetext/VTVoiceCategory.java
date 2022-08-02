@@ -3,6 +3,8 @@ package dev.felnull.ttsvoice.voice.voicetext;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
 
 public class VTVoiceCategory implements VoiceCategory {
+    private static final VTVoiceCategory INSTANCE = new VTVoiceCategory();
+
     @Override
     public String getTitle() {
         return "VoiceText";
@@ -13,7 +15,7 @@ public class VTVoiceCategory implements VoiceCategory {
         return "voicetext-";
     }
 
-    public static VTVoiceCategory getInstance(){
-        return new VTVoiceCategory();
+    public static VTVoiceCategory getInstance() {
+        return INSTANCE;
     }
 }

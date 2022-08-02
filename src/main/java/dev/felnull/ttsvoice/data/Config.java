@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice;
+package dev.felnull.ttsvoice.data;
 
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
@@ -9,10 +9,11 @@ import java.util.List;
 
 public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<String> coeiroInkURLs,
                      String voiceTextAPIKey, int cashTime, String ignoreRegex, List<Long> inmDenyUser,
-                     List<Long> cookieDenyUser, List<Long> adminRoles, List<Long> needAdminServers) {
+                     List<Long> cookieDenyUser, List<Long> adminRoles, List<Long> needAdminServers,
+                     VoiceConfig voiceConfig) {
 
     public static Config createDefault() {
-        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
+        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L), VoiceConfig.createDefault());
     }
 
     public static Config of(JsonObject jo) {
@@ -30,7 +31,9 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
         List<Long> adminRoles = Json5Utils.ofLongJsonArray(jo.get("AdminRoles"), 0);
         List<Long> needAdminServers = Json5Utils.ofLongJsonArray(jo.get("NeedAdminServers"), 0);
 
-        return new Config(botTokens, voiceVoxURLs, coeiroInkURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers);
+        VoiceConfig vc = VoiceConfig.of(jo.getObject("VoiceConfig"));
+
+        return new Config(botTokens, voiceVoxURLs, coeiroInkURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers, vc);
     }
 
     public JsonObject toJson() {
@@ -46,7 +49,7 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
         jo.put("CookieDenyUser", Json5Utils.toJsonArray(cookieDenyUser), "クッキー☆拒否ユーザー");
         jo.put("AdminRoles", Json5Utils.toJsonArray(adminRoles), "管理可能なロール");
         jo.put("NeedAdminServers", Json5Utils.toJsonArray(needAdminServers), "管理ロール指定が必要なサーバー");
-
+        jo.put("VoiceConfig", voiceConfig.toJson(), "読み上げタイプが有効かどうか");
         return jo;
     }
 
