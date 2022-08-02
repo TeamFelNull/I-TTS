@@ -18,6 +18,16 @@ public class Json5Utils {
         return ja;
     }
 
+    public static <T> List<T> ofJsonArray(JsonElement jsonElement, Function<JsonPrimitive, T> getter) {
+        if (jsonElement instanceof JsonArray jsonArray)
+            return ofJsonArray(jsonArray, getter);
+
+        if (jsonElement instanceof JsonPrimitive jsonPrimitive)
+            return ImmutableList.of(getter.apply(jsonPrimitive));
+
+        return ImmutableList.of();
+    }
+
     public static <T> List<T> ofJsonArray(JsonArray jsonArray, Function<JsonPrimitive, T> getter) {
         ImmutableList.Builder<T> builder = new ImmutableList.Builder<>();
         for (JsonElement jsonElement : jsonArray) {
@@ -27,8 +37,16 @@ public class Json5Utils {
         return builder.build();
     }
 
+    public static List<String> ofStringJsonArray(JsonElement jsonElement) {
+        return ofJsonArray(jsonElement, JsonPrimitive::asString);
+    }
+
     public static List<String> ofStringJsonArray(JsonArray jsonArray) {
         return ofJsonArray(jsonArray, JsonPrimitive::asString);
+    }
+
+    public static List<Long> ofLongJsonArray(JsonElement jsonElement, long defaultValue) {
+        return ofJsonArray(jsonElement, p -> p.asLong(defaultValue));
     }
 
     public static List<Long> ofLongJsonArray(JsonArray jsonArray, long defaultValue) {

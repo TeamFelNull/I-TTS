@@ -10,15 +10,17 @@ import dev.felnull.fnjl.util.FNURLUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.*;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public abstract class VVEngineManager {
@@ -28,6 +30,7 @@ public abstract class VVEngineManager {
     private final Map<String, Long> LAST_LOAD_ENGINE_TIMES = new HashMap<>();
     private List<VVEVoiceType> SPEAKERS;
     private long lastSpeakersLoadTime;
+    private boolean lastError;
 
     abstract public List<String> getEngineURLs();
 
@@ -101,7 +104,12 @@ public abstract class VVEngineManager {
 
             var url = getEngineURL();
             loadStartEngine(url);
-            try (Reader reader = new InputStreamReader(FNURLUtil.getStream(new URL(url + "/speakers")))) {
+
+            var hc = HttpClient.newHttpClient();
+            var req = HttpRequest.newBuilder(URI.create(url + "/speakers")).version(HttpClient.Version.HTTP_1_1).timeout(Duration.of(500, ChronoUnit.MILLIS)).build();
+            var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
+
+            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream)) {
                 ja = GSON.fromJson(reader, JsonArray.class);
             } finally {
                 loadEndEngine(url);
@@ -123,10 +131,12 @@ public abstract class VVEngineManager {
                 LOGGER.info("Successful get of " + getName() + " speakers");
 
             SPEAKERS = speakers.build();
-
+            lastError = false;
             lastSpeakersLoadTime = System.currentTimeMillis();
         } catch (Exception e) {
-            LOGGER.error("Failed to get " + getName() + " speakers", e);
+            if (!lastError)
+                LOGGER.error("Failed to get " + getName() + " speakers", e);
+            lastError = true;
             lastSpeakersLoadTime = System.currentTimeMillis() - 1000 * 60 * 7;
         }
     }

@@ -12,23 +12,23 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
                      List<Long> cookieDenyUser, List<Long> adminRoles, List<Long> needAdminServers) {
 
     public static Config createDefault() {
-        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://127.0.0.1:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
+        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L));
     }
 
     public static Config of(JsonObject jo) {
-        List<String> botTokens = Json5Utils.ofStringJsonArray(Json5Utils.getJsonArray(jo, "BotToken"));
-        List<String> voiceVoxURLs = Json5Utils.ofStringJsonArray(Json5Utils.getJsonArray(jo, "VoiceVoxURL"));
-        List<String> coeiroInkURLs = Json5Utils.ofStringJsonArray(Json5Utils.getJsonArray(jo, "CoeiroInkURL"));
+        List<String> botTokens = Json5Utils.ofStringJsonArray(jo.get("BotToken"));
+        List<String> voiceVoxURLs = Json5Utils.ofStringJsonArray(jo.get("VoiceVoxURL"));
+        List<String> coeiroInkURLs = Json5Utils.ofStringJsonArray(jo.get("CoeiroInkURL"));
 
         String voiceTextAPIKey = jo.get(String.class, "VoiceTextAPIKey");
         int cashTime = jo.getInt("CashTime", 3);
         String ignoreRegex = jo.get(String.class, "IgnoreRegex");
 
-        List<Long> inmDenyUsers = Json5Utils.ofLongJsonArray(Json5Utils.getJsonArray(jo, "InmDenyUser"), 0);
-        List<Long> cookieDenyUsers = Json5Utils.ofLongJsonArray(Json5Utils.getJsonArray(jo, "CookieDenyUser"), 0);
+        List<Long> inmDenyUsers = Json5Utils.ofLongJsonArray(jo.get("InmDenyUser"), 0);
+        List<Long> cookieDenyUsers = Json5Utils.ofLongJsonArray(jo.get("CookieDenyUser"), 0);
 
-        List<Long> adminRoles = Json5Utils.ofLongJsonArray(Json5Utils.getJsonArray(jo, "AdminRoles"), 0);
-        List<Long> needAdminServers = Json5Utils.ofLongJsonArray(Json5Utils.getJsonArray(jo, "NeedAdminServers"), 0);
+        List<Long> adminRoles = Json5Utils.ofLongJsonArray(jo.get("AdminRoles"), 0);
+        List<Long> needAdminServers = Json5Utils.ofLongJsonArray(jo.get("NeedAdminServers"), 0);
 
         return new Config(botTokens, voiceVoxURLs, coeiroInkURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers);
     }
@@ -36,30 +36,25 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
     public JsonObject toJson() {
         var jo = new JsonObject();
 
-        jo.put("BotToken", Json5Utils.toJsonArray(botTokens));
-        jo.put("VoiceVoxURL", Json5Utils.toJsonArray(voiceVoxURLs));
-        jo.put("CoeiroInkURL", Json5Utils.toJsonArray(coeiroInkURLs));
-        jo.put("VoiceTextAPIKey", JsonPrimitive.of(voiceTextAPIKey));
-        jo.put("CashTime", new JsonPrimitive(cashTime));
-        jo.put("IgnoreRegex", JsonPrimitive.of(ignoreRegex));
-        jo.put("InmDenyUser", Json5Utils.toJsonArray(inmDenyUser));
-        jo.put("CookieDenyUser", Json5Utils.toJsonArray(cookieDenyUser));
-        jo.put("AdminRoles", Json5Utils.toJsonArray(adminRoles));
-        jo.put("NeedAdminServers", Json5Utils.toJsonArray(needAdminServers));
+        jo.put("BotToken", Json5Utils.toJsonArray(botTokens), "BOTトークン指定");
+        jo.put("VoiceVoxURL", Json5Utils.toJsonArray(voiceVoxURLs), "VoiceVoxのURL指定");
+        jo.put("CoeiroInkURL", Json5Utils.toJsonArray(coeiroInkURLs), "CoeiroInkのURL指定");
+        jo.put("VoiceTextAPIKey", JsonPrimitive.of(voiceTextAPIKey), "VoiceTextのAPIキー指定");
+        jo.put("CashTime", new JsonPrimitive(cashTime), "キャッシュを保存する期間(分)");
+        jo.put("IgnoreRegex", JsonPrimitive.of(ignoreRegex), "無視する文字列");
+        jo.put("InmDenyUser", Json5Utils.toJsonArray(inmDenyUser), "淫夢拒否ユーザー");
+        jo.put("CookieDenyUser", Json5Utils.toJsonArray(cookieDenyUser), "クッキー☆拒否ユーザー");
+        jo.put("AdminRoles", Json5Utils.toJsonArray(adminRoles), "管理可能なロール");
+        jo.put("NeedAdminServers", Json5Utils.toJsonArray(needAdminServers), "管理ロール指定が必要なサーバー");
 
         return jo;
     }
 
     public void check() {
-        if (botTokens.isEmpty())
-            throw new IllegalStateException("Bot token is empty");
-        if (voiceVoxURLs.isEmpty())
-            throw new IllegalStateException("VoiceVox url is empty");
-        if (coeiroInkURLs.isEmpty())
-            throw new IllegalStateException("CoeiroInk url is empty");
-        if (voiceTextAPIKey.isEmpty())
-            throw new IllegalStateException("VoiceText api key is empty");
-        if (cashTime < 0)
-            throw new IllegalStateException("Cash time must be greater than or equal to 0");
+        if (botTokens.isEmpty()) throw new IllegalStateException("Bot token is empty");
+        if (voiceVoxURLs.isEmpty()) throw new IllegalStateException("VoiceVox url is empty");
+        if (coeiroInkURLs.isEmpty()) throw new IllegalStateException("CoeiroInk url is empty");
+        if (voiceTextAPIKey.isEmpty()) throw new IllegalStateException("VoiceText api key is empty");
+        if (cashTime < 0) throw new IllegalStateException("Cash time must be greater than or equal to 0");
     }
 }

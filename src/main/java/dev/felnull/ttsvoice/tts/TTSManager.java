@@ -10,10 +10,10 @@ import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.URLUtils;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
 import dev.felnull.ttsvoice.voice.VoiceType;
+import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
 import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateVoiceCategory;
 import dev.felnull.ttsvoice.voice.reinoare.ReinoareVoiceCategory;
 import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieManager;
-import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
 import dev.felnull.ttsvoice.voice.reinoare.inm.INMManager;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceCategory;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
@@ -105,7 +105,18 @@ public class TTSManager {
     public VoiceType getUserVoiceType(long userId, long guildId) {
         var uvt = Main.SAVE_DATA.getVoiceType(userId, guildId);
         if (uvt != null) return uvt;
-        return getVoiceTypeById("voicevox-2", userId, guildId);
+
+        var dvt = getDefaultVoiceType(userId, guildId);
+        if (dvt == null)
+            throw new RuntimeException("Failed to get default readalond voice type");
+        return dvt;
+    }
+
+    private VoiceType getDefaultVoiceType(long userId, long guildId) {
+        var dvt = getVoiceTypeById("voicevox-2", userId, guildId);
+        if (dvt != null)
+            return dvt;
+        return getVoiceTypeById("google-translate-tts-ja", userId, guildId);
     }
 
     public VoiceType getVoiceTypeById(String id, long userId, long guildId) {
