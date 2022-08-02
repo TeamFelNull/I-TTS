@@ -490,7 +490,7 @@ public class TTSListener extends ListenerAdapter {
         if (vc == null) return;
 
         if (vc == event.getChannelJoined())
-            tmSayText(event, VCEventSayVoice.EventType.JOIN);
+            sayText(event, VCEventSayVoice.EventType.JOIN);
     }
 
     @Override
@@ -501,8 +501,8 @@ public class TTSListener extends ListenerAdapter {
 
         if (vc == event.getChannelLeft()) {
             boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
-            if (wasKicked) tmSayText(event, VCEventSayVoice.EventType.FORCE_LEAVE);
-            else tmSayText(event, VCEventSayVoice.EventType.LEAVE);
+            if (wasKicked) sayText(event, VCEventSayVoice.EventType.FORCE_LEAVE);
+            else sayText(event, VCEventSayVoice.EventType.LEAVE);
         }
         updateAuditLogMap(event.getGuild());
     }
@@ -519,11 +519,11 @@ public class TTSListener extends ListenerAdapter {
         if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
             boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
             if (vc == event.getChannelLeft()) {
-                if (wasMoved) tmSayText(event, VCEventSayVoice.EventType.FORCE_MOVE_TO);
-                else tmSayText(event, VCEventSayVoice.EventType.MOVE_TO);
+                if (wasMoved) sayText(event, VCEventSayVoice.EventType.FORCE_MOVE_TO);
+                else sayText(event, VCEventSayVoice.EventType.MOVE_TO);
             } else if (vc == event.getChannelJoined()) {
-                if (wasMoved) tmSayText(event, VCEventSayVoice.EventType.FORCE_MOVE_FROM);
-                else tmSayText(event, VCEventSayVoice.EventType.MOVE_FROM);
+                if (wasMoved) sayText(event, VCEventSayVoice.EventType.FORCE_MOVE_FROM);
+                else sayText(event, VCEventSayVoice.EventType.MOVE_FROM);
             }
         }
         updateAuditLogMap(event.getGuild());
@@ -559,7 +559,7 @@ public class TTSListener extends ListenerAdapter {
         return true;
     }
 
-    public void tmSayText(GuildVoiceUpdateEvent event, VCEventSayVoice.EventType type) {
+    public void sayText(GuildVoiceUpdateEvent event, VCEventSayVoice.EventType type) {
         TTSManager.getInstance().sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(type, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
     }
 
