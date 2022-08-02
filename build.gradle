@@ -46,6 +46,7 @@ dependencies {
     implementation 'com.atilika.kuromoji:kuromoji-ipadic:0.9.0'
     implementation 'com.ibm.icu:icu4j:71.1'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'blue.endless:jankson:1.2.1'
 }
 
 test {

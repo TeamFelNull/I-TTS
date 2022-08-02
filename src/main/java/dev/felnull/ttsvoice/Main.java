@@ -1,5 +1,7 @@
 package dev.felnull.ttsvoice;
 
+import blue.endless.jankson.Jankson;
+import blue.endless.jankson.JsonGrammar;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,8 +31,9 @@ import java.util.*;
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Jankson JANKSON = Jankson.builder().build();
     private static final File SAVE_FILE = new File("./save.json");
-    private static final File SERVER_CONFIG_FOLDER = new File("./server_config");
+    private static final File SERVER_CONFIG_FOLDER = new File("./server_saves");
     public static final SaveData SAVE_DATA = new SaveData();
     private static final Map<Long, ServerConfig> SERVER_CONFIGS = new HashMap<>();
     private static final List<JDA> JDAs = new ArrayList<>();
@@ -51,18 +54,16 @@ public class Main {
         LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
         LOGGER.info("---------------");
 
-        var configFile = new File("./config.json");
+        var configFile = new File("./config.json5");
 
         if (configFile.exists()) {
-            try (Reader reader = new BufferedReader(new FileReader(configFile))) {
-                CONFIG = Config.of(GSON.fromJson(reader, JsonObject.class));
-            }
+            CONFIG = Config.of(JANKSON.load(configFile));
             LOGGER.info("Config file was loaded");
         } else {
             LOGGER.warn("No config file, generate default config");
             CONFIG = Config.createDefault();
             try (Writer writer = new BufferedWriter(new FileWriter(configFile))) {
-                GSON.toJson(CONFIG.toJson(), writer);
+                CONFIG.toJson().toJson(writer, JsonGrammar.JSON5, 0);
             }
             return;
         }
