@@ -5,6 +5,7 @@ import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.voice.HasTitleAndID;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
 import dev.felnull.ttsvoice.voice.VoiceType;
 import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieEntry;
 import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieManager;
@@ -12,9 +13,13 @@ import dev.felnull.ttsvoice.voice.reinoare.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.reinoare.inm.INMManager;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.audit.*;
+import net.dv8tion.jda.api.audit.ActionType;
+import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.guild.voice.*;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -32,7 +37,7 @@ import java.util.stream.IntStream;
 public class TTSListener extends ListenerAdapter {
     private static final Random rand = new Random();
     private final int botNumber;
-    public static HashMap<Long, List<AuditLogEntry>> auditLogs = new HashMap<>();
+    public static HashMap<Long, HashMap<ActionType, List<AuditLogEntry>>> auditLogs = new HashMap<>();
 
     public TTSListener(int botNumber) {
         this.botNumber = botNumber;
@@ -407,31 +412,23 @@ public class TTSListener extends ListenerAdapter {
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent e) {
         if ("voice".equals(e.getName()) && "change".equals(e.getSubcommandName())) {
             var opc = e.getInteraction().getOption("voice_category");
-            var op = e.getInteraction().getOption("voice_type");
+            var opt = e.getInteraction().getOption("voice_type");
             String strc = opc == null ? null : opc.getAsString();
-            String str = op == null ? null : op.getAsString();
-
+            String strt = opt == null ? null : opt.getAsString();
             var choices = new ArrayList<HasTitleAndID>();
-
-            if (strc.equals("")) {
-                choices.addAll(TTSManager.getInstance().getVoiceCategories(e.getUser().getIdLong(), e.getGuild().getIdLong()));
-            }
-            if (op != null) {
+            if (strt == null) {
+                for (VoiceCategory voiceCategory : TTSManager.getInstance().getVoiceCategories(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
+                    if (voiceCategory.getId().contains(strc) || voiceCategory.getTitle().contains(strc))
+                        choices.add(voiceCategory);
+                }
+            } else {
                 for (VoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
-                    if (voiceType.getId().contains(strc) && (voiceType.getId().contains(str) || voiceType.getTitle().contains(str)))
+                    if (voiceType.getId().contains(strc) && (voiceType.getId().contains(strt) || voiceType.getTitle().contains(strt)))
                         choices.add(voiceType);
                 }
             }
-/*
 
-            choices = choices.stream().sorted(Comparator.comparingInt(n -> {
-                if (str == null) return 0;
-                int i = TextUtils.getComplementPoint(n.getId(), str) * 2;
-                int t = TextUtils.getComplementPoint(n.getTitle(), str);
-                return i + t;
-            })).toList();
-*/
-            e.replyChoices(((ArrayList<HasTitleAndID>) reduceChoices(choices)).stream().map(n -> new Command.Choice(n.getTitle(), n.getId())).toList()).queue();
+            e.replyChoices(choices.stream().limit(25).map(n -> new Command.Choice(n.getTitle(), n.getId())).toList()).queue();
         } else if ("inm".equals(e.getName())) {
             var op = e.getInteraction().getOption("search");
             var entries = new ArrayList<INMEntry>();
@@ -532,30 +529,29 @@ public class TTSListener extends ListenerAdapter {
         updateAuditLogMap(event.getGuild());
     }
 
+    public static void updateAuditLogMap(Guild guild) {
+        var map = auditLogs.get(guild.getIdLong()) != null ? auditLogs.get(guild.getIdLong()) : new HashMap<ActionType, List<AuditLogEntry>>();
+        map.put(ActionType.MEMBER_VOICE_MOVE, guild.retrieveAuditLogs().type(ActionType.MEMBER_VOICE_MOVE).limit(10).complete());
+        map.put(ActionType.MEMBER_VOICE_KICK, guild.retrieveAuditLogs().type(ActionType.MEMBER_VOICE_KICK).limit(10).complete());
+        auditLogs.put(guild.getIdLong(), map);
+    }
+
     public static boolean wasAuditLogChanged(Guild guild, ActionType type) {
-        var logNew = getCurrentAuditLogEntries(guild, type);
-        var logOld = getPreviousAuditLogEntries(guild, type);
+        var logNew = guild.retrieveAuditLogs().type(type).limit(10).complete();
+        ;
+        var logOld = auditLogs.get(guild.getIdLong()).get(type);
         return !isEqualAuditLog(logNew, logOld);
-    }
-
-    public static List<AuditLogEntry> getCurrentAuditLogEntries(Guild guild, ActionType type) {
-        return guild.retrieveAuditLogs().stream().filter(l -> l.getType() == type).toList();
-    }
-
-    public static List<AuditLogEntry> getPreviousAuditLogEntries(Guild guild, ActionType type) {
-        return auditLogs.get(guild.getIdLong()).stream().filter(l -> l.getType() == type).toList();
     }
 
     public static boolean isEqualAuditLog(List<AuditLogEntry> log1, List<AuditLogEntry> log2) {
         var largerLog = new ArrayList<>(log1.size() > log2.size() ? log1 : log2);
-        var smallerLog = new ArrayList<>(log1.size() < log2.size() ? log1 : log2);
+        var smallerLog = new ArrayList<>(log1.size() <= log2.size() ? log1 : log2);
         IntStream.range(smallerLog.size(), largerLog.size()).forEach(i -> largerLog.remove(smallerLog.size()));
 
         if (!largerLog.equals(smallerLog))
             return false;
         for (int i = 0; i < largerLog.size(); i++) {
-            var a = largerLog.get(i).getOptions();
-            for (String key : a.keySet()) {
+            for (String key : largerLog.get(i).getOptions().keySet()) {
                 if (!largerLog.get(i).getOptionByName(key).equals(smallerLog.get(i).getOptionByName(key)))
                     return false;
             }
@@ -567,27 +563,12 @@ public class TTSListener extends ListenerAdapter {
         TTSManager.getInstance().sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(type, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
     }
 
-    public static void updateAuditLogMap(Guild guild) {
-        auditLogs.put(guild.getIdLong(), guild.retrieveAuditLogs().complete());
-    }
-
     private boolean checkNeedAdmin(Member member, IReplyCallback callback) {
         if (!DiscordUtils.hasNeedAdminPermission(member)) {
             callback.reply("コマンドを実行する権限がありません").setEphemeral(true).queue();
             return false;
         }
         return true;
-    }
-
-    public static ArrayList<?> reduceChoices(ArrayList<?> choices) {
-        if (choices.size() > 25) {
-            var nc = new ArrayList<>();
-            for (int i = 0; i < 25; i++) {
-                nc.add(choices.get(i));
-            }
-            return nc;
-        }
-        return choices;
     }
 
     private class ReconnectThread extends Thread {
