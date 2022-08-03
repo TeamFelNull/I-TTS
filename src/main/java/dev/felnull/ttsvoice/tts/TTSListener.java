@@ -12,6 +12,7 @@ import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieEntry;
 import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieManager;
 import dev.felnull.ttsvoice.voice.reinoare.inm.INMEntry;
 import dev.felnull.ttsvoice.voice.reinoare.inm.INMManager;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
@@ -504,9 +505,13 @@ public class TTSListener extends ListenerAdapter {
         if (vc == null) return;
 
         if (vc == event.getChannelLeft()) {
-            boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
-            if (wasKicked) sayText(event, VCEventSayedText.EventType.FORCE_LEAVE);
-            else sayText(event, VCEventSayedText.EventType.LEAVE);
+            if(canViewAuditLog(event.getGuild())) {
+                boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
+                if (wasKicked) sayText(event, VCEventSayedText.EventType.FORCE_LEAVE);
+                else sayText(event, VCEventSayedText.EventType.LEAVE);
+            }else {
+                sayText(event, VCEventSayedText.EventType.LEAVE);
+            }
         }
         updateAuditLogMap(event.getGuild());
     }
@@ -519,21 +524,33 @@ public class TTSListener extends ListenerAdapter {
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
         if (vc == null) return;
-
         if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
-            boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
-            if (vc == event.getChannelLeft()) {
-                if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_TO);
-                else sayText(event, VCEventSayedText.EventType.MOVE_TO);
-            } else if (vc == event.getChannelJoined()) {
-                if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_FROM);
-                else sayText(event, VCEventSayedText.EventType.MOVE_FROM);
+            if(canViewAuditLog(event.getGuild())) {
+                boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
+                if (vc == event.getChannelLeft()) {
+                    if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_TO);
+                    else sayText(event, VCEventSayedText.EventType.MOVE_TO);
+                } else if (vc == event.getChannelJoined()) {
+                    if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_FROM);
+                    else sayText(event, VCEventSayedText.EventType.MOVE_FROM);
+                }
+            }else {
+                if (vc == event.getChannelLeft()) {
+                    sayText(event, VCEventSayedText.EventType.MOVE_TO);
+                } else if (vc == event.getChannelJoined()) {
+                    sayText(event, VCEventSayedText.EventType.MOVE_FROM);
+                }
             }
         }
         updateAuditLogMap(event.getGuild());
     }
 
+    public static boolean canViewAuditLog(Guild guild){
+            return guild.getMember(guild.getJDA().getSelfUser()).hasPermission(Permission.VIEW_AUDIT_LOGS);
+    }
+
     public static void updateAuditLogMap(Guild guild) {
+        if(!canViewAuditLog(guild)) return;
         var map = auditLogs.get(guild.getIdLong()) != null ? auditLogs.get(guild.getIdLong()) : new HashMap<ActionType, List<AuditLogEntry>>();
         map.put(ActionType.MEMBER_VOICE_MOVE, guild.retrieveAuditLogs().type(ActionType.MEMBER_VOICE_MOVE).limit(10).complete());
         map.put(ActionType.MEMBER_VOICE_KICK, guild.retrieveAuditLogs().type(ActionType.MEMBER_VOICE_KICK).limit(10).complete());
@@ -542,7 +559,6 @@ public class TTSListener extends ListenerAdapter {
 
     public static boolean wasAuditLogChanged(Guild guild, ActionType type) {
         var logNew = guild.retrieveAuditLogs().type(type).limit(10).complete();
-        ;
         var logOld = auditLogs.get(guild.getIdLong()).get(type);
         return !isEqualAuditLog(logNew, logOld);
     }
