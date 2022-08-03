@@ -611,8 +611,7 @@ public class TTSListener extends ListenerAdapter {
                             lv = null;
                         }
 
-                        if (lv == null)
-                            Main.getSaveData().setLastVersion(Main.VERSION);
+                        Main.getSaveData().setLastVersion(Main.VERSION);
 
                         tm.saySystemText(bag, new StartupSayedText(name, lv, v));
 
