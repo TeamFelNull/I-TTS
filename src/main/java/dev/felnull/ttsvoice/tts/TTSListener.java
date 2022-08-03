@@ -165,10 +165,6 @@ public class TTSListener extends ListenerAdapter {
                     }
                     case "check" -> {
                         var uop = e.getOption("user");
-                        if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
-                            e.reply("他ユーザーを確認するための権限がありません").queue();
-                            return;
-                        }
                         User user = uop == null ? e.getUser() : uop.getAsUser();
                         if (user.isBot()) {
                             e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
@@ -390,7 +386,7 @@ public class TTSListener extends ListenerAdapter {
             }
             case "vnick" -> {
                 var uop = e.getOption("user");
-                if (uop != null && DiscordUtils.hasPermission(e.getMember())) {
+                if (uop != null && !DiscordUtils.hasPermission(e.getMember())) {
                     e.reply("他ユーザーの読み上げユーザ名を変更するための権限がありません").queue();
                     return;
                 }
@@ -421,7 +417,7 @@ public class TTSListener extends ListenerAdapter {
         if ("voice".equals(e.getName()) && "change".equals(e.getSubcommandName())) {
             var opc = e.getInteraction().getOption("voice_category");
             var opt = e.getInteraction().getOption("voice_type");
-            String strc = opc == null ? null : opc.getAsString();
+            String strc = opc == null ? "" : opc.getAsString();
             String strt = opt == null ? null : opt.getAsString();
             var choices = new ArrayList<HasTitleAndID>();
             if (strt == null) {

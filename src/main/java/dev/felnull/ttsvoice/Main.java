@@ -68,7 +68,7 @@ public class Main {
                 .addSubcommands(new SubcommandData("inm-mode", "INMモード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
                 .addSubcommands(new SubcommandData("cookie-mode", "クッキー☆モード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
                 .addSubcommands(new SubcommandData("join-say-name", "VCに参加時に名前を読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
-                .addSubcommands(new SubcommandData("read-around-limit", "最大読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setRequired(true)))
+                .addSubcommands(new SubcommandData("read-around-limit", "最大読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setMaxValue(Integer.MAX_VALUE).setRequired(true)))
                 .addSubcommands(new SubcommandData("non-reading-prefix", "先頭につけると読み上げなくなる文字").addOptions(new OptionData(OptionType.STRING, "prefix", "接頭辞").setRequired(true)))
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
         var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"));
