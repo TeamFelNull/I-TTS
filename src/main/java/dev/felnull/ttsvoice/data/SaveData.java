@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import dev.felnull.ttsvoice.util.DiscordUtils;
+import dev.felnull.ttsvoice.util.JsonUtils;
 import dev.felnull.ttsvoice.voice.VoiceType;
 
 import java.util.ArrayList;
@@ -13,10 +14,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SaveData {
+public class SaveData extends BaseSaveData {
     private final Map<Long, String> userVoiceTypes = new HashMap<>();
     private final Map<Long, List<Long>> denyUsers = new HashMap<>();
     private final Map<Long, String> userNickNames = new HashMap<>();
+    private String lastVersion = "";
     private boolean dirty;
 
     public void load(JsonObject jo) {
@@ -58,6 +60,7 @@ public class SaveData {
             }
         }
 
+        lastVersion = JsonUtils.getString(jo, "LastVersion");
     }
 
     public JsonObject save() {
@@ -84,6 +87,8 @@ public class SaveData {
         }
         jo.add("UserNickNames", unn);
 
+        jo.addProperty("LastVersion", lastVersion);
+
         return jo;
     }
 
@@ -101,6 +106,7 @@ public class SaveData {
             userVoiceTypes.put(userId, voiceType.getId());
         }
         dirty = true;
+        saved();
     }
 
     public List<Long> getDenyUsers(long guildId) {
@@ -120,6 +126,7 @@ public class SaveData {
             denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).add(userId);
         }
         dirty = true;
+        saved();
     }
 
     public void removeDenyUser(long guildId, long userId) {
@@ -127,6 +134,7 @@ public class SaveData {
             denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).remove(userId);
         }
         dirty = true;
+        saved();
     }
 
     public void setUserNickName(long userId, String name) {
@@ -134,6 +142,7 @@ public class SaveData {
             userNickNames.put(userId, name);
         }
         dirty = true;
+        saved();
     }
 
     public void removeUserNickName(long userId) {
@@ -141,6 +150,7 @@ public class SaveData {
             userNickNames.remove(userId);
         }
         dirty = true;
+        saved();
     }
 
     public String getUserNickName(long userId) {
@@ -149,11 +159,26 @@ public class SaveData {
         }
     }
 
+    public void setLastVersion(String lastVersion) {
+        this.lastVersion = lastVersion;
+        dirty = true;
+        saved();
+    }
+
+    public String getLastVersion() {
+        return lastVersion;
+    }
+
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
     }
 
     public boolean isDirty() {
         return dirty;
+    }
+
+    @Override
+    void doSave() {
+        ConfigAndSaveDataManager.getInstance().savedData();
     }
 }

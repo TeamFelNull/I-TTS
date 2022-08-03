@@ -39,7 +39,7 @@ public class DiscordUtils {
     }
 
     private static String getName_(int botNumber, Guild guild, User user, long userId) {
-        var unn = Main.SAVE_DATA.getUserNickName(userId);
+        var unn = Main.getSaveData().getUserNickName(userId);
         if (unn != null)
             return unn;
 
@@ -66,7 +66,7 @@ public class DiscordUtils {
     }
 
     private static String getName_(Member member) {
-        var unn = Main.SAVE_DATA.getUserNickName(member.getIdLong());
+        var unn = Main.getSaveData().getUserNickName(member.getIdLong());
         if (unn != null)
             return unn;
 
@@ -77,12 +77,12 @@ public class DiscordUtils {
     }
 
     public static boolean hasPermission(Member member) {
-        boolean flg = member.getRoles().stream().anyMatch(n -> Main.CONFIG.adminRoles().contains(n.getIdLong()));
+        boolean flg = member.getRoles().stream().anyMatch(n -> Main.getConfig().adminRoles().contains(n.getIdLong()));
         return flg || member.isOwner() || member.hasPermission(Permission.MANAGE_SERVER);
     }
 
     public static boolean hasNeedAdminPermission(Member member) {
-        if (Main.CONFIG.needAdminServers().contains(member.getGuild().getIdLong()))
+        if (Main.getConfig().needAdminServers().contains(member.getGuild().getIdLong()))
             return hasPermission(member);
         return true;
     }
@@ -113,7 +113,7 @@ public class DiscordUtils {
         if (Message.MentionType.USER.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
             long id = Long.parseLong(mentionText);
-            var nick = Main.SAVE_DATA.getUserNickName(id);
+            var nick = Main.getSaveData().getUserNickName(id);
             if (nick != null)
                 return nick;
 

@@ -17,7 +17,7 @@ public class VoiceVoxManager extends VVEngineManager {
 
     @Override
     public List<String> getEngineURLs() {
-        return Main.CONFIG.voiceVoxURLs();
+        return Main.getConfig().voiceVoxURLs();
     }
 
     @Override

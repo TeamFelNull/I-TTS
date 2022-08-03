@@ -55,9 +55,12 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
 
     public void check() {
         if (botTokens.isEmpty()) throw new IllegalStateException("Bot token is empty");
-        if (voiceVoxURLs.isEmpty()) throw new IllegalStateException("VoiceVox url is empty");
-        if (coeiroInkURLs.isEmpty()) throw new IllegalStateException("CoeiroInk url is empty");
-        if (voiceTextAPIKey.isEmpty()) throw new IllegalStateException("VoiceText api key is empty");
+        if (voiceConfig.enableVoiceVox())
+            if (voiceVoxURLs.isEmpty()) throw new IllegalStateException("VoiceVox url is empty");
+        if (voiceConfig.enableCoeiroInk())
+            if (coeiroInkURLs.isEmpty()) throw new IllegalStateException("CoeiroInk url is empty");
+        if (voiceConfig.enableVoiceText())
+            if (voiceTextAPIKey.isEmpty()) throw new IllegalStateException("VoiceText api key is empty");
         if (cashTime < 0) throw new IllegalStateException("Cash time must be greater than or equal to 0");
     }
 }

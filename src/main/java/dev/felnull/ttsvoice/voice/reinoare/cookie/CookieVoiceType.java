@@ -1,7 +1,8 @@
 package dev.felnull.ttsvoice.voice.reinoare.cookie;
 
-import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
-import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
+import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
+import dev.felnull.ttsvoice.tts.sayedtext.StartupSayedText;
+import dev.felnull.ttsvoice.tts.sayedtext.VCEventSayedText;
 import dev.felnull.ttsvoice.voice.URLVoiceType;
 
 import java.io.InputStream;
@@ -18,10 +19,10 @@ public class CookieVoiceType implements URLVoiceType {
     }
 
     @Override
-    public String getSayVoiceSoundURL(ISayVoice sayVoice) throws Exception {
-        if (sayVoice instanceof VCEventSayVoice)
+    public String getSayVoiceSoundURL(SayedText sayedText) throws Exception {
+        if (sayedText instanceof VCEventSayedText || sayedText instanceof StartupSayedText)
             return null;
-        return URLVoiceType.super.getSayVoiceSoundURL(sayVoice);
+        return URLVoiceType.super.getSayVoiceSoundURL(sayedText);
     }
 
     @Override
@@ -35,9 +36,9 @@ public class CookieVoiceType implements URLVoiceType {
     }
 
     @Override
-    public InputStream getSayVoiceSound(ISayVoice sayVoice) throws Exception {
-        if (sayVoice instanceof VCEventSayVoice vcEventSayVoice) {
-            var in = CookieManager.getInstance();
+    public InputStream getSayVoiceSound(SayedText sayedText) throws Exception {
+        var in = CookieManager.getInstance();
+        if (sayedText instanceof VCEventSayedText vcEventSayVoice) {
             return switch (vcEventSayVoice.getEventType()) {
                 case JOIN -> in.getJoinSound();
                 case MOVE_FROM -> in.getMoveFromSound();
@@ -47,12 +48,14 @@ public class CookieVoiceType implements URLVoiceType {
                 case MOVE_TO -> in.getMoveToSound();
                 case FORCE_MOVE_TO -> in.getForceMoveToSound();
             };
+        } else if (sayedText instanceof StartupSayedText) {
+            return in.getJoinSound();
         }
-        return URLVoiceType.super.getSayVoiceSound(sayVoice);
+        return URLVoiceType.super.getSayVoiceSound(sayedText);
     }
 
     @Override
-    public boolean isCached(ISayVoice sayVoice) {
+    public boolean isCached(SayedText sayVoice) {
         return false;
     }
 }

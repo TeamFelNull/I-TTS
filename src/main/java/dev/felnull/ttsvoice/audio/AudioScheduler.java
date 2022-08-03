@@ -163,7 +163,7 @@ public class AudioScheduler extends AudioEventAdapter {
 
                 currentTrackLoader = lg.getLeft();
 
-                if (!Main.getServerConfig(botAndGuild.guildId()).isOverwriteAloud()) {
+                if (!Main.getServerSaveData(botAndGuild.guildId()).isOverwriteAloud()) {
                     synchronized (queue) {
                         List<TTSVoiceEntry> qc = queue.stream().filter(n -> !previsionLoadTracks.containsKey(n)).toList();
                         int lc = FNMath.clamp(qc.size(), 0, previsionLoadCount);

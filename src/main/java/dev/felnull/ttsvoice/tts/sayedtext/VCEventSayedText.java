@@ -1,16 +1,15 @@
-package dev.felnull.ttsvoice.tts.sayvoice;
+package dev.felnull.ttsvoice.tts.sayedtext;
 
 import dev.felnull.fnjl.tuple.FNPair;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.guild.voice.GenericGuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class VCEventSayVoice implements ISayVoice {
+public class VCEventSayedText implements SayedText {
     private final EventType eventType;
     private final FNPair<Guild, Integer> guildAndBotNumber;
     private final User user;
@@ -19,11 +18,11 @@ public class VCEventSayVoice implements ISayVoice {
 
 
 
-    public VCEventSayVoice(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user) {
+    public VCEventSayedText(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user) {
         this(eventType, guildAndBotNumber, user, null);
     }
 
-    public VCEventSayVoice(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user, @Nullable GuildVoiceUpdateEvent event) {
+    public VCEventSayedText(EventType eventType, FNPair<Guild, Integer> guildAndBotNumber, User user, @Nullable GuildVoiceUpdateEvent event) {
         this.eventType = eventType;
         this.guildAndBotNumber = guildAndBotNumber;
         this.user = user;
@@ -67,7 +66,7 @@ public class VCEventSayVoice implements ISayVoice {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        VCEventSayVoice that = (VCEventSayVoice) o;
+        VCEventSayedText that = (VCEventSayedText) o;
         return eventType == that.eventType && Objects.equals(guildAndBotNumber, that.guildAndBotNumber) && Objects.equals(user, that.user) && Objects.equals(event, that.event);
     }
 

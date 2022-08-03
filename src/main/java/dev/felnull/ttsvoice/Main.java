@@ -1,25 +1,18 @@
 package dev.felnull.ttsvoice;
 
-import blue.endless.jankson.Jankson;
-import blue.endless.jankson.JsonGrammar;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import dev.felnull.ttsvoice.data.Config;
+import dev.felnull.ttsvoice.data.ConfigAndSaveDataManager;
 import dev.felnull.ttsvoice.data.SaveData;
-import dev.felnull.ttsvoice.data.ServerConfig;
-import dev.felnull.ttsvoice.tts.BotAndGuild;
+import dev.felnull.ttsvoice.data.ServerSaveData;
 import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.ChannelType;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -28,19 +21,11 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
 import java.util.*;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Jankson JANKSON = Jankson.builder().build();
-    private static final File SAVE_FILE = new File("./save.json");
-    private static final File SERVER_CONFIG_FOLDER = new File("./server_saves");
-    public static final SaveData SAVE_DATA = new SaveData();
-    private static final Map<Long, ServerConfig> SERVER_CONFIGS = new HashMap<>();
     private static final List<JDA> JDAs = new ArrayList<>();
-    public static Config CONFIG;
     public static String VERSION;
 
     public static void main(String[] args) throws Exception {
@@ -57,103 +42,11 @@ public class Main {
         LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
         LOGGER.info("---------------");
 
-        var configFile = new File("./config.json5");
-
-        if (configFile.exists()) {
-            CONFIG = Config.of(JANKSON.load(configFile));
-            LOGGER.info("Config file was loaded");
-        } else {
-            LOGGER.warn("No config file, generate default config");
-            CONFIG = Config.createDefault();
-            try (Writer writer = new BufferedWriter(new FileWriter(configFile))) {
-                CONFIG.toJson().toJson(writer, JsonGrammar.JSON5, 0);
-            }
-            return;
-        }
-
-        try {
-            CONFIG.check();
-        } catch (Exception ex) {
-            LOGGER.error("Config is incorrect: " + ex.getMessage());
-            return;
-        }
-
-        LOGGER.info("Completed config check");
-
-        if (SAVE_FILE.exists()) {
-            JsonObject jo;
-            try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(SAVE_FILE)))) {
-                jo = GSON.fromJson(reader, JsonObject.class);
-            }
-            SAVE_DATA.load(jo);
-            LOGGER.info("Completed load data");
-        }
-
-        if (SERVER_CONFIG_FOLDER.exists() && SERVER_CONFIG_FOLDER.isDirectory()) {
-            var files = SERVER_CONFIG_FOLDER.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.getName().endsWith(".json")) {
-                        var name = file.getName();
-                        name = name.substring(0, name.length() - ".json".length());
-                        try {
-                            long id = Long.parseLong(name);
-                            JsonObject jo;
-                            try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)))) {
-                                jo = GSON.fromJson(reader, JsonObject.class);
-                            }
-                            var sc = new ServerConfig();
-                            sc.load(jo);
-                            synchronized (SERVER_CONFIGS) {
-                                SERVER_CONFIGS.put(id, sc);
-                            }
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
-                }
-            }
-            LOGGER.info("Completed load server config");
-        }
-
-        Timer timer = new Timer();
-        TimerTask saveTask = new TimerTask() {
-            public void run() {
-                if (SAVE_DATA.isDirty()) {
-                    var jo = SAVE_DATA.save();
-                    try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(SAVE_FILE)))) {
-                        GSON.toJson(jo, writer);
-                        LOGGER.info("Completed to save data");
-                    } catch (Exception ex) {
-                        LOGGER.error("Failed to save data", ex);
-                    }
-                    SAVE_DATA.setDirty(false);
-                }
-                synchronized (SERVER_CONFIGS) {
-                    SERVER_CONFIGS.forEach((id, config) -> {
-                        if (config.isDirty()) {
-                            var jo = new JsonObject();
-                            config.save(jo);
-                            if (!SERVER_CONFIG_FOLDER.exists() && !SERVER_CONFIG_FOLDER.mkdirs()) {
-                                LOGGER.error("Failed to create server config folder");
-                            }
-                            try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(SERVER_CONFIG_FOLDER.toPath().resolve(id + ".json").toFile())))) {
-                                GSON.toJson(jo, writer);
-                                LOGGER.info("Completed to server config");
-                            } catch (Exception ex) {
-                                LOGGER.error("Failed to server config", ex);
-                            }
-                            config.setDirty(false);
-                        }
-                    });
-                }
-            }
-        };
-        timer.scheduleAtFixedRate(saveTask, 0, 30 * 1000);
-
+        ConfigAndSaveDataManager.getInstance().init();
         VoiceLoaderManager.getInstance().init();
 
         int num = 0;
-        for (String botToken : CONFIG.botTokens()) {
+        for (String botToken : getConfig().botTokens()) {
             var jda = JDABuilder.createDefault(botToken).addEventListeners(new TTSListener(num)).enableIntents(GatewayIntent.MESSAGE_CONTENT).build();
             JDAs.add(jda);
             num++;
@@ -181,6 +74,8 @@ public class Main {
         var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"));
         JDAs.forEach(jda -> jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, cookie, config, vnick).queue());
 
+        Timer timer = new Timer();
+
         TimerTask updatePresenceTask = new TimerTask() {
             public void run() {
                 long ct = TTSManager.getInstance().getTTSCount();
@@ -198,50 +93,22 @@ public class Main {
             }
         };
         timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
-
-        Thread reconecter = new Thread(() -> {
-            try {
-                Thread.sleep(1000 * 10);
-            } catch (InterruptedException ignored) {
-            }
-
-            synchronized (SERVER_CONFIGS) {
-                SERVER_CONFIGS.forEach((g, c) -> {
-                    synchronized (JDAs) {
-                        for (JDA jda : JDAs) {
-                            long id = jda.getSelfUser().getIdLong();
-                            var lj = c.getLastJoinChannel(id);
-                            if (lj != null) {
-                                try {
-                                    var guild = jda.getGuildById(g);
-                                    var audioManager = guild.getAudioManager();
-                                    var achn = guild.getChannelById(AudioChannel.class, lj.audioChannel());
-                                    if (achn == null) continue;
-                                    var tch = guild.getChannelById(TextChannel.class, lj.ttsChannel());
-                                    if (tch == null) continue;
-                                    audioManager.openAudioConnection(achn);
-                                    TTSManager.getInstance().connect(new BotAndGuild(getJDABotNumber(jda), guild.getIdLong()), tch.getIdLong(), achn.getIdLong());
-                                } catch (Exception ex) {
-                                    LOGGER.error("Reconnection failed", ex);
-                                }
-                            }
-                        }
-                    }
-                });
-
-                LOGGER.info("Reconnect bot");
-            }
-
-        });
-        reconecter.start();
     }
 
-    public static ServerConfig getServerConfig(long guildId) {
-        ServerConfig cfg;
-        synchronized (SERVER_CONFIGS) {
-            cfg = SERVER_CONFIGS.computeIfAbsent(guildId, n -> new ServerConfig());
-        }
-        return cfg;
+    public static ServerSaveData getServerSaveData(long guildId) {
+        return ConfigAndSaveDataManager.getInstance().getServerSaveData(guildId);
+    }
+
+    public static SaveData getSaveData() {
+        return ConfigAndSaveDataManager.getInstance().getSaveData();
+    }
+
+    public static Config getConfig() {
+        return ConfigAndSaveDataManager.getInstance().getConfig();
+    }
+
+    public static Map<Long, ServerSaveData> getAllServerSaveData() {
+        return ConfigAndSaveDataManager.getInstance().getAllServerSaveData();
     }
 
     public static JDA getJDA(int botNumber) {

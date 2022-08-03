@@ -22,7 +22,7 @@ public class VoiceTextManager {
     }
 
     public String getAPIKey() {
-        return Main.CONFIG.voiceTextAPIKey();
+        return Main.getConfig().voiceTextAPIKey();
     }
 
     public InputStream getVoice(String text, VTVoiceTypes vtVoiceTypes) throws IOException, InterruptedException, URISyntaxException {

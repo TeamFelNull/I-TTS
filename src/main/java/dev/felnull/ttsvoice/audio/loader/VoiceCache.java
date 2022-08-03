@@ -21,7 +21,7 @@ public class VoiceCache {
     }
 
     private boolean isTimeOut() {
-        return System.currentTimeMillis() - lastTime >= (long) Main.CONFIG.cashTime() * 60L * 1000L;
+        return System.currentTimeMillis() - lastTime >= (long) Main.getConfig().cashTime() * 60L * 1000L;
     }
 
     private boolean isForceTimeOut() {

@@ -3,9 +3,9 @@ package dev.felnull.ttsvoice.tts;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
-import dev.felnull.ttsvoice.data.ServerConfig;
-import dev.felnull.ttsvoice.tts.sayvoice.ISayVoice;
-import dev.felnull.ttsvoice.tts.sayvoice.LiteralSayVoice;
+import dev.felnull.ttsvoice.data.ServerSaveData;
+import dev.felnull.ttsvoice.tts.sayedtext.LiteralSayedText;
+import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.URLUtils;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
@@ -57,17 +57,17 @@ public class TTSManager {
     }
 
     public void connect(BotAndGuild bag, long ttsChanelId, long audioChannel) {
-        if (Main.getServerConfig(bag.getGuild().getIdLong()).isJoinSayName())
+        if (Main.getServerSaveData(bag.getGuild().getIdLong()).isJoinSayName())
             TTSListener.updateAuditLogMap(bag.getGuild());
 
         setTTSChanel(bag, ttsChanelId);
-        Main.getServerConfig(bag.guildId()).setLastJoinChannel(bag.getBotUserId(), new ServerConfig.TTSEntry(audioChannel, ttsChanelId));
+        Main.getServerSaveData(bag.guildId()).setLastJoinChannel(bag.getBotUserId(), new ServerSaveData.TTSEntry(audioChannel, ttsChanelId));
     }
 
     public void disconnect(BotAndGuild bag) {
         removeTTSChanel(bag);
         VoiceAudioPlayerManager.getInstance().clearSchedulers(bag);
-        Main.getServerConfig(bag.guildId()).removeLastJoinChannel(bag.getBotUserId());
+        Main.getServerSaveData(bag.guildId()).removeLastJoinChannel(bag.getBotUserId());
     }
 
     public long getTTSChanel(BotAndGuild bag) {
@@ -103,7 +103,7 @@ public class TTSManager {
     }
 
     public VoiceType getUserVoiceType(long userId, long guildId) {
-        var uvt = Main.SAVE_DATA.getVoiceType(userId, guildId);
+        var uvt = Main.getSaveData().getVoiceType(userId, guildId);
         if (uvt != null) return uvt;
 
         var dvt = getDefaultVoiceType(userId, guildId);
@@ -112,11 +112,20 @@ public class TTSManager {
         return dvt;
     }
 
+    private VoiceType getMyVoiceType(BotAndGuild bag) {
+        return getUserVoiceType(bag.getBotUserId(), bag.guildId());
+    }
+
     private VoiceType getDefaultVoiceType(long userId, long guildId) {
         var dvt = getVoiceTypeById("voicevox-2", userId, guildId);
         if (dvt != null)
             return dvt;
-        return getVoiceTypeById("google-translate-tts-ja", userId, guildId);
+
+        dvt = getVoiceTypeById("google-translate-tts-ja", userId, guildId);
+        if (dvt != null)
+            return dvt;
+
+        return getVoiceTypeById("voicetext-show", userId, guildId);
     }
 
     public VoiceType getVoiceTypeById(String id, long userId, long guildId) {
@@ -124,12 +133,12 @@ public class TTSManager {
     }
 
     public void setUserVoceTypes(long userId, VoiceType type) {
-        Main.SAVE_DATA.setVoiceType(userId, type);
+        Main.getSaveData().setVoiceType(userId, type);
     }
 
     public List<VoiceType> getVoiceTypes(long userId, long guildId) {
         ImmutableList.Builder<VoiceType> builder = new ImmutableList.Builder<>();
-        var vc = Main.CONFIG.voiceConfig();
+        var vc = Main.getConfig().voiceConfig();
 
         if (vc.enableVoiceVox())
             builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
@@ -141,16 +150,16 @@ public class TTSManager {
             builder.add(GoogleTranslateTTSType.values());
 
         if (vc.enableInm()) {
-            boolean flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
-            boolean flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
+            boolean flg1 = Main.getServerSaveData(guildId).isInmMode(guildId);
+            boolean flg2 = !Main.getConfig().inmDenyUser().contains(userId);
 
             if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId))
                 builder.add(INMManager.getInstance().getVoice());
         }
 
         if (vc.enableCookie()) {
-            boolean flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
-            boolean flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
+            boolean flg3 = Main.getServerSaveData(guildId).isCookieMode(guildId);
+            boolean flg4 = !Main.getConfig().cookieDenyUser().contains(userId);
 
             if (flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId))
                 builder.add(CookieManager.getInstance().getVoice());
@@ -166,10 +175,10 @@ public class TTSManager {
                 .add(VTVoiceCategory.getInstance())
                 .add(GoogleTranslateVoiceCategory.getInstance());
 
-        var flg1 = Main.getServerConfig(guildId).isInmMode(guildId);
-        var flg2 = !Main.CONFIG.inmDenyUser().contains(userId);
-        var flg3 = Main.getServerConfig(guildId).isCookieMode(guildId);
-        var flg4 = !Main.CONFIG.cookieDenyUser().contains(userId);
+        var flg1 = Main.getServerSaveData(guildId).isInmMode(guildId);
+        var flg2 = !Main.getConfig().inmDenyUser().contains(userId);
+        var flg3 = Main.getServerSaveData(guildId).isCookieMode(guildId);
+        var flg4 = !Main.getConfig().cookieDenyUser().contains(userId);
 
         if (flg1 && flg2 && !DiscordUtils.isNonAllowInm(guildId) || flg3 && flg4 && !DiscordUtils.isNonAllowCookie(guildId)) {
             builder.add(ReinoareVoiceCategory.getInstance());
@@ -179,7 +188,7 @@ public class TTSManager {
     }
 
     public void sayChat(BotAndGuild bag, long userId, String text) {
-        if (ignorePattern == null) ignorePattern = Pattern.compile(Main.CONFIG.ignoreRegex());
+        if (ignorePattern == null) ignorePattern = Pattern.compile(Main.getConfig().ignoreRegex());
 
         if (ignorePattern.matcher(text).matches()) return;
 
@@ -198,27 +207,31 @@ public class TTSManager {
         sayText(bag, vt, text);
     }
 
+    public void saySystemText(BotAndGuild bag, SayedText sayedText) {
+        sayText(bag, getMyVoiceType(bag), sayedText);
+    }
+
     public void sayText(BotAndGuild bag, VoiceType voiceType, String text) {
-        sayText(bag, voiceType, new LiteralSayVoice(text));
+        sayText(bag, voiceType, new LiteralSayedText(text));
     }
 
     public void sayText(BotAndGuild bag, long userId, String text) {
         sayText(bag, getUserVoiceType(userId, bag.guildId()), text);
     }
 
-    public void sayText(BotAndGuild bag, long userId, ISayVoice sayVoice) {
-        sayText(bag, getUserVoiceType(userId, bag.guildId()), sayVoice);
+    public void sayText(BotAndGuild bag, long userId, SayedText sayedText) {
+        sayText(bag, getUserVoiceType(userId, bag.guildId()), sayedText);
     }
 
-    public void sayText(BotAndGuild bag, VoiceType voiceType, ISayVoice sayVoice) {
+    public void sayText(BotAndGuild bag, VoiceType voiceType, SayedText sayedText) {
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(bag);
         var q = getTTSQueue(bag);
-        if (Main.getServerConfig(bag.guildId()).isOverwriteAloud()) {
+        if (Main.getServerSaveData(bag.guildId()).isOverwriteAloud()) {
             q.clear();
             sc.stop();
         }
 
-        q.add(new TTSVoiceEntry(new TTSVoice(sayVoice, voiceType), UUID.randomUUID()));
+        q.add(new TTSVoiceEntry(new TTSVoice(sayedText, voiceType), UUID.randomUUID()));
         if (!sc.isLoadingOrPlaying()) sc.next();
     }
 

@@ -2,7 +2,8 @@ package dev.felnull.ttsvoice.tts;
 
 import dev.felnull.fnjl.tuple.FNPair;
 import dev.felnull.ttsvoice.Main;
-import dev.felnull.ttsvoice.tts.sayvoice.VCEventSayVoice;
+import dev.felnull.ttsvoice.tts.sayedtext.StartupSayedText;
+import dev.felnull.ttsvoice.tts.sayedtext.VCEventSayedText;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.voice.HasTitleAndID;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
@@ -16,6 +17,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
@@ -29,12 +31,18 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.managers.AudioManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.IntStream;
 
 public class TTSListener extends ListenerAdapter {
+    private static final Logger LOGGER = LogManager.getLogger(TTSListener.class);
     private static final Random rand = new Random();
     private final int botNumber;
     public static HashMap<Long, HashMap<ActionType, List<AuditLogEntry>>> auditLogs = new HashMap<>();
@@ -178,7 +186,7 @@ public class TTSListener extends ListenerAdapter {
                             e.reply("読み上げ拒否をされているユーザ一覧を見る権限がありません").setEphemeral(true).queue();
                             return;
                         }
-                        var lst = Main.SAVE_DATA.getDenyUsers(e.getGuild().getIdLong());
+                        var lst = Main.getSaveData().getDenyUsers(e.getGuild().getIdLong());
                         if (lst.isEmpty()) {
                             e.reply("読み上げ拒否されたユーザは存在しません").setEphemeral(true).queue();
                             return;
@@ -209,11 +217,11 @@ public class TTSListener extends ListenerAdapter {
                             return;
                         }
 
-                        if (Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
+                        if (Main.getSaveData().isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
                             e.reply("すでに読み上げ拒否をされているユーザです").setEphemeral(true).queue();
                             return;
                         }
-                        Main.SAVE_DATA.addDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
+                        Main.getSaveData().addDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
                         e.reply(DiscordUtils.getName(botNumber, e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "の読み上げ拒否します").setEphemeral(true).queue();
                     }
                     case "remove" -> {
@@ -232,11 +240,11 @@ public class TTSListener extends ListenerAdapter {
                             e.reply(DiscordUtils.getName(botNumber, e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "はBOTです").setEphemeral(true).queue();
                             return;
                         }
-                        if (!Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
+                        if (!Main.getSaveData().isDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong())) {
                             e.reply("読み上げ拒否をされていないユーザです").setEphemeral(true).queue();
                             return;
                         }
-                        Main.SAVE_DATA.removeDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
+                        Main.getSaveData().removeDenyUser(e.getGuild().getIdLong(), uop.getAsUser().getIdLong());
                         e.reply(DiscordUtils.getName(botNumber, e.getGuild(), uop.getAsUser(), uop.getAsUser().getIdLong()) + "の読み上げ拒否を解除します").setEphemeral(true).queue();
                     }
                 }
@@ -265,7 +273,7 @@ public class TTSListener extends ListenerAdapter {
                     e.reply("コンフィグが未指定です").setEphemeral(true).queue();
                     return;
                 }
-                var sc = Main.getServerConfig(e.getGuild().getIdLong());
+                var sc = Main.getServerSaveData(e.getGuild().getIdLong());
                 if ("show".equals(sb)) {
                     var msg = new MessageBuilder().append("現在のコンフィグ\n");
                     StringBuilder sbr = new StringBuilder();
@@ -396,10 +404,10 @@ public class TTSListener extends ListenerAdapter {
                 if (nm != null) {
                     var name = nm.getAsString();
                     if ("reset".equals(name)) {
-                        Main.SAVE_DATA.removeUserNickName(user.getIdLong());
+                        Main.getSaveData().removeUserNickName(user.getIdLong());
                         e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "のニックネームをリセットしました").queue();
                     } else {
-                        Main.SAVE_DATA.setUserNickName(user.getIdLong(), name);
+                        Main.getSaveData().setUserNickName(user.getIdLong(), name);
                         e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "のニックネームを変更しました").queue();
                     }
                 }
@@ -462,12 +470,12 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e) {
-        var sc = Main.getServerConfig(e.getGuild().getIdLong());
+        var sc = Main.getServerSaveData(e.getGuild().getIdLong());
         var tm = TTSManager.getInstance();
         if (tm.getTTSChanel(new BotAndGuild(botNumber, e.getGuild().getIdLong())) == e.getChannel().getIdLong() && !e.getMember().getUser().isBot()) {
-            if (Main.SAVE_DATA.isDenyUser(e.getGuild().getIdLong(), e.getMember().getIdLong())) return;
+            if (Main.getSaveData().isDenyUser(e.getGuild().getIdLong(), e.getMember().getIdLong())) return;
             if (e.getMessage().getContentRaw().startsWith(sc.getNonReadingPrefix())) return;
-            if (Main.getServerConfig(e.getGuild().getIdLong()).isNeedJoin()) {
+            if (Main.getServerSaveData(e.getGuild().getIdLong()).isNeedJoin()) {
                 var vs = e.getMember().getVoiceState();
                 if (vs == null) return;
                 var vc = vs.getChannel();
@@ -485,45 +493,45 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
-        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+        if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
         if (vc == null) return;
 
         if (vc == event.getChannelJoined())
-            sayText(event, VCEventSayVoice.EventType.JOIN);
+            sayText(event, VCEventSayedText.EventType.JOIN);
     }
 
     @Override
     public void onGuildVoiceLeave(@NotNull GuildVoiceLeaveEvent event) {
-        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
+        if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
         if (vc == null) return;
 
         if (vc == event.getChannelLeft()) {
             boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
-            if (wasKicked) sayText(event, VCEventSayVoice.EventType.FORCE_LEAVE);
-            else sayText(event, VCEventSayVoice.EventType.LEAVE);
+            if (wasKicked) sayText(event, VCEventSayedText.EventType.FORCE_LEAVE);
+            else sayText(event, VCEventSayedText.EventType.LEAVE);
         }
         updateAuditLogMap(event.getGuild());
     }
 
     @Override
     public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
-        if (!Main.getServerConfig(event.getGuild().getIdLong()).isJoinSayName()) return;
-        var vc = event.getGuild().getAudioManager().getConnectedChannel();
-        if (vc == null) return;
-
         if (event.getMember().getUser().isBot() && Main.getJDAByID(event.getMember().getIdLong()) != null)
             TTSManager.getInstance().reconnect(BotAndGuild.ofId(event.getMember().getIdLong(), event.getGuild().getIdLong()), event.getChannelJoined().getIdLong());
+
+        if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+        if (vc == null) return;
 
         if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
             boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
             if (vc == event.getChannelLeft()) {
-                if (wasMoved) sayText(event, VCEventSayVoice.EventType.FORCE_MOVE_TO);
-                else sayText(event, VCEventSayVoice.EventType.MOVE_TO);
+                if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_TO);
+                else sayText(event, VCEventSayedText.EventType.MOVE_TO);
             } else if (vc == event.getChannelJoined()) {
-                if (wasMoved) sayText(event, VCEventSayVoice.EventType.FORCE_MOVE_FROM);
-                else sayText(event, VCEventSayVoice.EventType.MOVE_FROM);
+                if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_FROM);
+                else sayText(event, VCEventSayedText.EventType.MOVE_FROM);
             }
         }
         updateAuditLogMap(event.getGuild());
@@ -559,8 +567,8 @@ public class TTSListener extends ListenerAdapter {
         return true;
     }
 
-    public void sayText(GuildVoiceUpdateEvent event, VCEventSayVoice.EventType type) {
-        TTSManager.getInstance().sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayVoice(type, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
+    public void sayText(GuildVoiceUpdateEvent event, VCEventSayedText.EventType type) {
+        TTSManager.getInstance().sayText(new BotAndGuild(botNumber, event.getGuild().getIdLong()), event.getMember().getIdLong(), new VCEventSayedText(type, FNPair.of(event.getGuild(), botNumber), event.getMember().getUser(), event));
     }
 
     private boolean checkNeedAdmin(Member member, IReplyCallback callback) {
@@ -569,6 +577,52 @@ public class TTSListener extends ListenerAdapter {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void onReady(@NotNull ReadyEvent event) {
+        var jda = Main.getJDA(botNumber);
+        String name = jda.getSelfUser().getName();
+
+        synchronized (Main.getAllServerSaveData()) {
+            Main.getAllServerSaveData().forEach((g, c) -> {
+                long id = jda.getSelfUser().getIdLong();
+                var lj = c.getLastJoinChannel(id);
+                if (lj != null) {
+                    try {
+                        var guild = jda.getGuildById(g);
+                        var audioManager = guild.getAudioManager();
+                        var achn = guild.getChannelById(AudioChannel.class, lj.audioChannel());
+                        if (achn == null) return;
+                        var tch = guild.getChannelById(TextChannel.class, lj.ttsChannel());
+                        if (tch == null) return;
+                        audioManager.openAudioConnection(achn);
+                        var bag = new BotAndGuild(botNumber, guild.getIdLong());
+                        var tm = TTSManager.getInstance();
+                        tm.connect(bag, tch.getIdLong(), achn.getIdLong());
+
+                        var v = Main.VERSION;
+                        var lv = Main.getSaveData().getLastVersion();
+
+                        if (v.equals(lv)) {
+                            v = null;
+                            lv = null;
+                        } else if (lv != null && lv.isEmpty()) {
+                            lv = null;
+                        }
+
+                        if (lv == null)
+                            Main.getSaveData().setLastVersion(Main.VERSION);
+
+                        tm.saySystemText(bag, new StartupSayedText(name, lv, v));
+
+                        LOGGER.info(name + " reconnect to " + guild.getName());
+                    } catch (Exception ex) {
+                        LOGGER.error("Oh... reconnection failed", ex);
+                    }
+                }
+            });
+        }
     }
 
     private class ReconnectThread extends Thread {

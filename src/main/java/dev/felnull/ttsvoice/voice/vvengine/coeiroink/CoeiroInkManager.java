@@ -17,7 +17,7 @@ public class CoeiroInkManager extends VVEngineManager {
 
     @Override
     public List<String> getEngineURLs() {
-        return Main.CONFIG.coeiroInkURLs();
+        return Main.getConfig().coeiroInkURLs();
     }
 
     @Override
