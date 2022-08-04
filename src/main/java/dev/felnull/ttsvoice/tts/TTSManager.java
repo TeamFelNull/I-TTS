@@ -57,9 +57,6 @@ public class TTSManager {
     }
 
     public void connect(BotAndGuild bag, long ttsChanelId, long audioChannel) {
-        if (Main.getServerSaveData(bag.getGuild().getIdLong()).isJoinSayName())
-            TTSListener.updateAuditLogMap(bag.getGuild());
-
         setTTSChanel(bag, ttsChanelId);
         Main.getServerSaveData(bag.guildId()).setLastJoinChannel(bag.getBotUserId(), new ServerSaveData.TTSEntry(audioChannel, ttsChanelId));
     }

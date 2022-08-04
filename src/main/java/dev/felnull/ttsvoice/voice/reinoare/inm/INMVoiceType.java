@@ -3,11 +3,17 @@ package dev.felnull.ttsvoice.voice.reinoare.inm;
 import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
 import dev.felnull.ttsvoice.tts.sayedtext.StartupSayedText;
 import dev.felnull.ttsvoice.tts.sayedtext.VCEventSayedText;
+import dev.felnull.ttsvoice.voice.HasSayVoiceMP3Manager;
+import dev.felnull.ttsvoice.voice.HasSayVoiceMP3VoiceType;
 import dev.felnull.ttsvoice.voice.URLVoiceType;
+import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieManager;
 
 import java.io.InputStream;
 
-public class INMVoiceType implements URLVoiceType {
+public class INMVoiceType implements HasSayVoiceMP3VoiceType {
+    @Override
+    public HasSayVoiceMP3Manager getManager(){return INMManager.getInstance();}
+
     @Override
     public String getTitle() {
         return "淫夢";
@@ -19,13 +25,6 @@ public class INMVoiceType implements URLVoiceType {
     }
 
     @Override
-    public String getSayVoiceSoundURL(SayedText sayedText) throws Exception {
-        if (sayedText instanceof VCEventSayedText || sayedText instanceof StartupSayedText)
-            return null;
-        return URLVoiceType.super.getSayVoiceSoundURL(sayedText);
-    }
-
-    @Override
     public String getSoundURL(String text) throws Exception {
         var im = INMManager.getInstance();
         var ret = im.search(text);
@@ -33,25 +32,6 @@ public class INMVoiceType implements URLVoiceType {
         if (most == null)
             return null;
         return most.getURL();
-    }
-
-    @Override
-    public InputStream getSayVoiceSound(SayedText sayedText) throws Exception {
-        var in = INMManager.getInstance();
-        if (sayedText instanceof VCEventSayedText vcEventSayVoice) {
-            return switch (vcEventSayVoice.getEventType()) {
-                case JOIN -> in.getJoinSound();
-                case MOVE_FROM -> in.getMoveFromSound();
-                case FORCE_MOVE_FROM -> in.getForceMoveFromSound();
-                case LEAVE -> in.getLeaveSound();
-                case FORCE_LEAVE -> in.getForceLeaveSound();
-                case MOVE_TO -> in.getMoveToSound();
-                case FORCE_MOVE_TO -> in.getForceMoveToSound();
-            };
-        } else if (sayedText instanceof StartupSayedText) {
-            return in.getJoinSound();
-        }
-        return URLVoiceType.super.getSayVoiceSound(sayedText);
     }
 
     @Override

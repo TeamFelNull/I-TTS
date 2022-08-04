@@ -91,7 +91,8 @@ public class TTSListener extends ListenerAdapter {
                     }
                     return;
                 }
-
+                if (Main.getServerSaveData(e.getGuild().getIdLong()).isJoinSayName())
+                    TTSListener.updateAuditLogMap(e.getGuild());
                 TTSManager.getInstance().connect(new BotAndGuild(botNumber, e.getGuild().getIdLong()), e.getChannel().getIdLong(), audioChannel.getIdLong());
 
                 e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続しました").queue();
@@ -167,10 +168,10 @@ public class TTSListener extends ListenerAdapter {
                     case "check" -> {
                         var uop = e.getOption("user");
                         User user = uop == null ? e.getUser() : uop.getAsUser();
-                        if (user.isBot()) {
+     /*                   if (user.isBot()) {
                             e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
                             return;
-                        }
+                        }*/
                         var type = TTSManager.getInstance().getUserVoiceType(user.getIdLong(), e.getGuild().getIdLong());
                         e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "の現在の読み上げタイプは[" + type.getTitle() + "]です").setEphemeral(true).queue();
                     }
@@ -392,10 +393,10 @@ public class TTSListener extends ListenerAdapter {
                     return;
                 }
                 User user = uop == null ? e.getUser() : uop.getAsUser();
-                if (user.isBot()) {
+/*                if (user.isBot()) {
                     e.reply(DiscordUtils.getName(botNumber, e.getGuild(), user, user.getIdLong()) + "はBOTです").queue();
                     return;
-                }
+                }*/
 
                 var nm = e.getOption("name");
                 if (nm != null) {
@@ -492,17 +493,17 @@ public class TTSListener extends ListenerAdapter {
     public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
-        if (vc == null) return;
 
         if (vc == event.getChannelJoined())
             sayText(event, VCEventSayedText.EventType.JOIN);
+        if(event.getMember().getUser().isBot())
+            sayText(event, VCEventSayedText.EventType.CONNECT);
     }
 
     @Override
     public void onGuildVoiceLeave(@NotNull GuildVoiceLeaveEvent event) {
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
-        if (vc == null) return;
 
         if (vc == event.getChannelLeft()) {
             if(canViewAuditLog(event.getGuild())) {
@@ -518,15 +519,15 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
-        if (event.getMember().getUser().isBot() && Main.getJDAByID(event.getMember().getIdLong()) != null)
+        if (event.getMember().getUser().equals(event.getJDA().getSelfUser()))
             TTSManager.getInstance().reconnect(BotAndGuild.ofId(event.getMember().getIdLong(), event.getGuild().getIdLong()), event.getChannelJoined().getIdLong());
 
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
-        if (vc == null) return;
         if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
             if(canViewAuditLog(event.getGuild())) {
                 boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
+                System.out.println(wasMoved);
                 if (vc == event.getChannelLeft()) {
                     if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_TO);
                     else sayText(event, VCEventSayedText.EventType.MOVE_TO);
@@ -542,11 +543,20 @@ public class TTSListener extends ListenerAdapter {
                 }
             }
         }
-        updateAuditLogMap(event.getGuild());
+        if(getLogSeeableActiveJDAs(event.getGuild()).size() >= 1 && getLogSeeableActiveJDAs(event.getGuild()).get(0).equals(event.getJDA()))
+            updateAuditLogMap(event.getGuild());
+    }
+
+    public static List<JDA> getLogSeeableActiveJDAs(Guild guild){
+        return Main.getActiveJDAs(guild).stream().filter(jda -> canViewAuditLog(guild, jda)).toList();
     }
 
     public static boolean canViewAuditLog(Guild guild){
-            return guild.getMember(guild.getJDA().getSelfUser()).hasPermission(Permission.VIEW_AUDIT_LOGS);
+            return canViewAuditLog(guild, guild.getJDA());
+    }
+
+    public static boolean canViewAuditLog(Guild guild, JDA jda){
+        return guild.getMember(jda.getSelfUser()).hasPermission(Permission.VIEW_AUDIT_LOGS);
     }
 
     public static void updateAuditLogMap(Guild guild) {
@@ -611,6 +621,8 @@ public class TTSListener extends ListenerAdapter {
                         audioManager.openAudioConnection(achn);
                         var bag = new BotAndGuild(botNumber, guild.getIdLong());
                         var tm = TTSManager.getInstance();
+                        if (Main.getServerSaveData(bag.getGuild().getIdLong()).isJoinSayName())
+                            TTSListener.updateAuditLogMap(bag.getGuild());
                         tm.connect(bag, tch.getIdLong(), achn.getIdLong());
 
                         var v = Main.VERSION;

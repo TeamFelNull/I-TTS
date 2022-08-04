@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -115,6 +116,14 @@ public class Main {
         synchronized (JDAs) {
             return JDAs.get(botNumber);
         }
+    }
+
+    public static List<JDA> getActiveJDAs(Guild guild){
+        return JDAs.stream().filter(jda -> isConnectedTo(jda, guild)).toList();
+    }
+
+    public static boolean isConnectedTo(JDA jda, Guild guild){
+        return guild.getVoiceChannels().stream().anyMatch(vc -> vc.getMembers().stream().anyMatch(m -> m.getIdLong() == jda.getSelfUser().getIdLong()));
     }
 
     public static int getJDABotNumber(JDA jda) {

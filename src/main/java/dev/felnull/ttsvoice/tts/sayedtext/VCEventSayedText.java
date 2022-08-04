@@ -42,7 +42,8 @@ public class VCEventSayedText implements SayedText {
         return event;
     }
 
-    public static enum EventType {
+    public enum EventType {
+        CONNECT((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が接続しました"),
         JOIN((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が参加しました"),
         MOVE_FROM((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelLeft(), e.getMember(), "別のチャンネル") + "から移動してきました"),
         FORCE_MOVE_FROM((guildAndBotNumber, user, e) -> DiscordUtils.getName(guildAndBotNumber.getRight(), guildAndBotNumber.getLeft(), user, user.getIdLong()) + "が" + DiscordUtils.getChannelName(e.getChannelLeft(), e.getMember(), "別のチャンネル") + "から移動させられました"),
