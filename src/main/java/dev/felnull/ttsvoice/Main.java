@@ -27,6 +27,7 @@ import java.util.*;
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
     private static final List<JDA> JDAs = new ArrayList<>();
+    public static final long START_TIME = System.currentTimeMillis();
     public static String VERSION;
 
     public static void main(String[] args) throws Exception {
@@ -118,11 +119,11 @@ public class Main {
         }
     }
 
-    public static List<JDA> getActiveJDAs(Guild guild){
+    public static List<JDA> getActiveJDAs(Guild guild) {
         return JDAs.stream().filter(jda -> isConnectedTo(jda, guild)).toList();
     }
 
-    public static boolean isConnectedTo(JDA jda, Guild guild){
+    public static boolean isConnectedTo(JDA jda, Guild guild) {
         return guild.getVoiceChannels().stream().anyMatch(vc -> vc.getMembers().stream().anyMatch(m -> m.getIdLong() == jda.getSelfUser().getIdLong()));
     }
 

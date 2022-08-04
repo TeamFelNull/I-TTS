@@ -496,7 +496,7 @@ public class TTSListener extends ListenerAdapter {
 
         if (vc == event.getChannelJoined())
             sayText(event, VCEventSayedText.EventType.JOIN);
-        if(event.getMember().getUser().isBot())
+        if (event.getMember().getUser().isBot())
             sayText(event, VCEventSayedText.EventType.CONNECT);
     }
 
@@ -506,11 +506,11 @@ public class TTSListener extends ListenerAdapter {
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
 
         if (vc == event.getChannelLeft()) {
-            if(canViewAuditLog(event.getGuild())) {
+            if (canViewAuditLog(event.getGuild())) {
                 boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
                 if (wasKicked) sayText(event, VCEventSayedText.EventType.FORCE_LEAVE);
                 else sayText(event, VCEventSayedText.EventType.LEAVE);
-            }else {
+            } else {
                 sayText(event, VCEventSayedText.EventType.LEAVE);
             }
         }
@@ -525,7 +525,7 @@ public class TTSListener extends ListenerAdapter {
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
         if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
-            if(canViewAuditLog(event.getGuild())) {
+            if (canViewAuditLog(event.getGuild())) {
                 boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
                 System.out.println(wasMoved);
                 if (vc == event.getChannelLeft()) {
@@ -535,7 +535,7 @@ public class TTSListener extends ListenerAdapter {
                     if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_FROM);
                     else sayText(event, VCEventSayedText.EventType.MOVE_FROM);
                 }
-            }else {
+            } else {
                 if (vc == event.getChannelLeft()) {
                     sayText(event, VCEventSayedText.EventType.MOVE_TO);
                 } else if (vc == event.getChannelJoined()) {
@@ -543,24 +543,24 @@ public class TTSListener extends ListenerAdapter {
                 }
             }
         }
-        if(getLogSeeableActiveJDAs(event.getGuild()).size() >= 1 && getLogSeeableActiveJDAs(event.getGuild()).get(0).equals(event.getJDA()))
+        if (getLogSeeableActiveJDAs(event.getGuild()).size() >= 1 && getLogSeeableActiveJDAs(event.getGuild()).get(0).equals(event.getJDA()))
             updateAuditLogMap(event.getGuild());
     }
 
-    public static List<JDA> getLogSeeableActiveJDAs(Guild guild){
+    public static List<JDA> getLogSeeableActiveJDAs(Guild guild) {
         return Main.getActiveJDAs(guild).stream().filter(jda -> canViewAuditLog(guild, jda)).toList();
     }
 
-    public static boolean canViewAuditLog(Guild guild){
-            return canViewAuditLog(guild, guild.getJDA());
+    public static boolean canViewAuditLog(Guild guild) {
+        return canViewAuditLog(guild, guild.getJDA());
     }
 
-    public static boolean canViewAuditLog(Guild guild, JDA jda){
+    public static boolean canViewAuditLog(Guild guild, JDA jda) {
         return guild.getMember(jda.getSelfUser()).hasPermission(Permission.VIEW_AUDIT_LOGS);
     }
 
     public static void updateAuditLogMap(Guild guild) {
-        if(!canViewAuditLog(guild)) return;
+        if (!canViewAuditLog(guild)) return;
         var map = auditLogs.get(guild.getIdLong()) != null ? auditLogs.get(guild.getIdLong()) : new HashMap<ActionType, List<AuditLogEntry>>();
         map.put(ActionType.MEMBER_VOICE_MOVE, guild.retrieveAuditLogs().type(ActionType.MEMBER_VOICE_MOVE).limit(10).complete());
         map.put(ActionType.MEMBER_VOICE_KICK, guild.retrieveAuditLogs().type(ActionType.MEMBER_VOICE_KICK).limit(10).complete());
@@ -637,7 +637,7 @@ public class TTSListener extends ListenerAdapter {
 
                         Main.getSaveData().setLastVersion(Main.VERSION);
 
-                        tm.saySystemText(bag, new StartupSayedText(name, lv, v));
+                        tm.saySystemText(bag, new StartupSayedText(name, lv, v, System.currentTimeMillis() - Main.getSaveData().getLastTime() <= 60 * 1000));
 
                         LOGGER.info(name + " reconnect to " + guild.getName());
                     } catch (Exception ex) {

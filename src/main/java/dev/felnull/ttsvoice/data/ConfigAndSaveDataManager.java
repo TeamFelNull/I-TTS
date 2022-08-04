@@ -5,6 +5,7 @@ import blue.endless.jankson.JsonGrammar;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import dev.felnull.ttsvoice.Main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -97,7 +98,7 @@ public class ConfigAndSaveDataManager {
                 }
             }
         };
-        timer.scheduleAtFixedRate(saveTask, 0, 30 * 1000);
+        timer.scheduleAtFixedRate(saveTask, 10 * 1000, 30 * 1000);
     }
 
     public Config getConfig() {
@@ -122,11 +123,14 @@ public class ConfigAndSaveDataManager {
 
     public void savedData() {
         synchronized (SAVE_DATA) {
+            if (System.currentTimeMillis() - Main.START_TIME >= 5 * 1000)
+                SAVE_DATA.setLastTime(System.currentTimeMillis());
+
             if (SAVE_DATA.isDirty()) {
                 var jo = SAVE_DATA.save();
                 try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(SAVE_FILE)))) {
                     GSON.toJson(jo, writer);
-             //       LOGGER.info("Completed to save data");
+                    //       LOGGER.info("Completed to save data");
                 } catch (Exception ex) {
                     LOGGER.error("Failed to save data", ex);
                 }
@@ -146,7 +150,7 @@ public class ConfigAndSaveDataManager {
                 }
                 try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(SERVER_SAVE_DATA_FOLDER.toPath().resolve(guildId + ".json").toFile())))) {
                     GSON.toJson(jo, writer);
-           //         LOGGER.info("Completed to server save data");
+                    //         LOGGER.info("Completed to server save data");
                 } catch (Exception ex) {
                     LOGGER.error("Failed to server save data", ex);
                 }

@@ -4,6 +4,12 @@ import dev.felnull.ttsvoice.Main;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 
+/**
+ * BOTとサーバー情報
+ *
+ * @param botNumber BOTのユーザーIDではない
+ * @param guildId   サーバーID
+ */
 public record BotAndGuild(int botNumber, long guildId) {
     public JDA getJDA() {
         return Main.getJDA(botNumber);

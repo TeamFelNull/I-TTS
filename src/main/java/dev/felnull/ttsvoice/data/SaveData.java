@@ -19,6 +19,7 @@ public class SaveData extends BaseSaveData {
     private final Map<Long, List<Long>> denyUsers = new HashMap<>();
     private final Map<Long, String> userNickNames = new HashMap<>();
     private String lastVersion = "";
+    private long lastTime;
     private boolean dirty;
 
     public void load(JsonObject jo) {
@@ -61,6 +62,10 @@ public class SaveData extends BaseSaveData {
         }
 
         lastVersion = JsonUtils.getString(jo, "LastVersion");
+
+        var lstTime = JsonUtils.getLong(jo, "LastTime");
+        if (lstTime != null)
+            lastTime = lstTime;
     }
 
     public JsonObject save() {
@@ -88,6 +93,7 @@ public class SaveData extends BaseSaveData {
         jo.add("UserNickNames", unn);
 
         jo.addProperty("LastVersion", lastVersion);
+        jo.addProperty("LastTime", lastTime);
 
         return jo;
     }
@@ -167,6 +173,16 @@ public class SaveData extends BaseSaveData {
 
     public String getLastVersion() {
         return lastVersion;
+    }
+
+    public void setLastTime(long time) {
+        this.lastTime = time;
+        dirty = true;
+        saved();
+    }
+
+    public long getLastTime() {
+        return lastTime;
     }
 
     public void setDirty(boolean dirty) {
