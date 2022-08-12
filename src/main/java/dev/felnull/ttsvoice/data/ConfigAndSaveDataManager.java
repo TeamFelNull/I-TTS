@@ -23,29 +23,30 @@ public class ConfigAndSaveDataManager {
     private static final File SERVER_SAVE_DATA_FOLDER = new File("./server_saves");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Jankson JANKSON = Jankson.builder().build();
-    private final SaveData SAVE_DATA = new SaveData();
-    private final Map<Long, ServerSaveData> SERVER_SAVE_DATA = new HashMap<>();
-    private Config CONFIG;
+    private final SaveData saveData = new SaveData();
+    private final Map<Long, ServerSaveData> serverSaveData = new HashMap<>();
+    private Config config;
 
     public static ConfigAndSaveDataManager getInstance() {
         return INSTANCE;
     }
 
     public void init() throws Exception {
+
         if (CONFIG_FILE.exists()) {
-            CONFIG = Config.of(JANKSON.load(CONFIG_FILE));
+            config = Config.of(JANKSON.load(CONFIG_FILE));
             LOGGER.info("Config file was loaded");
         } else {
             LOGGER.warn("No config file, generate default config");
-            CONFIG = Config.createDefault();
+            config = Config.createDefault();
             try (Writer writer = new BufferedWriter(new FileWriter(CONFIG_FILE))) {
-                CONFIG.toJson().toJson(writer, JsonGrammar.JSON5, 0);
+                config.toJson().toJson(writer, JsonGrammar.JSON5, 0);
             }
             return;
         }
 
         try {
-            CONFIG.check();
+            config.check();
         } catch (Exception ex) {
             LOGGER.error("Config is incorrect: " + ex.getMessage());
             return;
@@ -58,7 +59,7 @@ public class ConfigAndSaveDataManager {
             try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(SAVE_FILE)))) {
                 jo = GSON.fromJson(reader, JsonObject.class);
             }
-            SAVE_DATA.load(jo);
+            saveData.load(jo);
             LOGGER.info("Completed load data");
         }
 
@@ -77,8 +78,8 @@ public class ConfigAndSaveDataManager {
                             }
                             var sc = new ServerSaveData(id);
                             sc.load(jo);
-                            synchronized (SERVER_SAVE_DATA) {
-                                SERVER_SAVE_DATA.put(id, sc);
+                            synchronized (serverSaveData) {
+                                serverSaveData.put(id, sc);
                             }
                         } catch (NumberFormatException ignored) {
                         }
@@ -93,7 +94,7 @@ public class ConfigAndSaveDataManager {
             public void run() {
                 savedData();
 
-                for (Long id : SERVER_SAVE_DATA.keySet()) {
+                for (Long id : serverSaveData.keySet()) {
                     savedServerData(id);
                 }
             }
@@ -102,46 +103,46 @@ public class ConfigAndSaveDataManager {
     }
 
     public Config getConfig() {
-        return CONFIG;
+        return config;
     }
 
     public ServerSaveData getServerSaveData(long guildId) {
         ServerSaveData cfg;
-        synchronized (SERVER_SAVE_DATA) {
-            cfg = SERVER_SAVE_DATA.computeIfAbsent(guildId, n -> new ServerSaveData(guildId));
+        synchronized (serverSaveData) {
+            cfg = serverSaveData.computeIfAbsent(guildId, n -> new ServerSaveData(guildId));
         }
         return cfg;
     }
 
     public Map<Long, ServerSaveData> getAllServerSaveData() {
-        return SERVER_SAVE_DATA;
+        return serverSaveData;
     }
 
     public SaveData getSaveData() {
-        return SAVE_DATA;
+        return saveData;
     }
 
     public void savedData() {
-        synchronized (SAVE_DATA) {
+        synchronized (saveData) {
             if (System.currentTimeMillis() - Main.START_TIME >= 5 * 1000)
-                SAVE_DATA.setLastTime(System.currentTimeMillis());
+                saveData.setLastTime(System.currentTimeMillis());
 
-            if (SAVE_DATA.isDirty()) {
-                var jo = SAVE_DATA.save();
+            if (saveData.isDirty()) {
+                var jo = saveData.save();
                 try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(SAVE_FILE)))) {
                     GSON.toJson(jo, writer);
                     //       LOGGER.info("Completed to save data");
                 } catch (Exception ex) {
                     LOGGER.error("Failed to save data", ex);
                 }
-                SAVE_DATA.setDirty(false);
+                saveData.setDirty(false);
             }
         }
     }
 
     public void savedServerData(long guildId) {
-        synchronized (SERVER_SAVE_DATA) {
-            var config = SERVER_SAVE_DATA.get(guildId);
+        synchronized (serverSaveData) {
+            var config = serverSaveData.get(guildId);
             if (config != null && config.isDirty()) {
                 var jo = new JsonObject();
                 config.save(jo);

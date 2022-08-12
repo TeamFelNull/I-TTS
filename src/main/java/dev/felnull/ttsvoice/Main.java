@@ -6,10 +6,10 @@ import dev.felnull.ttsvoice.data.Config;
 import dev.felnull.ttsvoice.data.ConfigAndSaveDataManager;
 import dev.felnull.ttsvoice.data.SaveData;
 import dev.felnull.ttsvoice.data.ServerSaveData;
+import dev.felnull.ttsvoice.discord.JDAManager;
 import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.ChannelType;
@@ -18,15 +18,16 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
-    private static final List<JDA> JDAs = new ArrayList<>();
     public static final long START_TIME = System.currentTimeMillis();
     public static String VERSION;
 
@@ -46,13 +47,6 @@ public class Main {
 
         ConfigAndSaveDataManager.getInstance().init();
         VoiceLoaderManager.getInstance().init();
-
-        int num = 0;
-        for (String botToken : getConfig().botTokens()) {
-            var jda = JDABuilder.createDefault(botToken).addEventListeners(new TTSListener(num)).enableIntents(GatewayIntent.MESSAGE_CONTENT).build();
-            JDAs.add(jda);
-            num++;
-        }
 
         var join = Commands.slash("join", "読み上げBOTをVCに呼び出す").addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定").setChannelTypes(ImmutableList.of(ChannelType.VOICE, ChannelType.STAGE)));
         var leave = Commands.slash("leave", "読み上げBOTをVCから切断");
@@ -74,27 +68,34 @@ public class Main {
                 .addSubcommands(new SubcommandData("non-reading-prefix", "先頭につけると読み上げなくなる文字").addOptions(new OptionData(OptionType.STRING, "prefix", "接頭辞").setRequired(true)))
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
         var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"));
-        JDAs.forEach(jda -> jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, cookie, config, vnick).queue());
+
+        JDAManager.getInstance().init(jda -> {
+            jda.addEventListener(new TTSListener(jda));
+            jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, cookie, config, vnick).queue();
+        });
 
         Timer timer = new Timer();
 
         TimerTask updatePresenceTask = new TimerTask() {
             public void run() {
-                long ct = TTSManager.getInstance().getTTSCount();
-                synchronized (JDAs) {
-                    String vstr = "v" + VERSION;
-
-                    JDAs.forEach(jda -> {
-                        if (ct > 0) {
-                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(vstr + " - " + ct + "個のチャンネルで読み上げ"));
-                        } else {
-                            jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing(vstr + " - " + "待機"));
-                        }
-                    });
-                }
+                updatePresence();
             }
         };
         timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
+    }
+
+    public static void updatePresence() {
+        long ct = TTSManager.getInstance().getTTSCount();
+
+        String vstr = "v" + VERSION;
+
+        JDAManager.getInstance().getAllJDA().forEach(jda -> {
+            if (ct > 0) {
+                jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening(vstr + " - " + ct + "個のチャンネルで読み上げ"));
+            } else {
+                jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.playing(vstr + " - " + "待機"));
+            }
+        });
     }
 
     public static ServerSaveData getServerSaveData(long guildId) {
@@ -113,29 +114,15 @@ public class Main {
         return ConfigAndSaveDataManager.getInstance().getAllServerSaveData();
     }
 
-    public static JDA getJDA(int botNumber) {
-        synchronized (JDAs) {
-            return JDAs.get(botNumber);
-        }
-    }
-
     public static List<JDA> getActiveJDAs(Guild guild) {
-        return JDAs.stream().filter(jda -> isConnectedTo(jda, guild)).toList();
+        return JDAManager.getInstance().getAllJDA().stream().filter(jda -> isConnectedTo(jda, guild)).toList();
     }
 
     public static boolean isConnectedTo(JDA jda, Guild guild) {
         return guild.getVoiceChannels().stream().anyMatch(vc -> vc.getMembers().stream().anyMatch(m -> m.getIdLong() == jda.getSelfUser().getIdLong()));
     }
 
-    public static int getJDABotNumber(JDA jda) {
-        synchronized (JDAs) {
-            return JDAs.indexOf(jda);
-        }
-    }
-
     public static JDA getJDAByID(long userId) {
-        synchronized (JDAs) {
-            return JDAs.stream().filter(n -> n.getSelfUser().getIdLong() == userId).findFirst().orElse(null);
-        }
+        return JDAManager.getInstance().getJDA(userId);
     }
 }

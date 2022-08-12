@@ -1,6 +1,7 @@
 package dev.felnull.ttsvoice.util;
 
 import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.discord.BotLocation;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
@@ -34,27 +35,27 @@ public class DiscordUtils {
         return txt;
     }
 
-    public static String getName(int botNumber, Guild guild, User user, long userId) {
-        return toNoMention(getName_(botNumber, guild, user, userId));
+    public static String getName(BotLocation botLocation, User user, long userId) {
+        return toNoMention(getName_(botLocation, user, userId));
     }
 
-    private static String getName_(int botNumber, Guild guild, User user, long userId) {
+    private static String getName_(BotLocation botLocation, User user, long userId) {
         var unn = Main.getSaveData().getUserNickName(userId);
         if (unn != null)
             return unn;
 
         if (user == null)
-            user = Main.getJDA(botNumber).getUserById(userId);
+            user = botLocation.getJDA().getUserById(userId);
 
         if (user == null)
-            user = Main.getJDA(botNumber).retrieveUserById(userId).complete();
+            user = botLocation.getJDA().retrieveUserById(userId).complete();
 
         if (user == null)
             return String.valueOf(userId);
-        var member = guild.getMember(user);
+        var member = botLocation.getGuild().getMember(user);
 
         if (member == null)
-            member = guild.retrieveMemberById(user.getIdLong()).complete();
+            member = botLocation.getGuild().retrieveMemberById(user.getIdLong()).complete();
 
         if (member == null)
             return user.getName();
@@ -87,46 +88,46 @@ public class DiscordUtils {
         return true;
     }
 
-    public static String replaceMentionToText(int botNumber, Guild guild, String text) {
+    public static String replaceMentionToText(BotLocation botLocation, String text) {
         for (Message.MentionType mentionType : Message.MentionType.values()) {
-            text = replaceMentionToText(botNumber, guild, mentionType, text);
+            text = replaceMentionToText(botLocation, mentionType, text);
         }
         return text;
     }
 
-    public static String replaceMentionToText(int botNumber, Guild guild, Message.MentionType mention, String text) {
+    public static String replaceMentionToText(BotLocation botLocation, Message.MentionType mention, String text) {
         return mention.getPattern().matcher(text).replaceAll(n -> {
             var p = n.group();
             if (mention == Message.MentionType.USER)
-                return toUserMentionToText(botNumber, guild, p);
+                return toUserMentionToText(botLocation, p);
             if (mention == Message.MentionType.CHANNEL)
-                return toChannelMentionToText(guild, p);
+                return toChannelMentionToText(botLocation.getGuild(), p);
             if (mention == Message.MentionType.ROLE)
-                return toRoleMentionToText(guild, p);
+                return toRoleMentionToText(botLocation.getGuild(), p);
             if (mention == Message.MentionType.EMOJI)
-                return toEmojiMentionToText(guild, p);
+                return toEmojiMentionToText(botLocation.getGuild(), p);
             return p;
         });
     }
 
-    private static String toUserMentionToText(int botNumber, Guild guild, String mentionText) {
+    private static String toUserMentionToText(BotLocation botLocation, String mentionText) {
         if (Message.MentionType.USER.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
             long id = Long.parseLong(mentionText);
             var nick = Main.getSaveData().getUserNickName(id);
             if (nick != null)
                 return nick;
-
+            var guild = botLocation.getGuild();
             var m = guild.getMemberById(id);
             if (m != null)
                 return getName(m);
-            var user = Main.getJDA(botNumber).getUserById(id);
+            var user = botLocation.getJDA().getUserById(id);
             if (user != null)
-                return getName(botNumber, guild, user, id);
+                return getName(botLocation, user, id);
 
-            var user2 = Main.getJDA(botNumber).retrieveUserById(id).complete();
+            var user2 = botLocation.getJDA().retrieveUserById(id).complete();
             if (user2 != null)
-                return getName(botNumber, guild, user2, id);
+                return getName(botLocation, user2, id);
         }
         return mentionText;
     }

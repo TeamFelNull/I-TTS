@@ -5,7 +5,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
-import dev.felnull.ttsvoice.tts.BotAndGuild;
+import dev.felnull.ttsvoice.discord.BotLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,7 +16,7 @@ public class VoiceAudioPlayerManager {
     private static final Logger LOGGER = LogManager.getLogger(VoiceAudioPlayerManager.class);
     private static final VoiceAudioPlayerManager INSTANCE = new VoiceAudioPlayerManager();
     private final AudioPlayerManager audioPlayerManager;
-    private final Map<BotAndGuild, AudioScheduler> SCHEDULERS = new HashMap<>();
+    private final Map<BotLocation, AudioScheduler> SCHEDULERS = new HashMap<>();
 
     public VoiceAudioPlayerManager() {
         this.audioPlayerManager = new DefaultAudioPlayerManager();
@@ -24,7 +24,7 @@ public class VoiceAudioPlayerManager {
         audioPlayerManager.registerSourceManager(new HttpAudioSourceManager(MediaContainerRegistry.DEFAULT_REGISTRY));
     }
 
-    public void clearSchedulers(BotAndGuild bag) {
+    public void clearSchedulers(BotLocation bag) {
         synchronized (SCHEDULERS) {
             var as = SCHEDULERS.remove(bag);
             if (as != null)
@@ -36,7 +36,7 @@ public class VoiceAudioPlayerManager {
         return INSTANCE;
     }
 
-    public synchronized AudioScheduler getScheduler(BotAndGuild bag) {
+    public synchronized AudioScheduler getScheduler(BotLocation bag) {
         synchronized (SCHEDULERS) {
             return SCHEDULERS.computeIfAbsent(bag, n -> new AudioScheduler(audioPlayerManager.createPlayer(), bag));
         }

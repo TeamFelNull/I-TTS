@@ -9,7 +9,7 @@ import dev.felnull.fnjl.util.FNMath;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import dev.felnull.ttsvoice.audio.player.VoiceTrackLoader;
-import dev.felnull.ttsvoice.tts.BotAndGuild;
+import dev.felnull.ttsvoice.discord.BotLocation;
 import dev.felnull.ttsvoice.tts.TTSManager;
 import dev.felnull.ttsvoice.tts.TTSVoiceEntry;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -25,12 +25,12 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 public class AudioScheduler extends AudioEventAdapter {
-    private static final Function<BotAndGuild, ExecutorService> EXECUTOR_SERVICES = FNDataUtil.memoize(bag -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-" + bag.botNumber() + "-%d").daemon(true).build()));
+    private static final Function<BotLocation, ExecutorService> EXECUTOR_SERVICES = FNDataUtil.memoize(bag -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-" + bag.botUserId() + "-%d").daemon(true).build()));
     private final int previsionLoadCount = 10;
     private final Map<TTSVoiceEntry, CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>>> previsionLoadTracks = new HashMap<>();
     private final Map<TTSVoiceEntry, VoiceTrackLoader> loaders = new HashMap<>();
     private final AudioPlayer player;
-    private final BotAndGuild botAndGuild;
+    private final BotLocation botLocation;
     private final Object nextLock = new Object();
     private final Object stopLock = new Object();
     private boolean loading;
@@ -39,17 +39,17 @@ public class AudioScheduler extends AudioEventAdapter {
     private VoiceTrackLoader currentTrackLoader;
     protected boolean destroy;
 
-    public AudioScheduler(AudioPlayer player, BotAndGuild bag) {
+    public AudioScheduler(AudioPlayer player, BotLocation bag) {
         this.player = player;
         this.player.addListener(this);
         var guild = bag.getGuild();
         guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(player));
-        this.botAndGuild = bag;
+        this.botLocation = bag;
     }
 
     private ExecutorService getExecutorService() {
         synchronized (EXECUTOR_SERVICES) {
-            return EXECUTOR_SERVICES.apply(botAndGuild);
+            return EXECUTOR_SERVICES.apply(botLocation);
         }
     }
 
@@ -73,7 +73,7 @@ public class AudioScheduler extends AudioEventAdapter {
 
         player.destroy();
 
-        var guild = botAndGuild.getGuild();
+        var guild = botLocation.getGuild();
         guild.getAudioManager().setSendingHandler(null);
     }
 
@@ -121,7 +121,7 @@ public class AudioScheduler extends AudioEventAdapter {
         synchronized (nextLock) {
             var vlm = VoiceLoaderManager.getInstance();
             var tm = TTSManager.getInstance();
-            var queue = tm.getTTSQueue(botAndGuild);
+            var queue = tm.getTTSQueue(botLocation);
             TTSVoiceEntry next;
             synchronized (queue) {
                 next = queue.poll();
@@ -163,7 +163,7 @@ public class AudioScheduler extends AudioEventAdapter {
 
                 currentTrackLoader = lg.getLeft();
 
-                if (!Main.getServerSaveData(botAndGuild.guildId()).isOverwriteAloud()) {
+                if (!Main.getServerSaveData(botLocation.guildId()).isOverwriteAloud()) {
                     synchronized (queue) {
                         List<TTSVoiceEntry> qc = queue.stream().filter(n -> !previsionLoadTracks.containsKey(n)).toList();
                         int lc = FNMath.clamp(qc.size(), 0, previsionLoadCount);

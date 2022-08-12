@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.data.ServerSaveData;
+import dev.felnull.ttsvoice.discord.BotLocation;
 import dev.felnull.ttsvoice.tts.sayedtext.LiteralSayedText;
 import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
 import dev.felnull.ttsvoice.util.DiscordUtils;
@@ -31,15 +32,15 @@ import java.util.regex.Pattern;
 public class TTSManager {
     private static final Logger LOGGER = LogManager.getLogger(TTSManager.class);
     private static final TTSManager INSTANCE = new TTSManager();
-    private final Map<BotAndGuild, Long> TTS_CHANEL = new HashMap<>();
-    private final Map<BotAndGuild, LinkedList<TTSVoiceEntry>> TTS_QUEUE = new HashMap<>();
+    private final Map<BotLocation, Long> TTS_CHANEL = new HashMap<>();
+    private final Map<BotLocation, LinkedList<TTSVoiceEntry>> TTS_QUEUE = new HashMap<>();
     private Pattern ignorePattern;
 
     public static TTSManager getInstance() {
         return INSTANCE;
     }
 
-    public void reconnect(BotAndGuild bag, long newAudioChannel) {
+    public void reconnect(BotLocation bag, long newAudioChannel) {
         long pt = -1;
         synchronized (TTS_CHANEL) {
             if (TTS_CHANEL.containsKey(bag))
@@ -56,18 +57,18 @@ public class TTSManager {
         connect(bag, pt, newAudioChannel);
     }
 
-    public void connect(BotAndGuild bag, long ttsChanelId, long audioChannel) {
+    public void connect(BotLocation bag, long ttsChanelId, long audioChannel) {
         setTTSChanel(bag, ttsChanelId);
-        Main.getServerSaveData(bag.guildId()).setLastJoinChannel(bag.getBotUserId(), new ServerSaveData.TTSEntry(audioChannel, ttsChanelId));
+        Main.getServerSaveData(bag.guildId()).setLastJoinChannel(bag.botUserId(), new ServerSaveData.TTSEntry(audioChannel, ttsChanelId));
     }
 
-    public void disconnect(BotAndGuild bag) {
+    public void disconnect(BotLocation bag) {
         removeTTSChanel(bag);
         VoiceAudioPlayerManager.getInstance().clearSchedulers(bag);
-        Main.getServerSaveData(bag.guildId()).removeLastJoinChannel(bag.getBotUserId());
+        Main.getServerSaveData(bag.guildId()).removeLastJoinChannel(bag.botUserId());
     }
 
-    public long getTTSChanel(BotAndGuild bag) {
+    public long getTTSChanel(BotLocation bag) {
         if (TTS_CHANEL.containsKey(bag)) return TTS_CHANEL.get(bag);
         return -1;
     }
@@ -78,19 +79,19 @@ public class TTSManager {
         return cv.getIdLong();
     }
 
-    public LinkedList<TTSVoiceEntry> getTTSQueue(BotAndGuild bag) {
+    public LinkedList<TTSVoiceEntry> getTTSQueue(BotLocation bag) {
         synchronized (TTS_QUEUE) {
             return TTS_QUEUE.computeIfAbsent(bag, n -> new LinkedList<>());
         }
     }
 
-    public void setTTSChanel(BotAndGuild bag, long chanelId) {
+    public void setTTSChanel(BotLocation bag, long chanelId) {
         synchronized (TTS_CHANEL) {
             TTS_CHANEL.put(bag, chanelId);
         }
     }
 
-    public void removeTTSChanel(BotAndGuild bag) {
+    public void removeTTSChanel(BotLocation bag) {
         synchronized (TTS_CHANEL) {
             TTS_CHANEL.remove(bag);
         }
@@ -109,8 +110,8 @@ public class TTSManager {
         return dvt;
     }
 
-    private VoiceType getMyVoiceType(BotAndGuild bag) {
-        return getUserVoiceType(bag.getBotUserId(), bag.guildId());
+    private VoiceType getMyVoiceType(BotLocation bag) {
+        return getUserVoiceType(bag.botUserId(), bag.guildId());
     }
 
     private VoiceType getDefaultVoiceType(long userId, long guildId) {
@@ -184,13 +185,13 @@ public class TTSManager {
         return builder.build().stream().filter(c -> types.stream().anyMatch(t -> t.getId().startsWith(c.getId()))).toList();
     }
 
-    public void sayChat(BotAndGuild bag, long userId, String text) {
+    public void sayChat(BotLocation bag, long userId, String text) {
         if (ignorePattern == null) ignorePattern = Pattern.compile(Main.getConfig().ignoreRegex());
 
         if (ignorePattern.matcher(text).matches()) return;
 
         text = DiscordUtils.toCodeBlockSyoryaku(text);
-        text = DiscordUtils.replaceMentionToText(bag.botNumber(), bag.getGuild(), text);
+        text = DiscordUtils.replaceMentionToText(bag, text);
         text = URLUtils.replaceURLToText(text);
 
         int pl = text.length();
@@ -204,23 +205,23 @@ public class TTSManager {
         sayText(bag, vt, text);
     }
 
-    public void saySystemText(BotAndGuild bag, SayedText sayedText) {
+    public void saySystemText(BotLocation bag, SayedText sayedText) {
         sayText(bag, getMyVoiceType(bag), sayedText);
     }
 
-    public void sayText(BotAndGuild bag, VoiceType voiceType, String text) {
+    public void sayText(BotLocation bag, VoiceType voiceType, String text) {
         sayText(bag, voiceType, new LiteralSayedText(text));
     }
 
-    public void sayText(BotAndGuild bag, long userId, String text) {
+    public void sayText(BotLocation bag, long userId, String text) {
         sayText(bag, getUserVoiceType(userId, bag.guildId()), text);
     }
 
-    public void sayText(BotAndGuild bag, long userId, SayedText sayedText) {
+    public void sayText(BotLocation bag, long userId, SayedText sayedText) {
         sayText(bag, getUserVoiceType(userId, bag.guildId()), sayedText);
     }
 
-    public void sayText(BotAndGuild bag, VoiceType voiceType, SayedText sayedText) {
+    public void sayText(BotLocation bag, VoiceType voiceType, SayedText sayedText) {
         var sc = VoiceAudioPlayerManager.getInstance().getScheduler(bag);
         var q = getTTSQueue(bag);
         if (Main.getServerSaveData(bag.guildId()).isOverwriteAloud()) {
