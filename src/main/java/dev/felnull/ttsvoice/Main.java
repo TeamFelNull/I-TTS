@@ -70,7 +70,7 @@ public class Main {
         var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"));
 
         JDAManager.getInstance().init(jda -> {
-            jda.addEventListener(new TTSListener(jda));
+            jda.addEventListener(new TTSListener());
             jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, cookie, config, vnick).queue();
         });
 

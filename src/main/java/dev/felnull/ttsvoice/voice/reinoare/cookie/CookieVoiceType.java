@@ -1,17 +1,16 @@
 package dev.felnull.ttsvoice.voice.reinoare.cookie;
 
 import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
-import dev.felnull.ttsvoice.tts.sayedtext.StartupSayedText;
-import dev.felnull.ttsvoice.tts.sayedtext.VCEventSayedText;
 import dev.felnull.ttsvoice.voice.HasSayVoiceMP3Manager;
 import dev.felnull.ttsvoice.voice.HasSayVoiceMP3VoiceType;
-import dev.felnull.ttsvoice.voice.URLVoiceType;
-
-import java.io.InputStream;
+import dev.felnull.ttsvoice.voice.VoiceCategory;
+import dev.felnull.ttsvoice.voice.reinoare.ReinoareVoiceCategory;
 
 public class CookieVoiceType implements HasSayVoiceMP3VoiceType {
     @Override
-    public HasSayVoiceMP3Manager getManager(){return CookieManager.getInstance();}
+    public HasSayVoiceMP3Manager getManager() {
+        return CookieManager.getInstance();
+    }
 
     @Override
     public String getTitle() {
@@ -36,5 +35,10 @@ public class CookieVoiceType implements HasSayVoiceMP3VoiceType {
     @Override
     public boolean isCached(SayedText sayVoice) {
         return false;
+    }
+
+    @Override
+    public VoiceCategory getCategory() {
+        return ReinoareVoiceCategory.getInstance();
     }
 }

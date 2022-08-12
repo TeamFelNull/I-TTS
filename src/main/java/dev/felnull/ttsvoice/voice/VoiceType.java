@@ -5,7 +5,7 @@ import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
 
 import java.io.InputStream;
 
-public interface VoiceType extends HasTitleAndID{
+public interface VoiceType extends HasTitleAndID {
 
     InputStream getSound(String text) throws Exception;
 
@@ -32,4 +32,6 @@ public interface VoiceType extends HasTitleAndID{
     default boolean isCached(SayedText sayVoice) {
         return true;
     }
+
+    VoiceCategory getCategory();
 }

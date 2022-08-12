@@ -182,7 +182,7 @@ public class TTSManager {
             builder.add(ReinoareVoiceCategory.getInstance());
         }
         var types = getVoiceTypes(userId, guildId);
-        return builder.build().stream().filter(c -> types.stream().anyMatch(t -> t.getId().startsWith(c.getId()))).toList();
+        return builder.build().stream().filter(c -> types.stream().anyMatch(t -> t.getCategory().equals(c))).toList();
     }
 
     public void sayChat(BotLocation bag, long userId, String text) {
