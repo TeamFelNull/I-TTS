@@ -485,8 +485,12 @@ public class TTSListener extends ListenerAdapter {
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
 
-        if (vc == event.getChannelJoined()) sayText(event, VCEventSayedText.EventType.JOIN);
-        if (event.getMember().getUser().isBot()) sayText(event, VCEventSayedText.EventType.CONNECT);
+        if (vc == event.getChannelJoined()) {
+            if (event.getMember().getUser().isBot())
+                sayText(event, VCEventSayedText.EventType.CONNECT);
+            else
+                sayText(event, VCEventSayedText.EventType.JOIN);
+        }
     }
 
     @Override
