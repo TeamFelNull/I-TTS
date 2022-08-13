@@ -4,7 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import dev.felnull.ttsvoice.audio.OldAudioScheduler;
+import dev.felnull.ttsvoice.audio.AudioScheduler;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +19,8 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     private final UUID uuid;
     private final boolean cached;
     private boolean already;
-    public OldAudioScheduler audioScheduler;
+    public AudioScheduler audioScheduler;
+    public UUID lastRuntimeID;
 
     public TmpFileVoiceTrackLoader(UUID uuid, boolean cached) {
         this.uuid = uuid;
@@ -58,8 +59,9 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     }
 
     @Override
-    public void setAudioScheduler(OldAudioScheduler scheduler) {
+    public void setAudioScheduler(AudioScheduler scheduler) {
         this.audioScheduler = scheduler;
+        this.lastRuntimeID = scheduler.getRuntimeId();
     }
 
     @Override
@@ -81,7 +83,7 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     }
 
     public boolean isAlready() {
-        return already || (audioScheduler != null && this.audioScheduler.isDestroy());
+        return already || (audioScheduler != null && !this.audioScheduler.getRuntimeId().equals(lastRuntimeID));
     }
 
     public void setAlready(boolean already) {

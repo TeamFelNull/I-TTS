@@ -143,12 +143,14 @@ public class AudioScheduler extends AudioEventAdapter {
         synchronized (lock) {
             end();
             currentEntry = Pair.of(voiceEntry, audioEntry);
-            if (voiceEntry.tracker() != null)
-                voiceEntry.tracker().setUpdateVoiceListener(inf -> {
 
-                });
             audioPlayer.startTrack(audioEntry.audioTrack(), false);
             audioPlayer.setVolume((int) (100 * voiceEntry.voice().voiceType().getVolume()));
+
+            /*if (voiceEntry.tracker() != null)
+                voiceEntry.tracker().setUpdateVoiceListener(inf -> {
+
+                });*/
         }
     }
 
