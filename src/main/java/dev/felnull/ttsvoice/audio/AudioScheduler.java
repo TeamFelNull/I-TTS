@@ -4,112 +4,48 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import dev.felnull.fnjl.util.FNDataUtil;
-import dev.felnull.fnjl.util.FNMath;
-import dev.felnull.ttsvoice.Main;
-import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
-import dev.felnull.ttsvoice.audio.player.VoiceTrackLoader;
 import dev.felnull.ttsvoice.discord.BotLocation;
-import dev.felnull.ttsvoice.tts.TTSManager;
 import dev.felnull.ttsvoice.tts.TTSVoiceEntry;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.LinkedList;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 
 public class AudioScheduler extends AudioEventAdapter {
-    private static final Function<BotLocation, ExecutorService> EXECUTOR_SERVICES = FNDataUtil.memoize(bag -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("voice-tack-loader-" + bag.guildId() + "-" + bag.botUserId() + "-%d").daemon(true).build()));
-    private final int previsionLoadCount = 10;
-    private final Map<TTSVoiceEntry, CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>>> previsionLoadTracks = new HashMap<>();
-    private final Map<TTSVoiceEntry, VoiceTrackLoader> loaders = new HashMap<>();
-    private final AudioPlayer player;
-    private final BotLocation botLocation;
-    private final Object nextLock = new Object();
-    private final Object stopLock = new Object();
-    private boolean loading;
-    private Thread loadThread;
+    private final ExecutorService playExecutorService;
+    protected final LinkedList<TTSVoiceEntry> ttsQueue = new LinkedList<>();
+    private final AudioLoader audioLoader;
+    protected final BotLocation botLocation;
+    private final AudioPlayer audioPlayer;
+    private final Object lock = new Object();
+    private volatile UUID runtimeId = UUID.randomUUID();
     private CoolDownThread coolDownThread;
-    private VoiceTrackLoader currentTrackLoader;
-    protected boolean destroy;
+    private Pair<TTSVoiceEntry, AudioEntry> currentEntry;
 
-    public AudioScheduler(AudioPlayer player, BotLocation bag) {
-        this.player = player;
-        this.player.addListener(this);
-        var guild = bag.getGuild();
-        guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(player));
-        this.botLocation = bag;
+    public AudioScheduler(BotLocation botLocation, AudioPlayer audioPlayer) {
+        this.botLocation = botLocation;
+        this.audioPlayer = audioPlayer;
+        this.audioPlayer.addListener(this);
+        botLocation.getGuild().getAudioManager().setSendingHandler(new AudioPlayerSendHandler(audioPlayer));
+        this.playExecutorService = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("voice-tack-player-" + botLocation.guildId() + "-" + botLocation.botUserId()).daemon(true).build());
+        this.audioLoader = new AudioLoader(this);
     }
 
-    private ExecutorService getExecutorService() {
-        synchronized (EXECUTOR_SERVICES) {
-            return EXECUTOR_SERVICES.apply(botLocation);
-        }
-    }
-
-    public void dispose() {
-        this.destroy = true;
-
-        if (coolDownThread != null)
-            coolDownThread.interrupt();
-
-        if (loading && loadThread != null)
-            loadThread.interrupt();
-
-        if (currentTrackLoader != null)
-            currentTrackLoader.end();
-
-        synchronized (loaders) {
-            for (VoiceTrackLoader value : loaders.values()) {
-                value.end();
+    public void reload() {
+        synchronized (lock) {
+            stop();
+            synchronized (ttsQueue) {
+                this.ttsQueue.clear();
             }
-        }
 
-        player.destroy();
+            this.audioLoader.reload();
+            this.runtimeId = UUID.randomUUID();
 
-        var guild = botLocation.getGuild();
-        guild.getAudioManager().setSendingHandler(null);
-    }
+            end();
 
-    @Override
-    public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
-        if (currentTrackLoader != null)
-            currentTrackLoader.end();
-        currentTrackLoader = null;
-        startCoolDown();
-    }
-
-    private void startCoolDown() {
-        if (coolDownThread != null) {
-            coolDownThread.interrupt();
-        }
-        coolDownThread = new CoolDownThread();
-        coolDownThread.start();
-    }
-
-    public void play(AudioTrack track, float volume) {
-        player.startTrack(track, false);
-        player.setVolume((int) (100 * volume));
-    }
-
-    public boolean isLoadingOrPlaying() {
-        return (coolDownThread != null && coolDownThread.isAlive()) || player.getPlayingTrack() != null || loading;
-    }
-
-    public void stop() {
-        synchronized (stopLock) {
-            if (loadThread != null) {
-                loadThread.interrupt();
-                loadThread = null;
-                loading = false;
-            }
-            player.stopTrack();
             if (coolDownThread != null) {
                 coolDownThread.interrupt();
                 coolDownThread = null;
@@ -117,105 +53,126 @@ public class AudioScheduler extends AudioEventAdapter {
         }
     }
 
-    public boolean next() {
-        synchronized (nextLock) {
-            var vlm = VoiceLoaderManager.getInstance();
-            var tm = TTSManager.getInstance();
-            var queue = tm.getTTSQueue(botLocation);
-            TTSVoiceEntry next;
-            synchronized (queue) {
-                next = queue.poll();
+    public UUID getRuntimeId() {
+        return runtimeId;
+    }
+
+    @Override
+    public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
+        synchronized (lock) {
+            end();
+            if (coolDownThread == null) {
+                coolDownThread = new CoolDownThread(this::next);
+                coolDownThread.start();
             }
-            if (next == null) return false;
-            loading = true;
-            loadThread = Thread.currentThread();
-
-            AudioTrack track;
-            try {
-                CompletableFuture<Pair<VoiceTrackLoader, AudioTrack>> loaded;
-                synchronized (previsionLoadTracks) {
-                    loaded = previsionLoadTracks.remove(next);
-                }
-                synchronized (loaders) {
-                    loaders.remove(next);
-                }
-
-                if (loaded == null) {
-                    var l = vlm.getTrackLoader(next.voice());
-                    if (l != null) {
-                        l.setAudioScheduler(this);
-                        loaded = l.loaded().thenApply(n -> Pair.of(l, n));
-                    }
-                }
-
-                if (loaded == null) {
-                    startCoolDown();
-                    loading = false;
-                    loadThread = null;
-                    return true;
-                }
-
-                var lg = loaded.get();
-                track = lg.getRight();
-
-                if (currentTrackLoader != null)
-                    currentTrackLoader.end();
-
-                currentTrackLoader = lg.getLeft();
-
-                if (!Main.getServerSaveData(botLocation.guildId()).isOverwriteAloud()) {
-                    synchronized (queue) {
-                        List<TTSVoiceEntry> qc = queue.stream().filter(n -> !previsionLoadTracks.containsKey(n)).toList();
-                        int lc = FNMath.clamp(qc.size(), 0, previsionLoadCount);
-                        if (lc >= 1) {
-                            for (int i = 0; i < lc; i++) {
-                                var l = qc.get(i);
-                                var ll = CompletableFuture.supplyAsync(() -> {
-                                    var tl = vlm.getTrackLoader(l.voice());
-                                    if (tl != null)
-                                        tl.setAudioScheduler(this);
-                                    return tl;
-                                }, getExecutorService()).thenApplyAsync(n -> {
-                                    try {
-                                        synchronized (loaders) {
-                                            loaders.put(l, n);
-                                        }
-                                        return Pair.of(n, n.loaded().get());
-                                    } catch (InterruptedException | ExecutionException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }, getExecutorService());
-                                synchronized (previsionLoadTracks) {
-                                    previsionLoadTracks.put(l, ll);
-                                }
-                            }
-                        }
-                    }
-                }
-
-            } catch (Exception ex) {
-                startCoolDown();
-                loading = false;
-                loadThread = null;
-                return true;
-            }
-            play(track, next.voice().voiceType().getVolume());
-            loading = false;
-            loadThread = null;
-            return true;
         }
     }
 
-    public boolean isDestroy() {
-        return destroy;
+    private void end() {
+        if (currentEntry != null) {
+            currentEntry.getLeft().trackerDepose();
+            currentEntry.getRight().trackLoader().end();
+            currentEntry = null;
+        }
+    }
+
+    public void addEntry(TTSVoiceEntry entry) {
+        synchronized (lock) {
+            synchronized (ttsQueue) {
+                this.ttsQueue.add(entry);
+            }
+
+            audioLoader.addLoadEntry(entry, ae -> {
+                next(Pair.of(entry, ae));
+            }, playExecutorService);
+        }
+    }
+
+    public void next(Pair<TTSVoiceEntry, AudioEntry> entry) {
+        synchronized (lock) {
+            TTSVoiceEntry lst;
+            synchronized (ttsQueue) {
+                lst = ttsQueue.getFirst();
+            }
+            if (audioPlayer.getPlayingTrack() == null && coolDownThread == null) {
+                boolean flg;
+                synchronized (audioLoader.loadingEntry) {
+                    var cf = audioLoader.loadingEntry.get(lst);
+                    flg = cf == null || cf.isDone();
+                }
+                if (flg) {
+                    if (entry != null && lst.equals(entry.getKey())) {
+                        synchronized (ttsQueue) {
+                            ttsQueue.removeFirst();
+                        }
+                        synchronized (audioLoader.loadingEntry) {
+                            audioLoader.loadingEntry.remove(entry.getKey());
+                        }
+                        play(entry.getKey(), entry.getValue());
+                    } else {
+                        next();
+                    }
+                }
+            }
+        }
+    }
+
+    private void next() {
+        synchronized (ttsQueue) {
+            synchronized (audioLoader.loadingEntry) {
+                if (ttsQueue.isEmpty()) return;
+                var lst = ttsQueue.getFirst();
+                if (lst != null) {
+                    var cf = audioLoader.loadingEntry.get(lst);
+                    if (cf != null && cf.isDone()) {
+                        cf.thenAcceptAsync(ae -> play(lst, ae), playExecutorService);
+                        audioLoader.loadingEntry.remove(lst);
+                    }
+                    ttsQueue.removeFirst();
+                }
+            }
+        }
+    }
+
+    public void start(TTSVoiceEntry entry) {
+        audioLoader.stopAllLoad();
+        audioLoader.addLoadEntry(entry, ae -> play(entry, ae), playExecutorService);
+    }
+
+    private synchronized void play(TTSVoiceEntry voiceEntry, AudioEntry audioEntry) {
+        synchronized (lock) {
+            end();
+            currentEntry = Pair.of(voiceEntry, audioEntry);
+            if (voiceEntry.tracker() != null)
+                voiceEntry.tracker().setUpdateVoiceListener(inf -> {
+
+                });
+            audioPlayer.startTrack(audioEntry.audioTrack(), false);
+            audioPlayer.setVolume((int) (100 * voiceEntry.voice().voiceType().getVolume()));
+        }
+    }
+
+    public synchronized void stop() {
+        audioPlayer.stopTrack();
+    }
+
+    public int getMaxPrevisionLoadCount() {
+        return 10;
     }
 
     private class CoolDownThread extends Thread {
+        private final Runnable runnable;
+
+        private CoolDownThread(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
         @Override
         public void run() {
             try {
                 Thread.sleep(1000);
-                next();
+                coolDownThread = null;
+                runnable.run();
             } catch (InterruptedException ignored) {
             }
         }

@@ -1,14 +1,12 @@
 package dev.felnull.ttsvoice.audio.player;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import dev.felnull.ttsvoice.audio.AudioScheduler;
-
-import java.util.concurrent.CompletableFuture;
+import dev.felnull.ttsvoice.audio.OldAudioScheduler;
 
 public interface VoiceTrackLoader {
-    CompletableFuture<AudioTrack> loaded();
+    AudioTrack loaded();
 
-    default void setAudioScheduler(AudioScheduler scheduler) {
+    default void setAudioScheduler(OldAudioScheduler scheduler) {
     }
 
     default void end() {

@@ -4,6 +4,7 @@ import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.discord.BotLocation;
 import dev.felnull.ttsvoice.tts.sayedtext.StartupSayedText;
 import dev.felnull.ttsvoice.tts.sayedtext.VCEventSayedText;
+import dev.felnull.ttsvoice.tts.tracker.TextMessageTTSTracker;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.voice.HasTitleAndID;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
@@ -25,7 +26,9 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
@@ -466,7 +469,7 @@ public class TTSListener extends ListenerAdapter {
                 if (vc == null) return;
                 if (vc.getIdLong() != TTSManager.getInstance().getTTSVoiceChanel(e.getGuild())) return;
             }
-            tm.sayChat(BotLocation.of(e), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw());
+            tm.sayChat(BotLocation.of(e), e.getMember().getUser().getIdLong(), e.getMessage().getContentRaw(), e.getChannel().getIdLong(), e.getMessage().getIdLong());
             for (Message.Attachment attachment : e.getMessage().getAttachments()) {
                 if (!attachment.isImage() && !attachment.isVideo())
                     tm.sayText(BotLocation.of(e), tm.getUserVoiceType(e.getMember().getUser().getIdLong(), e.getGuild().getIdLong()), attachment.getFileName());
@@ -514,7 +517,7 @@ public class TTSListener extends ListenerAdapter {
         if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
             if (canViewAuditLog(event.getGuild())) {
                 boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
-              //  System.out.println(wasMoved);
+                //  System.out.println(wasMoved);
                 if (vc == event.getChannelLeft()) {
                     if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_TO);
                     else sayText(event, VCEventSayedText.EventType.MOVE_TO);
@@ -631,6 +634,32 @@ public class TTSListener extends ListenerAdapter {
                 }
             });
         }
+    }
+
+    @Override
+    public void onMessageDelete(@NotNull MessageDeleteEvent event) {
+        var botLocation = BotLocation.of(event);
+        var mtkey = new TTSManager.TextMessageTTSTrackerKey(botLocation, event.getChannel().getIdLong(), event.getMessageIdLong());
+        final var trackers = TTSManager.getInstance().getTrackers();
+        TextMessageTTSTracker e;
+        synchronized (trackers) {
+            e = trackers.get(mtkey);
+        }
+        if (e != null)
+            e.onUpdateMessage(null, -1);
+    }
+
+    @Override
+    public void onMessageUpdate(@NotNull MessageUpdateEvent event) {
+        var botLocation = BotLocation.of(event);
+        var mtkey = new TTSManager.TextMessageTTSTrackerKey(botLocation, event.getChannel().getIdLong(), event.getMessageIdLong());
+        final var trackers = TTSManager.getInstance().getTrackers();
+        TextMessageTTSTracker e;
+        synchronized (trackers) {
+            e = trackers.get(mtkey);
+        }
+        if (e != null)
+            e.onUpdateMessage(event.getMessage().getContentRaw(), event.getMessage().getAuthor().getIdLong());
     }
 
     private class ReconnectThread extends Thread {
