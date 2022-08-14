@@ -23,7 +23,9 @@ jar {
         attributes 'Implementation-Version': project.version
     }
 }
-
+shadowJar {
+    classifier ''
+}
 repositories {
     mavenCentral()
     maven {
