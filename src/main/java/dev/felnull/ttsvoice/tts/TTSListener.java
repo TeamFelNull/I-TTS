@@ -252,12 +252,12 @@ public class TTSListener extends ListenerAdapter {
                 e.getHook().deleteOriginal().queue();
             }
             case "config" -> {
-                if (!checkNeedAdmin(e.getMember(), e)) return;
                 var sb = e.getSubcommandName();
                 if (sb == null || sb.isEmpty()) {
                     e.reply("コンフィグが未指定です").setEphemeral(true).queue();
                     return;
                 }
+
                 var sc = Main.getServerSaveData(e.getGuild().getIdLong());
                 if ("show".equals(sb)) {
                     var msg = new MessageBuilder().append("現在のコンフィグ\n");
@@ -270,9 +270,15 @@ public class TTSListener extends ListenerAdapter {
                     if (!DiscordUtils.isNonAllowCookie(e.getGuild().getIdLong()))
                         sbr.append("クッキー☆モード").append(" ").append(sc.isCookieMode(e.getGuild().getIdLong()) ? "有効" : "無効").append("\n");
 
+                    sbr.append("VCに参加時に名前を読み上げ").append(" ").append(sc.isJoinSayName() ? "有効" : "無効").append("\n");
+                    sbr.append("最大読み上げ文字数").append(" ").append(sc.getMaxReadAroundCharacterLimit()).append("文字").append("\n");
+                    sbr.append("先頭につけると読み上げなくなる文字").append(" \"").append(sc.getNonReadingPrefix()).append("\"").append("\n");
+
                     msg.appendCodeLine(sbr.toString());
                     e.reply(msg.build()).setEphemeral(true).queue();
                 } else {
+                    if (!checkNeedAdmin(e.getMember(), e)) return;
+
                     var en = e.getOption("enable");
                     if (en == null) en = e.getOption("max-count");
                     if (en == null) en = e.getOption("prefix");
