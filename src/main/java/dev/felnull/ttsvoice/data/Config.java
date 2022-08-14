@@ -3,17 +3,18 @@ package dev.felnull.ttsvoice.data;
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
 import com.google.common.collect.ImmutableList;
+import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.util.Json5Utils;
 
 import java.util.List;
 
-public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<String> coeiroInkURLs,
+public record Config(int configVersion, List<String> botTokens, List<String> voiceVoxURLs, List<String> coeiroInkURLs,
                      String voiceTextAPIKey, int cashTime, String ignoreRegex, List<Long> inmDenyUser,
                      List<Long> cookieDenyUser, List<Long> adminRoles, List<Long> needAdminServers,
                      VoiceConfig voiceConfig) {
 
     public static Config createDefault() {
-        return new Config(ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L), VoiceConfig.createDefault());
+        return new Config(Main.CONFIG_VERSION, ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L), VoiceConfig.createDefault());
     }
 
     public static Config of(JsonObject jo) {
@@ -33,12 +34,12 @@ public record Config(List<String> botTokens, List<String> voiceVoxURLs, List<Str
 
         VoiceConfig vc = VoiceConfig.of(jo.getObject("VoiceConfig"));
 
-        return new Config(botTokens, voiceVoxURLs, coeiroInkURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers, vc);
+        return new Config(jo.getInt("ConfigVersion", 0), botTokens, voiceVoxURLs, coeiroInkURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers, vc);
     }
 
     public JsonObject toJson() {
         var jo = new JsonObject();
-
+        jo.put("ConfigVersion", new JsonPrimitive(configVersion), "コンフィグバージョン(変更しないでください)");
         jo.put("BotToken", Json5Utils.toJsonArray(botTokens), "BOTトークン指定");
         jo.put("VoiceVoxURL", Json5Utils.toJsonArray(voiceVoxURLs), "VoiceVoxのURL指定");
         jo.put("CoeiroInkURL", Json5Utils.toJsonArray(coeiroInkURLs), "CoeiroInkのURL指定");

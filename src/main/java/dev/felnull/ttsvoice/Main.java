@@ -29,6 +29,7 @@ import java.util.TimerTask;
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
     public static final long START_TIME = System.currentTimeMillis();
+    public static final int CONFIG_VERSION = 1;
     public static String VERSION;
 
     public static void main(String[] args) throws Exception {
@@ -45,7 +46,9 @@ public class Main {
         LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
         LOGGER.info("---------------");
 
-        ConfigAndSaveDataManager.getInstance().init();
+        if (!ConfigAndSaveDataManager.getInstance().init())
+            return;
+
         VoiceLoaderManager.getInstance().init();
 
         var join = Commands.slash("join", "読み上げBOTをVCに呼び出す").addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定").setChannelTypes(ImmutableList.of(ChannelType.VOICE, ChannelType.STAGE)));

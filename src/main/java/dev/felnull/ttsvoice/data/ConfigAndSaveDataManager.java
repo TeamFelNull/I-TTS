@@ -31,8 +31,7 @@ public class ConfigAndSaveDataManager {
         return INSTANCE;
     }
 
-    public void init() throws Exception {
-
+    public boolean init() throws Exception {
         if (CONFIG_FILE.exists()) {
             config = Config.of(JANKSON.load(CONFIG_FILE));
             LOGGER.info("Config file was loaded");
@@ -42,14 +41,14 @@ public class ConfigAndSaveDataManager {
             try (Writer writer = new BufferedWriter(new FileWriter(CONFIG_FILE))) {
                 config.toJson().toJson(writer, JsonGrammar.JSON5, 0);
             }
-            return;
+            return false;
         }
 
         try {
             config.check();
         } catch (Exception ex) {
             LOGGER.error("Config is incorrect: " + ex.getMessage());
-            return;
+            return false;
         }
 
         LOGGER.info("Completed config check");
@@ -100,6 +99,7 @@ public class ConfigAndSaveDataManager {
             }
         };
         timer.scheduleAtFixedRate(saveTask, 10 * 1000, 30 * 1000);
+        return true;
     }
 
     public Config getConfig() {
