@@ -4,7 +4,13 @@ plugins {
 }
 
 group 'dev.felnull'
-version '1.24'
+
+if (System.getenv("GITHUB_REF") != null && System.getenv("GITHUB_REF").startsWith("refs/tags/v")) {
+    version System.getenv("GITHUB_REF").substring("refs/tags/v".length());
+} else {
+    version 'NONE'
+}
+
 apply plugin: 'application'
 mainClassName = 'dev.felnull.ttsvoice.Main'
 

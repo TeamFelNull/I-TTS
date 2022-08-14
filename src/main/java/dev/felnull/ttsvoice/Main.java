@@ -33,7 +33,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         VERSION = Main.class.getPackage().getImplementationVersion();
-        if (VERSION == null) VERSION = "None";
+        if (VERSION == null) VERSION = "NONE";
 
         LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
         LOGGER.info("--System info--");
