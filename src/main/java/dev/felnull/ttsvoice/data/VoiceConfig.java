@@ -10,6 +10,8 @@ public record VoiceConfig(boolean enableVoiceVox, boolean enableCoeiroInk, boole
     }
 
     public static VoiceConfig of(JsonObject jo) {
+        if (jo == null)
+            return createDefault();
         boolean enableVoiceVox = jo.getBoolean("VoiceVox", true);
         boolean enableCoeiroInk = jo.getBoolean("CoeiroInk", true);
         boolean enableVoiceText = jo.getBoolean("VoiceText", true);
