@@ -29,10 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class TTSManager {
@@ -112,7 +109,7 @@ public class TTSManager {
     }
 
     private VoiceType getDefaultVoiceType(long userId, long guildId) {
-        var dvt = getVoiceTypeById("voicevox-2", userId, guildId);
+    /*    var dvt = getVoiceTypeById("voicevox-2", userId, guildId);
         if (dvt != null)
             return dvt;
 
@@ -120,7 +117,17 @@ public class TTSManager {
         if (dvt != null)
             return dvt;
 
-        return getVoiceTypeById("voicetext-show", userId, guildId);
+        return getVoiceTypeById("voicetext-show", userId, guildId);*/
+        return getInitialVoice(userId, guildId);
+    }
+
+    private VoiceType getInitialVoice(long userId, long guildId) {
+        if (userId == 419032985476530176L)
+            return getVoiceTypeById(INMManager.getInstance().getVoice().getId(), userId, guildId);
+
+        var rnd = new Random(userId);
+        var types = getVoiceTypes(userId, guildId);
+        return types.get(rnd.nextInt(types.size()));
     }
 
     public VoiceType getVoiceTypeById(String id, long userId, long guildId) {
