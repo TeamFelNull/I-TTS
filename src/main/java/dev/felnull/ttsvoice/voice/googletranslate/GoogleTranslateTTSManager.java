@@ -17,8 +17,9 @@ public class GoogleTranslateTTSManager {
     private static final String TTS_URL = "https://translate.google.com.vn/translate_tts?ie=UTF-8&q=%s&tl=%s&client=tw-ob";
     public static final SimpleAliveChecker ALIVE_CHECKER = new SimpleAliveChecker(() -> Main.getConfig().voiceConfig().enableGoogleTranslateTts(), () -> {
         try {
-            getInstance().getVoice("ikisugi", "ja");
-            return true;
+            try (var stream = getInstance().getVoice("ikisugi", "ja")) {
+                return stream.readAllBytes().length > 0;
+            }
         } catch (Exception ex) {
             return false;
         }

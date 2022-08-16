@@ -4,6 +4,7 @@ import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.voice.SimpleAliveChecker;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -19,8 +20,9 @@ public class VoiceTextManager {
     private static final String API_URL = "https://api.voicetext.jp/v1/tts";
     public static final SimpleAliveChecker ALIVE_CHECKER = new SimpleAliveChecker(() -> Main.getConfig().voiceConfig().enableVoiceText(), () -> {
         try {
-            getInstance().getVoice("ikisugi", VTVoiceTypes.BEAR);
-            return true;
+            try (var stream = new BufferedInputStream(getInstance().getVoice("ikisugi", VTVoiceTypes.BEAR))) {
+                return stream.readAllBytes().length > 0;
+            }
         } catch (Exception ex) {
             return false;
         }
