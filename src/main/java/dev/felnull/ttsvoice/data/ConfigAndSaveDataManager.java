@@ -31,7 +31,7 @@ public class ConfigAndSaveDataManager {
         return INSTANCE;
     }
 
-    public boolean init() throws Exception {
+    public boolean init(Timer timer) throws Exception {
         if (CONFIG_FILE.exists()) {
             config = Config.of(JANKSON.load(CONFIG_FILE));
             LOGGER.info("Config file was loaded");
@@ -88,7 +88,7 @@ public class ConfigAndSaveDataManager {
             LOGGER.info("Completed load server save data");
         }
 
-        Timer timer = new Timer();
+
         TimerTask saveTask = new TimerTask() {
             public void run() {
                 savedData();

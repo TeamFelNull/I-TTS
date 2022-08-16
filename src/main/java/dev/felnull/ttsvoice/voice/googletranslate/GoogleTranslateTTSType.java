@@ -57,4 +57,9 @@ public enum GoogleTranslateTTSType implements VoiceType {
     public VoiceCategory getCategory() {
         return GoogleTranslateVoiceCategory.getInstance();
     }
+
+    @Override
+    public boolean isAlive() {
+        return GoogleTranslateTTSManager.getInstance().isAlive();
+    }
 }

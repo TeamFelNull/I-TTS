@@ -167,7 +167,7 @@ public class TTSManager {
                 builder.add(CookieManager.getInstance().getVoice());
         }
 
-        return builder.build();
+        return builder.build().stream().filter(VoiceType::isAlive).toList();
     }
 
     public List<VoiceCategory> getVoiceCategories(long userId, long guildId) {
@@ -253,6 +253,11 @@ public class TTSManager {
     }
 
     public void sayText(BotLocation botLocation, VoiceType voiceType, SayedText sayedText, BaseTTSTracker tracker) {
+        if (voiceType == INMManager.getInstance().getVoice() && !Main.getServerSaveData(botLocation.guildId()).isInmMode(botLocation.guildId()))
+            return;
+        if (voiceType == CookieManager.getInstance().getVoice() && !Main.getServerSaveData(botLocation.guildId()).isCookieMode(botLocation.guildId()))
+            return;
+
         VoiceAudioPlayerManager.getInstance().addTTS(botLocation, new TTSVoiceEntry(new TTSVoice(sayedText, voiceType), UUID.randomUUID(), tracker));
         //var sc = VoiceAudioPlayerManager.getInstance().getScheduler(botLocation);
         /*var q = getTTSQueue(botLocation);

@@ -41,4 +41,9 @@ public class INMVoiceType implements HasSayVoiceMP3VoiceType {
     public VoiceCategory getCategory() {
         return ReinoareVoiceCategory.getInstance();
     }
+
+    @Override
+    public boolean isAlive() {
+        return INMManager.getInstance().isAlive();
+    }
 }

@@ -32,11 +32,10 @@ public class VoiceLoaderManager {
         return INSTANCE;
     }
 
-    public void init() throws IOException {
+    public void init(Timer timer) throws IOException {
         FileUtils.deleteDirectory(TMP_FOLDER);
         TMP_FOLDER.mkdirs();
 
-        Timer timer = new Timer();
         TimerTask cashManageTask = new TimerTask() {
             public void run() {
                 clearCash();

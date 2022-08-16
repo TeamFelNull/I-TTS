@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.fnjl.tuple.FNPair;
 import dev.felnull.fnjl.util.FNURLUtil;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,6 +17,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -29,10 +31,22 @@ public abstract class VVEngineManager {
     private final Map<String, Integer> LOADING_ENGINES = new HashMap<>();
     private final Map<String, Long> LAST_LOAD_ENGINE_TIMES = new HashMap<>();
     private List<VVEVoiceType> SPEAKERS;
+    private List<String> aliveURLs;
     private long lastSpeakersLoadTime;
     private boolean lastError;
 
-    abstract public List<String> getEngineURLs();
+    abstract public List<String> getAllEngineURLs();
+
+    public synchronized List<String> getAliveEngineURLs() {
+        if (aliveURLs == null) {
+            aliveURLs = new ArrayList<>();
+            aliveCheck();
+        }
+
+        synchronized (aliveURLs) {
+            return ImmutableList.copyOf(aliveURLs);
+        }
+    }
 
     abstract protected VVEVoiceType createVoiceType(JsonObject jo, String name);
 
@@ -41,7 +55,7 @@ public abstract class VVEngineManager {
     public String getEngineURL() {
         List<String> mostEngines = new ArrayList<>();
         int mct = Integer.MAX_VALUE;
-        for (String vvEngineURL : getEngineURLs()) {
+        for (String vvEngineURL : getAliveEngineURLs()) {
             int ct = getLoadingEnginesCount(vvEngineURL);
             if (ct < mct) {
                 mostEngines.clear();
@@ -57,6 +71,9 @@ public abstract class VVEngineManager {
                 return FNPair.of(n, LAST_LOAD_ENGINE_TIMES.computeIfAbsent(n, v -> 0L));
             }
         }).sorted(Comparator.comparingLong(FNPair::getRight)).toList();
+
+        if (ky.isEmpty())
+            throw new RuntimeException(String.format("no %s available", getName()));
 
         return ky.get(0).getKey();
     }
@@ -156,15 +173,62 @@ public abstract class VVEngineManager {
     }
 
     public InputStream getVoce(JsonObject query, int speakerId) throws IOException, InterruptedException {
+        var ret = loadVoice(query, speakerId, "synthesis");
+        //   var ret = loadVoice(query, speakerId, "cancellable_synthesis");
+
+        if (ret.getRight().firstValue("content-type").map(v -> v.startsWith("audio/")).orElse(false))
+            return ret.getLeft();
+        return null;
+    }
+
+    private Pair<InputStream, HttpHeaders> loadVoice(JsonObject query, int speakerId, String synthesisStr) throws IOException, InterruptedException {
         var url = getEngineURL();
         loadStartEngine(url);
         try {
             var hc = HttpClient.newHttpClient();
-            var request = HttpRequest.newBuilder(URI.create(url + "/synthesis?speaker=" + speakerId)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(query))).version(HttpClient.Version.HTTP_1_1).build();
+            var request = HttpRequest.newBuilder(URI.create(url + "/" + synthesisStr + "?speaker=" + speakerId)).timeout(Duration.of(10, ChronoUnit.SECONDS)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(query))).version(HttpClient.Version.HTTP_1_1).build();
             var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
-            return res.body();
+            return Pair.of(res.body(), res.headers());
         } finally {
             loadEndEngine(url);
         }
     }
+
+    protected boolean aliveCheck() {
+        List<String> alive = new ArrayList<>();
+        for (String engineURL : getAllEngineURLs()) {
+            try {
+                var hc = HttpClient.newHttpClient();
+                var request = HttpRequest.newBuilder(URI.create(engineURL + "/openapi.json")).timeout(Duration.of(10, ChronoUnit.SECONDS)).GET().version(HttpClient.Version.HTTP_1_1).build();
+                var res = hc.send(request, HttpResponse.BodyHandlers.ofString());
+                GSON.fromJson(res.body(), JsonObject.class);
+                alive.add(engineURL);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (aliveURLs != null) {
+            synchronized (aliveURLs) {
+                aliveURLs.clear();
+                aliveURLs.addAll(alive);
+                synchronized (LOADING_ENGINES) {
+                    for (String s : LOADING_ENGINES.keySet()) {
+                        if (!aliveURLs.contains(s))
+                            LOADING_ENGINES.remove(s);
+                    }
+                }
+
+                synchronized (LAST_LOAD_ENGINE_TIMES) {
+                    for (String s : LAST_LOAD_ENGINE_TIMES.keySet()) {
+                        if (!aliveURLs.contains(s))
+                            LAST_LOAD_ENGINE_TIMES.remove(s);
+                    }
+                }
+            }
+        }
+
+        return !alive.isEmpty();
+    }
+
+    abstract public boolean isAlive();
 }

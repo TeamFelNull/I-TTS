@@ -73,4 +73,9 @@ public abstract class VVEVoiceType implements VoiceType {
     public int hashCode() {
         return Objects.hash(engineName, vveId, name, styleName);
     }
+
+    @Override
+    public boolean isAlive() {
+        return getEngineManager().isAlive();
+    }
 }

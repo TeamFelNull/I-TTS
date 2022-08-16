@@ -34,4 +34,6 @@ public interface VoiceType extends HasTitleAndID {
     }
 
     VoiceCategory getCategory();
+
+    boolean isAlive();
 }

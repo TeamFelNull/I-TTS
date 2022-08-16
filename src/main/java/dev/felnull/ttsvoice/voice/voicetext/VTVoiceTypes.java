@@ -54,4 +54,9 @@ public enum VTVoiceTypes implements VoiceType {
     public VoiceCategory getCategory() {
         return VTVoiceCategory.getInstance();
     }
+
+    @Override
+    public boolean isAlive() {
+        return VoiceTextManager.getInstance().isAlive();
+    }
 }

@@ -9,6 +9,11 @@ import dev.felnull.ttsvoice.data.ServerSaveData;
 import dev.felnull.ttsvoice.discord.JDAManager;
 import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.tts.TTSManager;
+import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSManager;
+import dev.felnull.ttsvoice.voice.reinoare.ReinoareManager;
+import dev.felnull.ttsvoice.voice.voicetext.VoiceTextManager;
+import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CoeiroInkManager;
+import dev.felnull.ttsvoice.voice.vvengine.voicevox.VoiceVoxManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -28,6 +33,7 @@ import java.util.TimerTask;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
+    private static final Timer TIMER = new Timer("main-timer", true);
     public static final long START_TIME = System.currentTimeMillis();
     public static final int CONFIG_VERSION = 1;
     public static String VERSION;
@@ -46,10 +52,10 @@ public class Main {
         LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
         LOGGER.info("---------------");
 
-        if (!ConfigAndSaveDataManager.getInstance().init())
+        if (!ConfigAndSaveDataManager.getInstance().init(TIMER))
             return;
 
-        VoiceLoaderManager.getInstance().init();
+        VoiceLoaderManager.getInstance().init(TIMER);
 
         var join = Commands.slash("join", "読み上げBOTをVCに呼び出す").addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定").setChannelTypes(ImmutableList.of(ChannelType.VOICE, ChannelType.STAGE)));
         var leave = Commands.slash("leave", "読み上げBOTをVCから切断");
@@ -77,14 +83,18 @@ public class Main {
             jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, inm, cookie, config, vnick).queue();
         });
 
-        Timer timer = new Timer();
-
         TimerTask updatePresenceTask = new TimerTask() {
             public void run() {
                 updatePresence();
             }
         };
-        timer.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
+        TIMER.scheduleAtFixedRate(updatePresenceTask, 1000 * 30, 1000 * 30);
+
+        VoiceVoxManager.ALIVE_CHECKER.init(TIMER);
+        CoeiroInkManager.ALIVE_CHECKER.init(TIMER);
+        VoiceTextManager.ALIVE_CHECKER.init(TIMER);
+        GoogleTranslateTTSManager.ALIVE_CHECKER.init(TIMER);
+        ReinoareManager.ALIVE_CHECKER.init(TIMER);
     }
 
     public static void updatePresence() {

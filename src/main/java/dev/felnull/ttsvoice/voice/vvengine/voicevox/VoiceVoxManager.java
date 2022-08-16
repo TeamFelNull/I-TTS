@@ -2,6 +2,7 @@ package dev.felnull.ttsvoice.voice.vvengine.voicevox;
 
 import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.voice.SimpleAliveChecker;
 import dev.felnull.ttsvoice.voice.vvengine.VVEVoiceType;
 import dev.felnull.ttsvoice.voice.vvengine.VVEngineManager;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 public class VoiceVoxManager extends VVEngineManager {
     private static final VoiceVoxManager INSTANCE = new VoiceVoxManager();
+    public static final SimpleAliveChecker ALIVE_CHECKER = new SimpleAliveChecker(() -> Main.getConfig().voiceConfig().enableVoiceVox(), () -> getInstance().aliveCheck());
     public static final String NAME = "voicevox";
 
     public static VoiceVoxManager getInstance() {
@@ -16,7 +18,7 @@ public class VoiceVoxManager extends VVEngineManager {
     }
 
     @Override
-    public List<String> getEngineURLs() {
+    public List<String> getAllEngineURLs() {
         return Main.getConfig().voiceVoxURLs();
     }
 
@@ -28,5 +30,10 @@ public class VoiceVoxManager extends VVEngineManager {
     @Override
     protected String getName() {
         return NAME;
+    }
+
+    @Override
+    public boolean isAlive() {
+        return ALIVE_CHECKER.isAlive();
     }
 }

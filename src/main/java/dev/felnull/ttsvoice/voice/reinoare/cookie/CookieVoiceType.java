@@ -41,4 +41,9 @@ public class CookieVoiceType implements HasSayVoiceMP3VoiceType {
     public VoiceCategory getCategory() {
         return ReinoareVoiceCategory.getInstance();
     }
+
+    @Override
+    public boolean isAlive() {
+        return CookieManager.getInstance().isAlive();
+    }
 }
