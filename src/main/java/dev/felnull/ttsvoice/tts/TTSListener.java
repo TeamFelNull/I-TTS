@@ -607,6 +607,9 @@ public class TTSListener extends ListenerAdapter {
                 if (lj != null) {
                     try {
                         var guild = jda.getGuildById(g);
+                        if (guild == null)
+                            return;
+
                         var audioManager = guild.getAudioManager();
                         var achn = guild.getChannelById(AudioChannel.class, lj.audioChannel());
                         if (achn == null) return;
