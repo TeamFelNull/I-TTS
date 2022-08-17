@@ -52,6 +52,8 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent e) {
+        if (!e.isFromGuild()) return;
+
         switch (e.getName()) {
             case "join" -> {
                 if (!checkNeedAdmin(e.getMember(), e)) return;
@@ -407,6 +409,8 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent e) {
+        if (!e.isFromGuild()) return;
+
         if ("voice".equals(e.getName()) && "change".equals(e.getSubcommandName())) {
             var opc = e.getInteraction().getOption("voice_category");
             var opt = e.getInteraction().getOption("voice_type");
@@ -463,6 +467,8 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e) {
+        if (!e.isFromGuild()) return;
+
         var sc = Main.getServerSaveData(e.getGuild().getIdLong());
         var tm = TTSManager.getInstance();
         if (tm.getTTSChanel(BotLocation.of(e)) == e.getChannel().getIdLong() && !e.getMember().getUser().isBot()) {
@@ -647,6 +653,8 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onMessageDelete(@NotNull MessageDeleteEvent event) {
+        if (!event.isFromGuild()) return;
+
         var botLocation = BotLocation.of(event);
         var mtkey = new TTSManager.TextMessageTTSTrackerKey(botLocation, event.getChannel().getIdLong(), event.getMessageIdLong());
         final var trackers = TTSManager.getInstance().getTrackers();
@@ -660,6 +668,8 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onMessageUpdate(@NotNull MessageUpdateEvent event) {
+        if (!event.isFromGuild()) return;
+
         var botLocation = BotLocation.of(event);
         var mtkey = new TTSManager.TextMessageTTSTrackerKey(botLocation, event.getChannel().getIdLong(), event.getMessageIdLong());
         final var trackers = TTSManager.getInstance().getTrackers();

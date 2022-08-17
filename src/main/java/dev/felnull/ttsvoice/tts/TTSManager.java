@@ -122,8 +122,11 @@ public class TTSManager {
     }
 
     private VoiceType getInitialVoice(long userId, long guildId) {
-        if (userId == 419032985476530176L)
-            return getVoiceTypeById(INMManager.getInstance().getVoice().getId(), userId, guildId);
+        if (userId == 419032985476530176L) {
+            var inm = getVoiceTypeById(INMManager.getInstance().getVoice().getId(), userId, guildId);
+            if (inm != null)
+                return inm;
+        }
 
         var rnd = new Random(userId);
         var types = getVoiceTypes(userId, guildId);

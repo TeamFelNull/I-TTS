@@ -117,27 +117,26 @@ public class VoiceLoaderManager {
     }
 
     private TmpFileVoiceTrackLoader loadTmpFileVoice(TTSVoice voice) {
-        InputStream voiceStream;
-        try {
-            voiceStream = voice.voiceType().getSayVoiceSound(voice.sayVoice());
+        try (InputStream voiceStream = voice.voiceType().getSayVoiceSound(voice.sayVoice())) {
+            if (voiceStream == null)
+                return null;
+
+            var uuid = UUID.randomUUID();
+            var file = getTmpFolder(uuid);
+
+            try (FileOutputStream outputStream = new FileOutputStream(file)) {
+                FNDataUtil.bufInputToOutput(voiceStream, outputStream);
+            } catch (IOException ex) {
+                if (file.exists())
+                    file.delete();
+                LOGGER.error("Failed to write audio data cash", ex);
+                return null;
+            }
+
+            return new TmpFileVoiceTrackLoader(uuid, voice.isCached());
         } catch (Exception ex) {
             LOGGER.error("Failed to get audio data", ex);
             return null;
         }
-
-        if (voiceStream == null)
-            return null;
-
-        var uuid = UUID.randomUUID();
-        var file = getTmpFolder(uuid);
-        try {
-            FNDataUtil.bufInputToOutput(voiceStream, new FileOutputStream(file));
-        } catch (IOException ex) {
-            if (file.exists())
-                file.delete();
-            LOGGER.error("Failed to write audio data cash", ex);
-            return null;
-        }
-        return new TmpFileVoiceTrackLoader(uuid, voice.isCached());
     }
 }
