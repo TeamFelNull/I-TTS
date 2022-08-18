@@ -36,7 +36,12 @@ public class DiscordUtils {
     }
 
     public static String getName(BotLocation botLocation, User user, long userId) {
-        return toNoMention(getName_(botLocation, user, userId));
+        var name = toNoMention(getName_(botLocation, user, userId));
+        int maxr = Main.getServerSaveData(botLocation.guildId()).getMaxReadAroundNameLimit();
+        if (name.length() > maxr) {
+            name = name.substring(0, maxr) + "以下略";
+        }
+        return name;
     }
 
     private static String getName_(BotLocation botLocation, User user, long userId) {

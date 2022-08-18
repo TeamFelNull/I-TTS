@@ -52,7 +52,7 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent e) {
-        if (!e.isFromGuild()) return;
+        if (!e.isFromGuild() || e.getMember() == null) return;
 
         switch (e.getName()) {
             case "join" -> {
@@ -274,6 +274,7 @@ public class TTSListener extends ListenerAdapter {
 
                     sbr.append("VCに参加時に名前を読み上げ").append(" ").append(sc.isJoinSayName() ? "有効" : "無効").append("\n");
                     sbr.append("最大読み上げ文字数").append(" ").append(sc.getMaxReadAroundCharacterLimit()).append("文字").append("\n");
+                    sbr.append("最大名前読み上げ文字数").append(" ").append(sc.getMaxReadAroundNameLimit()).append("文字").append("\n");
                     sbr.append("先頭につけると読み上げなくなる文字").append(" \"").append(sc.getNonReadingPrefix()).append("\"").append("\n");
 
                     msg.appendCodeLine(sbr.toString());
@@ -363,6 +364,14 @@ public class TTSListener extends ListenerAdapter {
                                 sc.setMaxReadAroundCharacterLimit(iv);
                                 e.reply("最大読み上げ文字数を" + iv + "にしました").queue();
                             }
+                            case "read-around-name-limit" -> {
+                                if (sc.getMaxReadAroundNameLimit() == iv) {
+                                    e.reply("すでに最大名前読み上げ文字数は" + iv + "です").setEphemeral(true).queue();
+                                    return;
+                                }
+                                sc.setMaxReadAroundNameLimit(iv);
+                                e.reply("最大名前読み上げ文字数を" + iv + "にしました").queue();
+                            }
                         }
                     } else if (en.getType() == OptionType.STRING) {
                         String pre = en.getAsString();
@@ -409,7 +418,7 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent e) {
-        if (!e.isFromGuild()) return;
+        if (!e.isFromGuild() || e.getMember() == null) return;
 
         if ("voice".equals(e.getName()) && "change".equals(e.getSubcommandName())) {
             var opc = e.getInteraction().getOption("voice_category");
@@ -467,7 +476,7 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e) {
-        if (!e.isFromGuild()) return;
+        if (!e.isFromGuild() || e.getMember() == null) return;
 
         var sc = Main.getServerSaveData(e.getGuild().getIdLong());
         var tm = TTSManager.getInstance();
@@ -668,7 +677,7 @@ public class TTSListener extends ListenerAdapter {
 
     @Override
     public void onMessageUpdate(@NotNull MessageUpdateEvent event) {
-        if (!event.isFromGuild()) return;
+        if (!event.isFromGuild() || event.getMember() == null) return;
 
         var botLocation = BotLocation.of(event);
         var mtkey = new TTSManager.TextMessageTTSTrackerKey(botLocation, event.getChannel().getIdLong(), event.getMessageIdLong());

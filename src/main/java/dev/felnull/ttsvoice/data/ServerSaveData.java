@@ -18,6 +18,7 @@ public class ServerSaveData extends BaseSaveData {
     private int maxReadAroundCharacterLimit = 200;
     private String nonReadingPrefix = ";";
     private final Map<Long, TTSEntry> lastJoinChannels = new HashMap<>();
+    private int maxReadAroundNameLimit = 10;
     private boolean dirty;
 
     public ServerSaveData(long guildId) {
@@ -53,6 +54,9 @@ public class ServerSaveData extends BaseSaveData {
         if (nrp != null)
             nonReadingPrefix = nrp;
 
+        var mranl = JsonUtils.getInteger(jo, "max_read_around_name_limit");
+        if (mranl != null)
+            maxReadAroundNameLimit = mranl;
 
         if (jo.has("last_join") && jo.get("last_join").isJsonObject()) {
             var joe = jo.getAsJsonObject("last_join");
@@ -70,6 +74,7 @@ public class ServerSaveData extends BaseSaveData {
         jo.addProperty("cookie_mode", cookieMode);
         jo.addProperty("join_say_name", joinSayName);
         jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
+        jo.addProperty("max_read_around_name_limit", maxReadAroundNameLimit);
         jo.addProperty("non-reading_prefix", nonReadingPrefix);
 
         var ljjo = new JsonObject();
@@ -105,6 +110,10 @@ public class ServerSaveData extends BaseSaveData {
 
     public int getMaxReadAroundCharacterLimit() {
         return maxReadAroundCharacterLimit;
+    }
+
+    public int getMaxReadAroundNameLimit() {
+        return maxReadAroundNameLimit;
     }
 
     public String getNonReadingPrefix() {
@@ -157,6 +166,12 @@ public class ServerSaveData extends BaseSaveData {
 
     public void setNonReadingPrefix(String NonReadingPrefix) {
         this.nonReadingPrefix = NonReadingPrefix;
+        dirty = true;
+        saved();
+    }
+
+    public void setMaxReadAroundNameLimit(int maxReadAroundNameLimit) {
+        this.maxReadAroundNameLimit = maxReadAroundNameLimit;
         dirty = true;
         saved();
     }
