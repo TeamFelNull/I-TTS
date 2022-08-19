@@ -33,7 +33,14 @@ public class GoogleTranslateTTSManager {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
         var url = String.format(TTS_URL, text, lang);
-        return FNURLUtil.getStream(new URL(url));
+        var con = FNURLUtil.getConnection(new URL(url));
+        con.connect();
+
+        var header = con.getHeaderField("content-type");
+        if (header != null && header.startsWith("audio/"))
+            return con.getInputStream();
+
+        return null;
     }
 
     public boolean isAlive() {

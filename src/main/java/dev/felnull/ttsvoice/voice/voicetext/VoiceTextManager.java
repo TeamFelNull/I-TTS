@@ -43,7 +43,11 @@ public class VoiceTextManager {
         String basic = "Basic " + FNStringUtil.encodeBase64(getAPIKey() + ":");
         var request = HttpRequest.newBuilder(URI.create(API_URL)).header("Authorization", basic).header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(String.format("text=%s&speaker=%s", text, vtVoiceTypes.getName()))).version(HttpClient.Version.HTTP_1_1).build();
         var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
-        return res.body();
+
+        if (res.headers().firstValue("content-type").map(n -> n.startsWith("audio/")).orElse(false))
+            return res.body();
+
+        return null;
     }
 
     public boolean isAlive() {
