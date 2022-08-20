@@ -268,7 +268,7 @@ public class TTSListener extends ListenerAdapter {
                     sbr.append("VCに参加時のみ読み上げ").append(" ").append(sc.isNeedJoin() ? "有効" : "無効").append("\n");
                     sbr.append("読み上げの上書き").append(" ").append(sc.isOverwriteAloud() ? "有効" : "無効").append("\n");
                     if (!DiscordUtils.isNonAllowInm(e.getGuild().getIdLong()))
-                        sbr.append("INMモード").append(" ").append(sc.isInmMode(e.getGuild().getIdLong()) ? "有効" : "無効").append("\n");
+                        sbr.append("淫夢モード").append(" ").append(sc.isInmMode(e.getGuild().getIdLong()) ? "有効" : "無効").append("\n");
                     if (!DiscordUtils.isNonAllowCookie(e.getGuild().getIdLong()))
                         sbr.append("クッキー☆モード").append(" ").append(sc.isCookieMode(e.getGuild().getIdLong()) ? "有効" : "無効").append("\n");
 
@@ -319,11 +319,12 @@ public class TTSListener extends ListenerAdapter {
                                     return;
                                 }
                                 if (sc.isInmMode(e.getGuild().getIdLong()) == ena) {
-                                    e.reply("すでにINMモードは" + enStr + "です").setEphemeral(true).queue();
+                                    e.reply("すでに淫夢モードは" + enStr + "です").setEphemeral(true).queue();
                                     return;
                                 }
                                 sc.setInmMode(ena);
-                                e.reply("INMモードを" + enStr + "にしました").queue();
+                                Main.updateGuildCommand(e.getGuild(), true);
+                                e.reply("淫夢モードを" + enStr + "にしました").queue();
                             }
                             case "cookie-mode" -> {
                                 if (ena && DiscordUtils.isNonAllowCookie(e.getGuild().getIdLong())) {
@@ -339,6 +340,7 @@ public class TTSListener extends ListenerAdapter {
                                     return;
                                 }
                                 sc.setCookieMode(ena);
+                                Main.updateGuildCommand(e.getGuild(), true);
                                 e.reply("クッキー☆モードを" + enStr + "にしました").queue();
                             }
                             case "join-say-name" -> {
@@ -615,6 +617,10 @@ public class TTSListener extends ListenerAdapter {
         var jda = event.getJDA();
         String name = jda.getSelfUser().getName();
 
+        for (Guild guild : jda.getGuilds()) {
+            Main.updateGuildCommand(guild, false);
+        }
+
         synchronized (Main.getAllServerSaveData()) {
             Main.getAllServerSaveData().forEach((g, c) -> {
                 long id = jda.getSelfUser().getIdLong();
@@ -624,12 +630,12 @@ public class TTSListener extends ListenerAdapter {
                         var guild = jda.getGuildById(g);
                         if (guild == null)
                             return;
-
                         var audioManager = guild.getAudioManager();
                         var achn = guild.getChannelById(AudioChannel.class, lj.audioChannel());
                         if (achn == null) return;
                         var tch = guild.getChannelById(TextChannel.class, lj.ttsChannel());
                         if (tch == null) return;
+
                         audioManager.openAudioConnection(achn);
                         var bag = BotLocation.of(event, guild);
                         var tm = TTSManager.getInstance();

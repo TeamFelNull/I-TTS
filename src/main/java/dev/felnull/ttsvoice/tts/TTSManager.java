@@ -130,6 +130,9 @@ public class TTSManager {
 
         var rnd = new Random(userId);
         var types = getVoiceTypes(userId, guildId);
+        if (types.isEmpty())
+            return null;
+
         return types.get(rnd.nextInt(types.size()));
     }
 
