@@ -56,7 +56,7 @@ public class TTSListener extends ListenerAdapter {
 
         switch (e.getName()) {
             case "join" -> {
-                if (!checkNeedAdmin(e.getMember(), e)) return;
+                //if (!checkNeedAdmin(e.getMember(), e)) return;
                 var channel = e.getInteraction().getOption("channel");
                 AudioChannel audioChannel;
                 if (channel != null) {
@@ -92,7 +92,7 @@ public class TTSListener extends ListenerAdapter {
                 e.reply(DiscordUtils.createChannelMention(audioChannel) + "に接続しました").queue();
             }
             case "leave" -> {
-                if (!checkNeedAdmin(e.getMember(), e)) return;
+               // if (!checkNeedAdmin(e.getMember(), e)) return;
                 var audioManager = e.getGuild().getAudioManager();
                 if (audioManager.isConnected()) {
                     var chn = audioManager.getConnectedChannel();
@@ -104,7 +104,7 @@ public class TTSListener extends ListenerAdapter {
                 }
             }
             case "reconnect" -> {
-                if (!checkNeedAdmin(e.getMember(), e)) return;
+               // if (!checkNeedAdmin(e.getMember(), e)) return;
                 var audioManager = e.getGuild().getAudioManager();
                 if (audioManager.isConnected()) {
                     var chn = audioManager.getConnectedChannel();
