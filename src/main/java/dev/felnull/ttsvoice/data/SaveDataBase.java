@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import dev.felnull.fnjl.io.watcher.FileSystemWatcher;
 import dev.felnull.fnjl.util.FNDataUtil;
+import dev.felnull.ttsvoice.Main;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -100,8 +101,10 @@ public abstract class SaveDataBase {
         if (fileWatcherWaitTimeThread == null) {
             fileWatcherWaitTimeThread = new WaitTimeThread(() -> {
                 try {
-                    load();
-                    ConfigAndSaveDataManager.LOGGER.info("Loaded by file watcher: " + path);
+                    if (load()) {
+                        Main.updateAllGuildCommand();
+                        ConfigAndSaveDataManager.LOGGER.info("Loaded by file watcher: " + path);
+                    }
                 } catch (Exception ex) {
                     ConfigAndSaveDataManager.LOGGER.info("Load failed in file watcher: " + path, ex);
                 } finally {

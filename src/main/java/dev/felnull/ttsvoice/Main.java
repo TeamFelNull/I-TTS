@@ -80,6 +80,21 @@ public class Main {
         ReinoareManager.ALIVE_CHECKER.init(TIMER);
     }
 
+    public static void updateAllGuildCommand() {
+        List<Guild> guilds = new ArrayList<>();
+
+        var jdas = JDAManager.getInstance().getAllJDA();
+        synchronized (jdas) {
+            for (JDA jda : jdas) {
+                guilds.addAll(jda.getGuilds());
+            }
+        }
+
+        for (Guild guild : guilds) {
+            updateGuildCommand(guild, false);
+        }
+    }
+
     public static void updateGuildCommand(Guild guild, boolean allJDA) {
         long guildId = guild.getIdLong();
         var defaultPermissions = getUseCommandPermission();
