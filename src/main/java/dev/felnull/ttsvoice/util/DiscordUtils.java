@@ -2,6 +2,8 @@ package dev.felnull.ttsvoice.util;
 
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.discord.BotLocation;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
@@ -26,7 +28,7 @@ public class DiscordUtils {
         return "<#" + channel.getId() + ">";
     }
 
-    public static String toNoMention(String txt) {
+    public static String mentionEscape(String txt) {
         if (txt == null) return null;
         txt = Message.MentionType.EVERYONE.getPattern().matcher(txt).replaceAll(n -> "everyone");
         txt = Message.MentionType.HERE.getPattern().matcher(txt).replaceAll(n -> "here");
@@ -36,7 +38,7 @@ public class DiscordUtils {
     }
 
     public static String getName(BotLocation botLocation, User user, long userId) {
-        var name = toNoMention(getName_(botLocation, user, userId));
+        var name = mentionEscape(getName_(botLocation, user, userId));
         int maxr = Main.getServerSaveData(botLocation.guildId()).getMaxReadAroundNameLimit();
         if (name.length() > maxr) {
             name = name.substring(0, maxr) + "以下略";
@@ -68,7 +70,7 @@ public class DiscordUtils {
     }
 
     public static String getName(Member member) {
-        return toNoMention(getName_(member));
+        return mentionEscape(getName_(member));
     }
 
     private static String getName_(Member member) {
@@ -172,5 +174,26 @@ public class DiscordUtils {
 
     public static boolean isNonAllowCookie(long guildId) {
         return guildId == 930083398691733565L;
+    }
+
+    public static EmbedBuilder createEmbedBuilder() {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(Main.THEME_COLOR);
+        return eb;
+
+        /*
+
+         EmbedBuilder eb = DiscordUtils.createEmbedBuilder();
+            eb.setAuthor("Author");
+            eb.setTitle("Title");
+            eb.addField("The Field", "field", false);
+            eb.addField("No inline Field", "nlfield", false);
+            eb.setImage(e.getMember().getAvatarUrl());
+            eb.setThumbnail(e.getMember().getEffectiveAvatarUrl());
+         */
+    }
+
+    public static Message createEmbedMessage(MessageEmbed embed) {
+        return new MessageBuilder(embed).build();
     }
 }

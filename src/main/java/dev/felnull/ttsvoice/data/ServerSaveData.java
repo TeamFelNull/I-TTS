@@ -5,10 +5,11 @@ import com.google.gson.JsonObject;
 import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.JsonUtils;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServerSaveData extends BaseSaveData {
+public class ServerSaveData extends SaveDataBase {
     private final long guildId;
     private boolean needJoin = false;
     private boolean overwriteAloud = true;
@@ -19,12 +20,13 @@ public class ServerSaveData extends BaseSaveData {
     private String nonReadingPrefix = ";";
     private final Map<Long, TTSEntry> lastJoinChannels = new HashMap<>();
     private int maxReadAroundNameLimit = 10;
-    private boolean dirty;
 
-    public ServerSaveData(long guildId) {
+    public ServerSaveData(File saveFile, long guildId) {
+        super(saveFile);
         this.guildId = guildId;
     }
 
+    @Override
     public void load(JsonObject jo) {
         var nj = JsonUtils.getBoolean(jo, "need_join");
         if (nj != null)
@@ -64,24 +66,6 @@ public class ServerSaveData extends BaseSaveData {
                 lastJoinChannels.put(Long.parseLong(entry.getKey()), TTSEntry.of(entry.getValue().getAsJsonObject()));
             }
         }
-
-    }
-
-    public void save(JsonObject jo) {
-        jo.addProperty("need_join", needJoin);
-        jo.addProperty("overwrite_aloud", overwriteAloud);
-        jo.addProperty("inm_mode", inmMode);
-        jo.addProperty("cookie_mode", cookieMode);
-        jo.addProperty("join_say_name", joinSayName);
-        jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
-        jo.addProperty("max_read_around_name_limit", maxReadAroundNameLimit);
-        jo.addProperty("non-reading_prefix", nonReadingPrefix);
-
-        var ljjo = new JsonObject();
-        for (Map.Entry<Long, TTSEntry> entry : lastJoinChannels.entrySet()) {
-            ljjo.add(String.valueOf(entry.getKey()), entry.getValue().toJson());
-        }
-        jo.add("last_join", ljjo);
     }
 
     public boolean isInmMode(long guildId) {
@@ -120,71 +104,53 @@ public class ServerSaveData extends BaseSaveData {
         return nonReadingPrefix;
     }
 
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
     public void setInmMode(boolean inmMode) {
         this.inmMode = inmMode;
-        dirty = true;
         saved();
     }
 
     public void setCookieMode(boolean cookieMode) {
         this.cookieMode = cookieMode;
-        dirty = true;
         saved();
     }
 
     public void setNeedJoin(boolean needJoin) {
         this.needJoin = needJoin;
-        dirty = true;
         saved();
     }
 
     public void setOverwriteAloud(boolean overwriteAloud) {
         this.overwriteAloud = overwriteAloud;
-        dirty = true;
         saved();
     }
 
     public void setJoinSayName(boolean joinSayName) {
         this.joinSayName = joinSayName;
-        dirty = true;
         saved();
     }
 
     public void setMaxReadAroundCharacterLimit(int maxReadAroundCharacterLimit) {
         this.maxReadAroundCharacterLimit = maxReadAroundCharacterLimit;
-        dirty = true;
         saved();
     }
 
     public void setNonReadingPrefix(String NonReadingPrefix) {
         this.nonReadingPrefix = NonReadingPrefix;
-        dirty = true;
         saved();
     }
 
     public void setMaxReadAroundNameLimit(int maxReadAroundNameLimit) {
         this.maxReadAroundNameLimit = maxReadAroundNameLimit;
-        dirty = true;
         saved();
     }
 
     public void setLastJoinChannel(long botUserId, TTSEntry ttsEntry) {
         lastJoinChannels.put(botUserId, ttsEntry);
-        dirty = true;
         saved();
     }
 
     public void removeLastJoinChannel(long botUserId) {
         lastJoinChannels.remove(botUserId);
-        dirty = true;
         saved();
     }
 
@@ -193,8 +159,25 @@ public class ServerSaveData extends BaseSaveData {
     }
 
     @Override
-    void doSave() {
-        ConfigAndSaveDataManager.getInstance().savedServerData(guildId);
+    public JsonObject save() {
+        var jo = new JsonObject();
+
+        jo.addProperty("need_join", needJoin);
+        jo.addProperty("overwrite_aloud", overwriteAloud);
+        jo.addProperty("inm_mode", inmMode);
+        jo.addProperty("cookie_mode", cookieMode);
+        jo.addProperty("join_say_name", joinSayName);
+        jo.addProperty("max_read_around_character_limit", maxReadAroundCharacterLimit);
+        jo.addProperty("max_read_around_name_limit", maxReadAroundNameLimit);
+        jo.addProperty("non-reading_prefix", nonReadingPrefix);
+
+        var ljjo = new JsonObject();
+        for (Map.Entry<Long, TTSEntry> entry : lastJoinChannels.entrySet()) {
+            ljjo.add(String.valueOf(entry.getKey()), entry.getValue().toJson());
+        }
+        jo.add("last_join", ljjo);
+
+        return jo;
     }
 
     public static record TTSEntry(long audioChannel, long ttsChannel) {
@@ -209,6 +192,4 @@ public class ServerSaveData extends BaseSaveData {
             return new TTSEntry(jo.get("audio_channel").getAsLong(), jo.get("tts_channel").getAsLong());
         }
     }
-
-
 }

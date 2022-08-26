@@ -9,19 +9,24 @@ import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.util.JsonUtils;
 import dev.felnull.ttsvoice.voice.VoiceType;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SaveData extends BaseSaveData {
+public class SaveData extends SaveDataBase {
     private final Map<Long, String> userVoiceTypes = new HashMap<>();
     private final Map<Long, List<Long>> denyUsers = new HashMap<>();
     private final Map<Long, String> userNickNames = new HashMap<>();
     private String lastVersion = "";
     private long lastTime;
-    private boolean dirty;
 
+    public SaveData(File saveFile) {
+        super(saveFile);
+    }
+
+    @Override
     public void load(JsonObject jo) {
         synchronized (userVoiceTypes) {
             userVoiceTypes.clear();
@@ -68,6 +73,87 @@ public class SaveData extends BaseSaveData {
             lastTime = lstTime;
     }
 
+    public VoiceType getVoiceType(long userId, long guildId) {
+        synchronized (userVoiceTypes) {
+            var vt = userVoiceTypes.get(userId);
+            if (vt != null)
+                return TTSManager.getInstance().getVoiceTypeById(vt, userId, guildId);
+        }
+        return null;
+    }
+
+    public void setVoiceType(long userId, VoiceType voiceType) {
+        synchronized (userVoiceTypes) {
+            userVoiceTypes.put(userId, voiceType.getId());
+        }
+        saved();
+    }
+
+    public List<Long> getDenyUsers(long guildId) {
+        synchronized (denyUsers) {
+            return ImmutableList.copyOf(denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()));
+        }
+    }
+
+    public boolean isDenyUser(long guildId, long userId) {
+        synchronized (denyUsers) {
+            return denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).contains(userId);
+        }
+    }
+
+    public void addDenyUser(long guildId, long userId) {
+        synchronized (denyUsers) {
+            denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).add(userId);
+        }
+        saved();
+    }
+
+    public void removeDenyUser(long guildId, long userId) {
+        synchronized (denyUsers) {
+            denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).remove(userId);
+        }
+        saved();
+    }
+
+    public void setUserNickName(long userId, String name) {
+        synchronized (userNickNames) {
+            userNickNames.put(userId, name);
+        }
+        saved();
+    }
+
+    public void removeUserNickName(long userId) {
+        synchronized (userNickNames) {
+            userNickNames.remove(userId);
+        }
+        saved();
+    }
+
+    public String getUserNickName(long userId) {
+        synchronized (userNickNames) {
+            return DiscordUtils.mentionEscape(userNickNames.get(userId));
+        }
+    }
+
+    public void setLastVersion(String lastVersion) {
+        this.lastVersion = lastVersion;
+        saved();
+    }
+
+    public String getLastVersion() {
+        return lastVersion;
+    }
+
+    public void setLastTime(long time) {
+        this.lastTime = time;
+        saved();
+    }
+
+    public long getLastTime() {
+        return lastTime;
+    }
+
+    @Override
     public JsonObject save() {
         var jo = new JsonObject();
         var juvt = new JsonObject();
@@ -96,105 +182,5 @@ public class SaveData extends BaseSaveData {
         jo.addProperty("LastTime", lastTime);
 
         return jo;
-    }
-
-    public VoiceType getVoiceType(long userId, long guildId) {
-        synchronized (userVoiceTypes) {
-            var vt = userVoiceTypes.get(userId);
-            if (vt != null)
-                return TTSManager.getInstance().getVoiceTypeById(vt, userId, guildId);
-        }
-        return null;
-    }
-
-    public void setVoiceType(long userId, VoiceType voiceType) {
-        synchronized (userVoiceTypes) {
-            userVoiceTypes.put(userId, voiceType.getId());
-        }
-        dirty = true;
-        saved();
-    }
-
-    public List<Long> getDenyUsers(long guildId) {
-        synchronized (denyUsers) {
-            return ImmutableList.copyOf(denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()));
-        }
-    }
-
-    public boolean isDenyUser(long guildId, long userId) {
-        synchronized (denyUsers) {
-            return denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).contains(userId);
-        }
-    }
-
-    public void addDenyUser(long guildId, long userId) {
-        synchronized (denyUsers) {
-            denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).add(userId);
-        }
-        dirty = true;
-        saved();
-    }
-
-    public void removeDenyUser(long guildId, long userId) {
-        synchronized (denyUsers) {
-            denyUsers.computeIfAbsent(guildId, n -> new ArrayList<>()).remove(userId);
-        }
-        dirty = true;
-        saved();
-    }
-
-    public void setUserNickName(long userId, String name) {
-        synchronized (userNickNames) {
-            userNickNames.put(userId, name);
-        }
-        dirty = true;
-        saved();
-    }
-
-    public void removeUserNickName(long userId) {
-        synchronized (userNickNames) {
-            userNickNames.remove(userId);
-        }
-        dirty = true;
-        saved();
-    }
-
-    public String getUserNickName(long userId) {
-        synchronized (userNickNames) {
-            return DiscordUtils.toNoMention(userNickNames.get(userId));
-        }
-    }
-
-    public void setLastVersion(String lastVersion) {
-        this.lastVersion = lastVersion;
-        dirty = true;
-        saved();
-    }
-
-    public String getLastVersion() {
-        return lastVersion;
-    }
-
-    public void setLastTime(long time) {
-        this.lastTime = time;
-        dirty = true;
-        saved();
-    }
-
-    public long getLastTime() {
-        return lastTime;
-    }
-
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
-    void doSave() {
-        ConfigAndSaveDataManager.getInstance().savedData();
     }
 }

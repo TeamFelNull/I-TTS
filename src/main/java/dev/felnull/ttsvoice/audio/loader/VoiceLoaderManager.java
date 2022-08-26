@@ -34,7 +34,7 @@ public class VoiceLoaderManager {
 
     public void init(Timer timer) throws IOException {
         FileUtils.deleteDirectory(TMP_FOLDER);
-        TMP_FOLDER.mkdirs();
+        FNDataUtil.wishMkdir(TMP_FOLDER);
 
         TimerTask cashManageTask = new TimerTask() {
             public void run() {
@@ -45,6 +45,7 @@ public class VoiceLoaderManager {
     }
 
     public File getTmpFolder(UUID id) {
+        FNDataUtil.wishMkdir(TMP_FOLDER);
         return new File(TMP_FOLDER, id.toString());
     }
 

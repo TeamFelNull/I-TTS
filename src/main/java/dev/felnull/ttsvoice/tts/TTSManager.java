@@ -4,13 +4,13 @@ import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.data.ServerSaveData;
+import dev.felnull.ttsvoice.tts.dictionary.DictionaryManager;
 import dev.felnull.ttsvoice.discord.BotLocation;
 import dev.felnull.ttsvoice.tts.sayedtext.LiteralSayedText;
 import dev.felnull.ttsvoice.tts.sayedtext.SayedText;
 import dev.felnull.ttsvoice.tts.tracker.BaseTTSTracker;
 import dev.felnull.ttsvoice.tts.tracker.TextMessageTTSTracker;
 import dev.felnull.ttsvoice.util.DiscordUtils;
-import dev.felnull.ttsvoice.util.URLUtils;
 import dev.felnull.ttsvoice.voice.VoiceCategory;
 import dev.felnull.ttsvoice.voice.VoiceType;
 import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSType;
@@ -215,9 +215,10 @@ public class TTSManager {
 
         if (ignorePattern.matcher(text).matches()) return null;
 
-        text = DiscordUtils.toCodeBlockSyoryaku(text);
+       // text = DiscordUtils.toCodeBlockSyoryaku(text);
         text = DiscordUtils.replaceMentionToText(botLocation, text);
-        text = URLUtils.replaceURLToText(text);
+     //   text = URLUtils.replaceURLToText(text);
+        text = DictionaryManager.getInstance().replace(botLocation.guildId(), text);
 
         int pl = text.length();
         var vt = getUserVoiceType(userId, botLocation.guildId());

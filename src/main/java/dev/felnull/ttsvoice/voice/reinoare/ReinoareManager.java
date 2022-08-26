@@ -6,8 +6,12 @@ import dev.felnull.fnjl.util.FNURLUtil;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.voice.HasSayVoiceMP3Manager;
 import dev.felnull.ttsvoice.voice.SimpleAliveChecker;
+import dev.felnull.ttsvoice.voice.VoiceType;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
@@ -28,12 +32,24 @@ public abstract class ReinoareManager extends HasSayVoiceMP3Manager {
         }
     });
 
+    public List<ReinoareEntry> search(String text) throws URISyntaxException, IOException {
+        return search(text, 150);
+    }
+
+    abstract public List<ReinoareEntry> search(String text, int max) throws URISyntaxException, IOException;
+
+    abstract public List<ReinoareEntry> sort(List<ReinoareEntry> entries);
+
     public String getFileURL(UUID uuid) {
         if (uuid == null) return null;
         return INC_URL + "/link/" + uuid;
     }
 
+    abstract public VoiceType getVoice();
+
     public boolean isAlive() {
         return ALIVE_CHECKER.isAlive();
     }
+
+    abstract public boolean isEnable(long guildId);
 }

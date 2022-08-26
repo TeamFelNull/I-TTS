@@ -1,12 +1,13 @@
 package dev.felnull.ttsvoice.voice.reinoare.inm;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.fnjl.util.FNURLUtil;
+import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.voice.VoiceType;
+import dev.felnull.ttsvoice.voice.reinoare.ReinoareEntry;
 import dev.felnull.ttsvoice.voice.reinoare.ReinoareManager;
 
 import java.io.IOException;
@@ -16,7 +17,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 
 public class INMManager extends ReinoareManager {
     private static final INMManager INSTANCE = new INMManager();
@@ -26,11 +28,8 @@ public class INMManager extends ReinoareManager {
         return INSTANCE;
     }
 
-    public List<INMEntry> search(String text) throws URISyntaxException, IOException {
-        return search(text, 150);
-    }
-
-    public List<INMEntry> search(String text, int max) throws URISyntaxException, IOException {
+    @Override
+    public List<ReinoareEntry> search(String text, int max) throws URISyntaxException, IOException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
         var ret = FNURLUtil.getResponse(new URL(INC_URL + "/search?s=" + text + "&t=inm&m=" + max));
@@ -38,38 +37,37 @@ public class INMManager extends ReinoareManager {
         if (!jo.has("result"))
             return ImmutableList.of();
         var ja = jo.getAsJsonArray("result");
-        ImmutableList.Builder<INMEntry> builder = new ImmutableList.Builder<>();
+        ImmutableList.Builder<ReinoareEntry> builder = new ImmutableList.Builder<>();
         for (JsonElement entry : ja) {
             var ejo = entry.getAsJsonObject();
             var path = ejo.get("path").getAsString();
-            //  if (!path.startsWith("/淫夢"))
-            //     continue;
             builder.add(new INMEntry(ejo.get("name").getAsString(), path, FNStringUtil.getUUIDFromStringNonThrow(ejo.get("uuid").getAsString())));
         }
         return builder.build();
     }
 
-    public List<INMEntry> sort(List<INMEntry> entries) {
-        Comparator<INMEntry> cp = Comparator.comparingInt(this::getMostPoint);
+    @Override
+    public List<ReinoareEntry> sort(List<ReinoareEntry> entries) {
+        Comparator<ReinoareEntry> cp = Comparator.comparingInt(this::getMostPoint);
         cp = cp.reversed();
         return entries.stream().sorted(cp).toList();
     }
 
-    public INMEntry getMost(List<INMEntry> entries) {
+    public ReinoareEntry getMost(List<ReinoareEntry> entries) {
         if (entries.isEmpty()) return null;
-        List<INMEntry> sorted = sort(entries);
+        List<ReinoareEntry> sorted = sort(entries);
         int mostP = getMostPoint(sorted.get(0));
-        List<INMEntry> rets = sorted.stream().filter(n -> getMostPoint(n) == mostP).toList();
+        List<ReinoareEntry> rets = sorted.stream().filter(n -> getMostPoint(n) == mostP).toList();
         return rets.get(RANDOM.nextInt(rets.size()));
     }
 
-    private int getMostPoint(INMEntry entry) {
-        String[] paths = entry.path().split("/");
+    private int getMostPoint(ReinoareEntry entry) {
+        String[] paths = entry.getPath().split("/");
         int p = 0;
         for (String s : paths) {
             p += getMostNumber(s);
         }
-        p += (getMostNumber(entry.name()) * 2);
+        p += (getMostNumber(entry.getName()) * 2);
         return p;
     }
 
@@ -85,8 +83,14 @@ public class INMManager extends ReinoareManager {
         return 0;
     }
 
-    public INMVoiceType getVoice() {
+    @Override
+    public VoiceType getVoice() {
         return VOICE;
+    }
+
+    @Override
+    public boolean isEnable(long guildId) {
+        return Main.getServerSaveData(guildId).isInmMode(guildId);
     }
 
     @Override
