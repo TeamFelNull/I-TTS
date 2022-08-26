@@ -52,7 +52,12 @@ public class SavedDictionary extends SaveDataBase implements Dictionary {
             if (je == null || !je.isJsonPrimitive() || !je.getAsJsonPrimitive().isString())
                 throw new RuntimeException("Invalid entry value");
 
-            en.put(key, je.getAsString());
+            var str = je.getAsString();
+
+            if (key.length() > 1000 || str.length() > 1000)
+                throw new RuntimeException("Max 1000 characters");
+
+            en.put(key, str);
         }
 
         synchronized (dictEntry) {

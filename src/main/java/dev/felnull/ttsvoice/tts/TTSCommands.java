@@ -459,6 +459,11 @@ public class TTSCommands {
         String worldStr = DiscordUtils.mentionEscape(word.getAsString());
         String readingStr = DiscordUtils.mentionEscape(reading.getAsString());
 
+        if (worldStr.length() > 1000 || readingStr.length() > 1000) {
+            e.reply("登録可能な最大文字数は1000文字です").queue();
+            return;
+        }
+
         DictionaryManager dm = DictionaryManager.getInstance();
 
         var dict = dm.getGuildDictionary(e.getGuild().getIdLong());
