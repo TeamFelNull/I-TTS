@@ -5,7 +5,7 @@ import blue.endless.jankson.JsonGrammar;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.felnull.ttsvoice.Main;
-import dev.felnull.ttsvoice.tts.dictionary.DictionaryManager;
+import dev.felnull.ttsvoice.data.dictionary.DictionaryManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,8 +54,9 @@ public class ConfigAndSaveDataManager {
 
         LOGGER.info("Completed config check");
 
-        if (saveData.load())
+        if (saveData.load()) {
             LOGGER.info("Completed load data");
+        }
 
         serverSaveData.putAll(loadGuildFolderSaveData(SERVER_SAVE_DATA_FOLDER, id -> new ServerSaveData(getServerSaveDataFile(id), id)));
         if (!serverSaveData.isEmpty())

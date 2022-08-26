@@ -1,6 +1,6 @@
 package dev.felnull.ttsvoice.tts;
 
-import dev.felnull.ttsvoice.tts.dictionary.DictionaryManager;
+import dev.felnull.ttsvoice.data.dictionary.DictionaryManager;
 import dev.felnull.ttsvoice.util.TextUtils;
 import dev.felnull.ttsvoice.voice.HasTitleAndID;
 import dev.felnull.ttsvoice.voice.VoiceCategory;

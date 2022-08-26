@@ -28,8 +28,10 @@ public abstract class SaveDataBase {
         return duw;
     });
     private final File saveFile;
-    private WaitTimeThread waitTimeThread;
+    private WaitTimeThread dirtyWaitTimeThread;
+    private WaitTimeThread fileWatcherWaitTimeThread;
     private boolean dirty;
+    private long lastSaveWrite = -1;
 
     protected SaveDataBase(File saveFile) {
         this.saveFile = saveFile;
@@ -39,6 +41,10 @@ public abstract class SaveDataBase {
     abstract public JsonObject save();
 
     abstract public void load(JsonObject jo);
+
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+    }
 
     public boolean load() throws IOException {
         if (saveFile.exists()) {
@@ -54,6 +60,7 @@ public abstract class SaveDataBase {
 
     public void doSave() {
         try {
+            lastSaveWrite = System.currentTimeMillis();
             FNDataUtil.wishMkdir(saveFile.getParentFile());
 
             try (Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(saveFile)))) {
@@ -72,22 +79,40 @@ public abstract class SaveDataBase {
 
     protected void saved() {
         dirty = true;
-        if (waitTimeThread == null) {
-            waitTimeThread = new WaitTimeThread(() -> {
+        if (dirtyWaitTimeThread == null) {
+            dirtyWaitTimeThread = new WaitTimeThread(() -> {
                 try {
                     doSave();
                 } finally {
-                    waitTimeThread = null;
+                    dirtyWaitTimeThread = null;
                 }
             });
-            waitTimeThread.start();
+            dirtyWaitTimeThread.setName("save-wait-thread");
+            dirtyWaitTimeThread.start();
         } else {
-            waitTimeThread.update();
+            dirtyWaitTimeThread.update();
         }
     }
 
     private void onFileUpdate(WatchEvent<Path> watchEvent, Path path) {
+        if (lastSaveWrite != -1 && System.currentTimeMillis() - lastSaveWrite <= 1000 * 5) return;
 
+        if (fileWatcherWaitTimeThread == null) {
+            fileWatcherWaitTimeThread = new WaitTimeThread(() -> {
+                try {
+                    load();
+                    ConfigAndSaveDataManager.LOGGER.info("Loaded by file watcher: " + path);
+                } catch (Exception ex) {
+                    ConfigAndSaveDataManager.LOGGER.info("Load failed in file watcher: " + path, ex);
+                } finally {
+                    fileWatcherWaitTimeThread = null;
+                }
+            });
+            fileWatcherWaitTimeThread.setName("file-watcher-wait-thread");
+            fileWatcherWaitTimeThread.start();
+        } else {
+            fileWatcherWaitTimeThread.update();
+        }
     }
 
     private static class DataUpdateWatcher implements FileSystemWatcher.WatchEventListener {

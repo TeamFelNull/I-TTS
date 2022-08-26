@@ -6,7 +6,7 @@ import dev.felnull.ttsvoice.data.Config;
 import dev.felnull.ttsvoice.data.ConfigAndSaveDataManager;
 import dev.felnull.ttsvoice.data.SaveData;
 import dev.felnull.ttsvoice.data.ServerSaveData;
-import dev.felnull.ttsvoice.tts.dictionary.DictionaryManager;
+import dev.felnull.ttsvoice.data.dictionary.DictionaryManager;
 import dev.felnull.ttsvoice.discord.JDAManager;
 import dev.felnull.ttsvoice.tts.TTSListener;
 import dev.felnull.ttsvoice.tts.TTSManager;

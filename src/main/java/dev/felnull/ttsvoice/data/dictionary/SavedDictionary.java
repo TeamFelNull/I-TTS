@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.tts.dictionary;
+package dev.felnull.ttsvoice.data.dictionary;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;

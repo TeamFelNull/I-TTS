@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.tts.dictionary;
+package dev.felnull.ttsvoice.data.dictionary;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -30,6 +30,9 @@ public class DictionaryManager {
     public void init() throws IOException {
         if (globalSavedDictionary.load()) {
             LOGGER.info("Completed load global dictionary");
+        } else {
+            globalSavedDictionary.setDirty(true);
+            globalSavedDictionary.doSave();
         }
 
         /*
@@ -86,7 +89,6 @@ public class DictionaryManager {
         }
 
         text = getGuildDictionary(guildId).replace(text);
-
         return text;
     }
 }

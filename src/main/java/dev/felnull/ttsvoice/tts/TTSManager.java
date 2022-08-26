@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.VoiceAudioPlayerManager;
 import dev.felnull.ttsvoice.data.ServerSaveData;
-import dev.felnull.ttsvoice.tts.dictionary.DictionaryManager;
+import dev.felnull.ttsvoice.data.dictionary.DictionaryManager;
 import dev.felnull.ttsvoice.discord.BotLocation;
 import dev.felnull.ttsvoice.tts.sayedtext.LiteralSayedText;
 import dev.felnull.ttsvoice.tts.sayedtext.SayedText;

@@ -3,7 +3,7 @@ package dev.felnull.ttsvoice.data;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WaitTimeThread extends Thread {
-    private final AtomicBoolean wait = new AtomicBoolean();
+    private final AtomicBoolean wait = new AtomicBoolean(true);
     private final Runnable end;
 
     public WaitTimeThread(Runnable end) {
@@ -18,8 +18,8 @@ public class WaitTimeThread extends Thread {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
-            end.run();
         }
+        end.run();
     }
 
     public void update() {
