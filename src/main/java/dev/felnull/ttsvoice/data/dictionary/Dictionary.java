@@ -6,4 +6,8 @@ public interface Dictionary {
     String replace(String text);
 
     Map<String, String> getEntryShowTexts();
+
+    String getName();
+
+    boolean isBuildIn();
 }

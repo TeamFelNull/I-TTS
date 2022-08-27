@@ -1,8 +1,6 @@
 package dev.felnull.ttsvoice.data.dictionary;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import dev.felnull.ttsvoice.data.ConfigAndSaveDataManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,13 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 public class DictionaryManager {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Logger LOGGER = LogManager.getLogger(DictionaryManager.class);
     private static final DictionaryManager INSTANCE = new DictionaryManager();
     private static final File GLOBAL_SAVE_DICTIONARY_FILE = new File("./dictionary.json");
     private static final File SERVER_SAVE_DICTIONARY_FOLDER = new File("./server_dictionaries");
     private final SavedDictionary globalSavedDictionary = new SavedDictionary(new File("./dictionary.json"), true);
-    private final List<Dictionary> globalDictionaries = ImmutableList.of(globalSavedDictionary);
+    private final List<Dictionary> globalDictionaries = ImmutableList.of(globalSavedDictionary, new UnitDictionary());
     private final Map<Long, SavedDictionary> guildDictionaries = new HashMap<>();
 
     public static DictionaryManager getInstance() {

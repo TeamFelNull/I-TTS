@@ -127,6 +127,16 @@ public class SavedDictionary extends SaveDataBase implements Dictionary {
     }
 
     @Override
+    public String getName() {
+        return "カスタム辞書";
+    }
+
+    @Override
+    public boolean isBuildIn() {
+        return false;
+    }
+
+    @Override
     public JsonObject save() {
         var jo = new JsonObject();
         jo.addProperty("version", VERSION);

@@ -97,7 +97,7 @@ public class Main {
 
     public static void updateGuildCommand(Guild guild, boolean allJDA) {
         long guildId = guild.getIdLong();
-        var defaultPermissions = getUseCommandPermission();
+        var defaultPermissions = DefaultMemberPermissions.enabledFor(Permission.VOICE_CONNECT, Permission.MESSAGE_SEND);
 
         List<CommandData> cmds = new ArrayList<>();
 
@@ -125,30 +125,27 @@ public class Main {
         }
     }
 
-    private static DefaultMemberPermissions getUseCommandPermission() {
-        return DefaultMemberPermissions.enabledFor(Permission.VOICE_CONNECT, Permission.MESSAGE_SEND);
-    }
-
     private static void updateGlobalCommands(JDA jda) {
-        var defaultPermissions = getUseCommandPermission();
+        var membersDefaultPermissions = DefaultMemberPermissions.enabledFor(Permission.VOICE_CONNECT, Permission.MESSAGE_SEND);
+        var ownersDefaultPermissions = DefaultMemberPermissions.enabledFor(Permission.MANAGE_SERVER);
 
-        var join = Commands.slash("join", "読み上げBOTをVCに呼び出す").addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定").setChannelTypes(ImmutableList.of(ChannelType.VOICE, ChannelType.STAGE))).setGuildOnly(true).setDefaultPermissions(defaultPermissions);
+        var join = Commands.slash("join", "読み上げBOTをVCに呼び出す").addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定").setChannelTypes(ImmutableList.of(ChannelType.VOICE, ChannelType.STAGE))).setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions);
 
-        var leave = Commands.slash("leave", "読み上げBOTをVCから切断").setGuildOnly(true).setDefaultPermissions(defaultPermissions);
+        var leave = Commands.slash("leave", "読み上げBOTをVCから切断").setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions);
 
-        var reconnect = Commands.slash("reconnect", "読み上げBOTをVCに再接続").setGuildOnly(true).setDefaultPermissions(defaultPermissions);
+        var reconnect = Commands.slash("reconnect", "読み上げBOTをVCに再接続").setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions);
 
-        var voice = Commands.slash("voice", "読み上げ音声タイプ関係").setGuildOnly(true).setDefaultPermissions(defaultPermissions)
+        var voice = Commands.slash("voice", "読み上げ音声タイプ関係").setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions)
                 .addSubcommands(new SubcommandData("check", "現在の読み上げ音声タイプを確認").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")))
                 .addSubcommands(new SubcommandData("show", "読み上げ音声タイプ一覧を表示"))
                 .addSubcommands(new SubcommandData("change", "読み上げ音声タイプを変更").addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声のカテゴリ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げる声タイプ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")));
 
-        var deny = Commands.slash("deny", "読み上げ拒否関係").setGuildOnly(true).setDefaultPermissions(defaultPermissions)
+        var deny = Commands.slash("deny", "読み上げ拒否関係").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions)
                 .addSubcommands(new SubcommandData("show", "読み上げ拒否一覧を表示"))
                 .addSubcommands(new SubcommandData("add", "読み上げ拒否に追加").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true)))
                 .addSubcommands(new SubcommandData("remove", "読み上げ拒否を解除").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true)));
 
-        var config = Commands.slash("config", "読み上げ設定").setGuildOnly(true).setDefaultPermissions(defaultPermissions)
+        var config = Commands.slash("config", "読み上げ設定").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions)
                 .addSubcommands(new SubcommandData("need-join", "VCに参加時のみ読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
                 .addSubcommands(new SubcommandData("overwrite-aloud", "読み上げの上書き").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
                 .addSubcommands(new SubcommandData("inm-mode", "淫夢モード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
@@ -159,9 +156,9 @@ public class Main {
                 .addSubcommands(new SubcommandData("read-around-name-limit", "最大名前読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setMaxValue(Integer.MAX_VALUE).setRequired(true)))
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
 
-        var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")).setGuildOnly(true).setDefaultPermissions(defaultPermissions);
+        var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")).setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions);
 
-        var dict = Commands.slash("dict", "読み上げ辞書").setGuildOnly(true).setDefaultPermissions(defaultPermissions)
+        var dict = Commands.slash("dict", "読み上げ辞書").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions)
                 .addSubcommands(new SubcommandData("show", "現在の読み上げ辞書を表示").addOptions(new OptionData(OptionType.STRING, "type", "辞書タイプ").addChoice("サーバー別辞書", "server").addChoice("グローバル辞書", "global")))
                 .addSubcommands(new SubcommandData("add", "読み上げ辞書に単語を登録").addOption(OptionType.STRING, "word", "対象の単語", true).addOption(OptionType.STRING, "reading", "対象の読み", true))
                 .addSubcommands(new SubcommandData("remove", "読み上げ辞書から単語を削除").addOption(OptionType.STRING, "word", "対象の単語", true, true))

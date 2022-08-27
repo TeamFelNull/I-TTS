@@ -24,11 +24,10 @@ import net.dv8tion.jda.api.managers.AudioManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TTSCommands {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -421,25 +420,38 @@ public class TTSCommands {
 
     private static void setDictShowEmbed(EmbedBuilder builder, List<Dictionary> dictionaries) {
         if (dictionaries.isEmpty()) {
-            builder.setDescription("登録済み単語なし");
+            builder.setDescription("登録なし");
             return;
         }
 
-        Map<String, String> allWord = new HashMap<>();
+        if (dictionaries.isEmpty() || dictionaries.stream().allMatch(n -> n.getEntryShowTexts().isEmpty())) {
+            builder.setDescription("登録なし");
+            return;
+        }
+
+        boolean single = dictionaries.size() == 1;
+        AtomicInteger ct = new AtomicInteger();
 
         for (Dictionary dictionary : dictionaries) {
-            allWord.putAll(dictionary.getEntryShowTexts());
-        }
+            var shows = dictionary.getEntryShowTexts();
 
-        if (allWord.isEmpty()) {
-            builder.setDescription("登録済み単語なし");
-        } else {
-            builder.setDescription("登録済み単語一覧");
-            allWord.forEach((word, read) -> {
+            if (!single) {
+                String name = dictionary.getName();
+                if (dictionary.isBuildIn())
+                    name += " [組み込み]";
+
+                builder.addField(name, shows.isEmpty() ? "登録なし" : shows.size() + "種類", false);
+                if (shows.isEmpty())
+                    continue;
+            }
+
+            shows.forEach((word, read) -> {
+                ct.getAndIncrement();
                 addDictWordAndReadingField(builder, DiscordUtils.mentionEscape(word), DiscordUtils.mentionEscape(read));
             });
-            builder.setFooter("計" + allWord.size() + "単語");
         }
+
+        builder.setFooter("計" + ct.get() + "種類");
     }
 
     private static void addDictWordAndReadingField(EmbedBuilder builder, String word, String reading) {

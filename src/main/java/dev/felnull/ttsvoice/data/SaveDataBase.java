@@ -22,6 +22,7 @@ public abstract class SaveDataBase {
     private static final Function<String, DataUpdateWatcher> WATCHERS = FNDataUtil.memoize(path -> {
         var duw = new DataUpdateWatcher();
         try {
+            FNDataUtil.wishMkdir(Paths.get(path).toFile());
             FNDataUtil.watchDirectory(Paths.get(path), duw, StandardWatchEventKinds.ENTRY_MODIFY);
         } catch (IOException e) {
             throw new RuntimeException(e);
