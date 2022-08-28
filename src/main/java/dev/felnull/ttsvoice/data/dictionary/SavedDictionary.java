@@ -2,30 +2,41 @@ package dev.felnull.ttsvoice.data.dictionary;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.felnull.fnjl.util.FNDataUtil;
+import dev.felnull.ttsvoice.data.ConfigAndSaveDataManager;
 import dev.felnull.ttsvoice.data.SaveDataBase;
 import dev.felnull.ttsvoice.util.JsonUtils;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class SavedDictionary extends SaveDataBase implements Dictionary {
     private static final Gson GSON = new Gson();
     private static final int VERSION = 0;
+    private static final int TEMPLATE_VERSION = 0;
     private final Map<String, String> dictEntry = new HashMap<>();
 
-    public SavedDictionary(File saveFile, boolean loadDefault) {
+    public SavedDictionary(File saveFile, boolean loadTemplate) {
         super(saveFile);
-        if (loadDefault)
-            loadDefault();
+        if (loadTemplate)
+            loadTemplate();
     }
 
-    private void loadDefault() {
-        dictEntry.put("```(.|\n)*```", "コードブロック省略");
-        dictEntry.put("http(s)?:\\/\\/([\\w-]+\\.)+[\\w-]+(\\/[\\w\\- .\\/?%&=~#:,]*)?", "ユーアールエル省略");
-        dictEntry.put("test", "てすと");
-        dictEntry.put("土方", "どかた");
+    private void loadTemplate() {
+        try (InputStream stream = FNDataUtil.resourceExtractor(SavedDictionary.class, "dictionary_template/global_v0.json"); Reader reader = new InputStreamReader(Objects.requireNonNull(stream))) {
+            JsonObject jo = GSON.fromJson(reader, JsonObject.class);
+
+            for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
+                dictEntry.put(entry.getKey(), entry.getValue().getAsString());
+            }
+
+        } catch (IOException | NullPointerException e) {
+            ConfigAndSaveDataManager.LOGGER.error("Failed to load dictionary template", e);
+        }
     }
 
     public void load(JsonObject jo, boolean loadFromFile, boolean overwrite) {
@@ -140,6 +151,7 @@ public class SavedDictionary extends SaveDataBase implements Dictionary {
     public JsonObject save() {
         var jo = new JsonObject();
         jo.addProperty("version", VERSION);
+        jo.addProperty("template_version", TEMPLATE_VERSION);
 
         var ejo = new JsonObject();
 

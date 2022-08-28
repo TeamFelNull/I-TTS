@@ -38,6 +38,7 @@ public class UnitDictionary implements Dictionary {
         return Pattern.compile("\\d+[" + preOrUnitMiddle + "]*[" + lastUnits + "]");
     }
 
+
     @Override
     public String replace(String text) {
         text = UNIT_PREFIX.matcher(text).replaceAll(matchResult -> replaceUnitAndPrefix(matchResult.group()));
@@ -62,7 +63,7 @@ public class UnitDictionary implements Dictionary {
 
         if (prefix == null) return text;
 
-        return number + prefix + unit.read;
+        return number + prefix.read + unit.read;
     }
 
     @Override
@@ -94,6 +95,18 @@ public class UnitDictionary implements Dictionary {
         builder.put(upsbw.toString(), upsbr.toString());
         builder.put(dosbw.toString(), dosbr.toString());
 
+        StringBuilder unitsbw = new StringBuilder();
+        StringBuilder unitsbr = new StringBuilder();
+
+        for (Unit unit : Unit.values()) {
+            unitsbw.append(unit.getWord()).append(",");
+            unitsbr.append(unit.getRead()).append(",");
+        }
+
+        unitsbw.deleteCharAt(unitsbw.length() - 1);
+        unitsbr.deleteCharAt(unitsbr.length() - 1);
+
+        builder.put(unitsbw.toString(), unitsbr.toString());
 
         return builder.build();
     }
@@ -110,12 +123,38 @@ public class UnitDictionary implements Dictionary {
 
     //https://www.mikipulley.co.jp/JP/Services/Tech_data/tech01.html
     private static enum Unit {
+        GRAM("g", "ぐらむ", Prefix.NORMAL_ALL),
         BYTE("b", "ばいと", Prefix.NORMAL_UP),
         METER("m", "めーとる", Prefix.NORMAL_ALL),
-        SECOND("s", "びょう", Prefix.NORMAL_DOWN),
+        SECOND("s", "秒", Prefix.NORMAL_DOWN),
         AMPERE("a", "あんぺあ", Prefix.NORMAL_ALL),
         MOLE("mol", "もる", Prefix.NORMAL_ALL),
-        CANDELA("cd", "かんでら", Prefix.NORMAL_ALL);
+        CANDELA("cd", "かんでら", Prefix.NORMAL_ALL),
+        RADIAN("rad", "らじあん", Prefix.NORMAL_ALL),
+        STERADIAN("sr", "すてらじあん", Prefix.NORMAL_ALL),
+        HERTZ("Hz", "すてらじあん", ArrayUtils.addAll(Prefix.NORMAL_ALL, Prefix.DECA, Prefix.HECTO)),
+        NEWTON("n", "にゅーとん", Prefix.NORMAL_ALL),
+        PASCAL("Pa", "ぱすかる", Prefix.NORMAL_ALL),
+        JOULE("J", "じゅーる", Prefix.NORMAL_ALL),
+        WATT("W", "わっと", Prefix.NORMAL_ALL),
+        COULOMB("C", "くーろん", Prefix.NORMAL_ALL),
+        VOLT("V", "ぼると", Prefix.NORMAL_ALL),
+        FARAD("F", "ふぁらど", Prefix.NORMAL_ALL),
+        OHM("Ω", "おーむ", Prefix.NORMAL_ALL),
+        SIEMENS("S", "じーめんす", Prefix.NORMAL_ALL),
+        WEBER("Wb", "うぇーば", Prefix.NORMAL_ALL),
+        TESLA("T", "てすら", Prefix.NORMAL_ALL),
+        HENRY("H", "へんりー", Prefix.NORMAL_ALL),
+        CELSIUS("°C", "ど"),
+        LUMEN("lm", "るーめん", Prefix.NORMAL_ALL),
+        LUX("lx", "るくす", Prefix.NORMAL_ALL),
+        BECQUEREL("Bq", "べくれる", Prefix.NORMAL_ALL),
+        GRAY("Gy", "ぐれい", Prefix.NORMAL_ALL),
+        SIEVERT("Sv", "しーべると", Prefix.NORMAL_ALL),
+        KATAL("kat", "かたーる", Prefix.NORMAL_ALL),
+        KELVIN("k", "けるびん"),
+        TONS("t", "とん"),
+        LITER("l", "りっとる", ArrayUtils.addAll(Prefix.NORMAL_ALL, Prefix.DECA, Prefix.DECI));
 
         private final String word;
         private final String read;
@@ -142,7 +181,20 @@ public class UnitDictionary implements Dictionary {
         }
 
         public boolean isEndMache(String text) {
-            text = text.toLowerCase(Locale.ROOT);
+            if (findPrefix(text))
+                return true;
+            Pattern alphabet = Pattern.compile("[a-z|A-Z]+");
+
+            text = alphabet.matcher(text).replaceAll(n -> n.group().toLowerCase(Locale.ROOT));
+            if (findPrefix(text))
+                return true;
+
+            text = alphabet.matcher(text).replaceAll(n -> n.group().toUpperCase(Locale.ROOT));
+
+            return findPrefix(text);
+        }
+
+        private boolean findPrefix(String text) {
             var m = pattern.matcher(text);
             int lstm = -1;
             while (m.find()) {
@@ -152,11 +204,22 @@ public class UnitDictionary implements Dictionary {
         }
 
         public static Unit getEndUnit(String text) {
+            List<Unit> maches = new ArrayList<>();
+
             for (Unit unit : values()) {
                 if (unit.isEndMache(text))
+                    maches.add(unit);
+            }
+
+            if (maches.isEmpty()) return null;
+            if (maches.size() == 1) return maches.get(0);
+
+            for (Unit unit : maches) {
+                if (unit.word.equals(text))
                     return unit;
             }
-            return null;
+
+            return maches.get(0);
         }
     }
 
