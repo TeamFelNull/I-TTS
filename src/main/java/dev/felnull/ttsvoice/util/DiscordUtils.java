@@ -40,6 +40,7 @@ public class DiscordUtils {
     public static String getName(BotLocation botLocation, User user, long userId) {
         var name = mentionEscape(getName_(botLocation, user, userId));
         int maxr = Main.getServerSaveData(botLocation.guildId()).getMaxReadAroundNameLimit();
+        //ikaryakuは読み上げ時の文字数を正しく調べるためにひらがなにする必要があります
         String ikaryaku = "いかりゃく";
         if (name.length() > maxr) {
             name = name.substring(0, Math.max(1, maxr - ikaryaku.length())) + ikaryaku;
