@@ -23,8 +23,8 @@ public class CoeiroInkManager extends VVEngineManager {
     }
 
     @Override
-    protected VVEVoiceType createVoiceType(JsonObject jo, String name) {
-        return new CIVoiceType(jo.get("id").getAsInt(), name, jo.get("name").getAsString());
+    protected VVEVoiceType createVoiceType(JsonObject jo, String name, boolean neta) {
+        return new CIVoiceType(jo.get("id").getAsInt(), name, jo.get("name").getAsString(), neta);
     }
 
     @Override

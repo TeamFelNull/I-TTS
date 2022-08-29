@@ -1,6 +1,7 @@
 package dev.felnull.ttsvoice;
 
 import com.google.common.collect.ImmutableList;
+import dev.felnull.fnjl.util.FNArrayUtil;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import dev.felnull.ttsvoice.data.Config;
 import dev.felnull.ttsvoice.data.ConfigAndSaveDataManager;
@@ -40,12 +41,20 @@ public class Main {
     public static final int CONFIG_VERSION = 1;
     public static final int THEME_COLOR = 0x114514;
     public static String VERSION;
+    private static boolean TEST;
 
     public static void main(String[] args) throws Exception {
-        VERSION = Main.class.getPackage().getImplementationVersion();
-        if (VERSION == null) VERSION = "NONE";
+        if (args.length > 0) TEST = FNArrayUtil.contains(args, "devtest");
 
-        LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
+        VERSION = Main.class.getPackage().getImplementationVersion();
+        if (VERSION == null) VERSION = isTest() ? "Dev Test" : "None";
+
+        if (isTest()) {
+            LOGGER.info("The Ikisugi Discord TTS BOT" + VERSION);
+        } else {
+            LOGGER.info("The Ikisugi Discord TTS BOT v" + VERSION);
+        }
+
         LOGGER.info("--System info--");
         LOGGER.info("Java version: " + System.getProperty("java.version"));
         LOGGER.info("Java vm name: " + System.getProperty("java.vm.name"));
@@ -55,8 +64,7 @@ public class Main {
         LOGGER.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
         LOGGER.info("---------------");
 
-        if (!ConfigAndSaveDataManager.getInstance().init(TIMER))
-            return;
+        if (!ConfigAndSaveDataManager.getInstance().init(TIMER)) return;
 
         DictionaryManager.getInstance().init();
         VoiceLoaderManager.getInstance().init(TIMER);
@@ -78,6 +86,10 @@ public class Main {
         VoiceTextManager.ALIVE_CHECKER.init(TIMER);
         GoogleTranslateTTSManager.ALIVE_CHECKER.init(TIMER);
         ReinoareManager.ALIVE_CHECKER.init(TIMER);
+    }
+
+    public static boolean isTest() {
+        return TEST;
     }
 
     public static void updateAllGuildCommand() {
@@ -116,8 +128,7 @@ public class Main {
             synchronized (jdas) {
                 for (JDA jda : jdas) {
                     var jg = jda.getGuildById(guildId);
-                    if (jg != null)
-                        jg.updateCommands().addCommands(cmds).queue();
+                    if (jg != null) jg.updateCommands().addCommands(cmds).queue();
                 }
             }
         } else {
@@ -135,35 +146,15 @@ public class Main {
 
         var reconnect = Commands.slash("reconnect", "読み上げBOTをVCに再接続").setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions);
 
-        var voice = Commands.slash("voice", "読み上げ音声タイプ関係").setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions)
-                .addSubcommands(new SubcommandData("check", "現在の読み上げ音声タイプを確認").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")))
-                .addSubcommands(new SubcommandData("show", "読み上げ音声タイプ一覧を表示"))
-                .addSubcommands(new SubcommandData("change", "読み上げ音声タイプを変更").addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声のカテゴリ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げる声タイプ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")));
+        var voice = Commands.slash("voice", "読み上げ音声タイプ関係").setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions).addSubcommands(new SubcommandData("check", "現在の読み上げ音声タイプを確認").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定"))).addSubcommands(new SubcommandData("show", "読み上げ音声タイプ一覧を表示")).addSubcommands(new SubcommandData("change", "読み上げ音声タイプを変更").addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声のカテゴリ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げる声タイプ").setAutoComplete(true).setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")));
 
-        var deny = Commands.slash("deny", "読み上げ拒否関係").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions)
-                .addSubcommands(new SubcommandData("show", "読み上げ拒否一覧を表示"))
-                .addSubcommands(new SubcommandData("add", "読み上げ拒否に追加").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true)))
-                .addSubcommands(new SubcommandData("remove", "読み上げ拒否を解除").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true)));
+        var deny = Commands.slash("deny", "読み上げ拒否関係").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions).addSubcommands(new SubcommandData("show", "読み上げ拒否一覧を表示")).addSubcommands(new SubcommandData("add", "読み上げ拒否に追加").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true))).addSubcommands(new SubcommandData("remove", "読み上げ拒否を解除").addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定").setRequired(true)));
 
-        var config = Commands.slash("config", "読み上げ設定").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions)
-                .addSubcommands(new SubcommandData("need-join", "VCに参加時のみ読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
-                .addSubcommands(new SubcommandData("overwrite-aloud", "読み上げの上書き").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
-                .addSubcommands(new SubcommandData("inm-mode", "淫夢モード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
-                .addSubcommands(new SubcommandData("cookie-mode", "クッキー☆モード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
-                .addSubcommands(new SubcommandData("join-say-name", "VCに参加時に名前を読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true)))
-                .addSubcommands(new SubcommandData("read-around-limit", "最大読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setMaxValue(Integer.MAX_VALUE).setRequired(true)))
-                .addSubcommands(new SubcommandData("non-reading-prefix", "先頭につけると読み上げなくなる文字").addOptions(new OptionData(OptionType.STRING, "prefix", "接頭辞").setRequired(true)))
-                .addSubcommands(new SubcommandData("read-around-name-limit", "最大名前読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setMaxValue(Integer.MAX_VALUE).setRequired(true)))
-                .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
+        var config = Commands.slash("config", "読み上げ設定").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions).addSubcommands(new SubcommandData("need-join", "VCに参加時のみ読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true))).addSubcommands(new SubcommandData("overwrite-aloud", "読み上げの上書き").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true))).addSubcommands(new SubcommandData("inm-mode", "淫夢モード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true))).addSubcommands(new SubcommandData("cookie-mode", "クッキー☆モード").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true))).addSubcommands(new SubcommandData("join-say-name", "VCに参加時に名前を読み上げ").addOptions(new OptionData(OptionType.BOOLEAN, "enable", "有効かどうか").setRequired(true))).addSubcommands(new SubcommandData("read-around-limit", "最大読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setMaxValue(Integer.MAX_VALUE).setRequired(true))).addSubcommands(new SubcommandData("non-reading-prefix", "先頭につけると読み上げなくなる文字").addOptions(new OptionData(OptionType.STRING, "prefix", "接頭辞").setRequired(true))).addSubcommands(new SubcommandData("read-around-name-limit", "最大名前読み上げ文字数").addOptions(new OptionData(OptionType.INTEGER, "max-count", "最大文字数").setMinValue(1).setMaxValue(Integer.MAX_VALUE).setRequired(true))).addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
 
         var vnick = Commands.slash("vnick", "読み上げユーザ名変更").addOptions(new OptionData(OptionType.STRING, "name", "名前").setRequired(true)).addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")).setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions);
 
-        var dict = Commands.slash("dict", "読み上げ辞書").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions)
-                .addSubcommands(new SubcommandData("show", "現在の読み上げ辞書を表示").addOptions(new OptionData(OptionType.STRING, "type", "辞書タイプ").addChoice("サーバー別辞書", "server").addChoice("グローバル辞書", "global")))
-                .addSubcommands(new SubcommandData("add", "読み上げ辞書に単語を登録").addOption(OptionType.STRING, "word", "対象の単語", true).addOption(OptionType.STRING, "reading", "対象の読み", true))
-                .addSubcommands(new SubcommandData("remove", "読み上げ辞書から単語を削除").addOption(OptionType.STRING, "word", "対象の単語", true, true))
-                .addSubcommands(new SubcommandData("download", "現在の読み上げ辞書をダウンロード"))
-                .addSubcommands(new SubcommandData("upload", "読み上げ辞書をアップロード").addOption(OptionType.ATTACHMENT, "file", "辞書ファイル", true).addOption(OptionType.BOOLEAN, "overwrite", "上書き", true));
+        var dict = Commands.slash("dict", "読み上げ辞書").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions).addSubcommands(new SubcommandData("show", "現在の読み上げ辞書を表示").addOptions(new OptionData(OptionType.STRING, "type", "辞書タイプ").addChoice("サーバー別辞書", "server").addChoice("グローバル辞書", "global"))).addSubcommands(new SubcommandData("add", "読み上げ辞書に単語を登録").addOption(OptionType.STRING, "word", "対象の単語", true).addOption(OptionType.STRING, "reading", "対象の読み", true)).addSubcommands(new SubcommandData("remove", "読み上げ辞書から単語を削除").addOption(OptionType.STRING, "word", "対象の単語", true, true)).addSubcommands(new SubcommandData("download", "現在の読み上げ辞書をダウンロード")).addSubcommands(new SubcommandData("upload", "読み上げ辞書をアップロード").addOption(OptionType.ATTACHMENT, "file", "辞書ファイル", true).addOption(OptionType.BOOLEAN, "overwrite", "上書き", true));
 
         jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, config, vnick, dict).queue();
     }
@@ -171,7 +162,13 @@ public class Main {
     public static void updatePresence() {
         long ct = TTSManager.getInstance().getTTSCount();
 
-        String vstr = "v" + VERSION;
+        String vstr;
+
+        if (isTest()) {
+            vstr = VERSION;
+        } else {
+            vstr = "v" + VERSION;
+        }
 
         JDAManager.getInstance().getAllJDA().forEach(jda -> {
             if (ct > 0) {

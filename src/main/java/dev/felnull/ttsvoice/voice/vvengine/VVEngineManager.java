@@ -48,7 +48,7 @@ public abstract class VVEngineManager {
         }
     }
 
-    abstract protected VVEVoiceType createVoiceType(JsonObject jo, String name);
+    abstract protected VVEVoiceType createVoiceType(JsonObject jo, String name, boolean neta);
 
     abstract protected String getName();
 
@@ -138,9 +138,11 @@ public abstract class VVEngineManager {
                 var jo = (JsonObject) element;
                 var name = jo.get("name").getAsString();
                 var styles = jo.getAsJsonArray("styles");
+                boolean neta = false;
                 for (JsonElement style : styles) {
                     var sjo = (JsonObject) style;
-                    speakers.add(createVoiceType(sjo, name));
+                    speakers.add(createVoiceType(sjo, name, neta));
+                    neta = true;
                 }
             }
 

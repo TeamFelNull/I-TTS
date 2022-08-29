@@ -13,8 +13,10 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class SavedDictionary extends SaveDataBase implements Dictionary {
+    private static final Pattern ALPHABET_REGEX = Pattern.compile("[a-zA-Z]");
     private static final Gson GSON = new Gson();
     private static final int VERSION = 0;
     private static final int TEMPLATE_VERSION = 0;
@@ -22,7 +24,7 @@ public class SavedDictionary extends SaveDataBase implements Dictionary {
 
     public SavedDictionary(File saveFile, boolean loadTemplate) {
         super(saveFile);
-        if (loadTemplate)
+        if (loadTemplate && !saveFile.exists())
             loadTemplate();
     }
 
@@ -106,26 +108,29 @@ public class SavedDictionary extends SaveDataBase implements Dictionary {
         }
     }
 
-
-    public void load(File file) throws IOException {
-        if (file.exists()) {
-            try (Reader reader = new InputStreamReader(new FileInputStream(file)); Reader bufReader = new BufferedReader(reader)) {
-                var jo = GSON.fromJson(reader, JsonObject.class);
-                if (jo != null)
-                    load(jo, true, true);
-            }
-        } else {
-            synchronized (dictEntry) {
-                dictEntry.clear();
-            }
-        }
-    }
-
     @Override
     public String replace(String text) {
         String[] tex = {text};
         synchronized (dictEntry) {
-            dictEntry.forEach((k, e) -> tex[0] = tex[0].replaceAll(k, e));
+            dictEntry.forEach((k, e) -> {
+                StringBuilder nk = new StringBuilder();
+                for (int i = 0; i < k.length(); i++) {
+                    char c = k.charAt(i);
+
+                    if (ALPHABET_REGEX.matcher(String.valueOf(c)).matches()) {
+                        boolean al = i == 0 || k.charAt(i - 1) != '\\';
+                        if (al) {
+                            nk.append("[").append(Character.toLowerCase(c)).append(Character.toUpperCase(c)).append("]");
+                        } else
+                            nk.append(c);
+                    } else {
+                        nk.append(c);
+                    }
+                }
+                k = nk.toString();
+
+                tex[0] = tex[0].replaceAll(k, e);
+            });
         }
         return tex[0];
     }

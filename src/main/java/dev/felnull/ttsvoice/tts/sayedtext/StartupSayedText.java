@@ -1,5 +1,7 @@
 package dev.felnull.ttsvoice.tts.sayedtext;
 
+import dev.felnull.ttsvoice.Main;
+
 import java.util.Objects;
 
 public class StartupSayedText implements SayedText {
@@ -18,6 +20,9 @@ public class StartupSayedText implements SayedText {
     @Override
     public String getSayVoiceText() {
         String str = restart ? "再起動" : "起動";
+
+        if (Main.isTest())
+            str = "開発テストモードで" + str;
 
         if (oldVersion == null && newVersion == null)
             return myName + "が" + str + "しました";

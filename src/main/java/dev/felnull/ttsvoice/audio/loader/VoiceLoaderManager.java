@@ -82,6 +82,7 @@ public class VoiceLoaderManager {
             if (u != null)
                 return new URLVoiceTrackLoader(u);
         }
+
         synchronized (caches) {
             var c = caches.get(voice);
             if (c != null)

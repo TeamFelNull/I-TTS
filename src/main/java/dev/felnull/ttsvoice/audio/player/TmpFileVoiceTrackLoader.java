@@ -83,7 +83,7 @@ public class TmpFileVoiceTrackLoader implements VoiceTrackLoader {
     }
 
     public boolean isAlready() {
-        return already || (audioScheduler != null && !this.audioScheduler.getRuntimeId().equals(lastRuntimeID));
+        return already || audioScheduler == null || !this.audioScheduler.getRuntimeId().equals(lastRuntimeID);
     }
 
     public void setAlready(boolean already) {

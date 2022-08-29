@@ -11,12 +11,18 @@ public abstract class VVEVoiceType implements VoiceType {
     private final int vveId;
     private final String name;
     private final String styleName;
+    private final boolean neta;
 
-    public VVEVoiceType(String engineName, int vveId, String name, String styleName) {
+    public VVEVoiceType(String engineName, int vveId, String name, String styleName, boolean neta) {
         this.engineName = engineName;
         this.vveId = vveId;
         this.name = name;
         this.styleName = styleName;
+        this.neta = neta;
+    }
+
+    public boolean isNeta() {
+        return neta;
     }
 
     public String getName() {
@@ -60,18 +66,28 @@ public abstract class VVEVoiceType implements VoiceType {
         return TextUtils.replaceLatinToHiragana(VoiceType.super.replace(text));
     }
 
+    @Override
+    public String toString() {
+        return "VVEVoiceType{" +
+                "engineName='" + engineName + '\'' +
+                ", vveId=" + vveId +
+                ", name='" + name + '\'' +
+                ", styleName='" + styleName + '\'' +
+                ", neta=" + neta +
+                '}';
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VVEVoiceType that = (VVEVoiceType) o;
-        return vveId == that.vveId && Objects.equals(engineName, that.engineName) && Objects.equals(name, that.name) && Objects.equals(styleName, that.styleName);
+        return vveId == that.vveId && neta == that.neta && Objects.equals(engineName, that.engineName) && Objects.equals(name, that.name) && Objects.equals(styleName, that.styleName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(engineName, vveId, name, styleName);
+        return Objects.hash(engineName, vveId, name, styleName, neta);
     }
 
     @Override

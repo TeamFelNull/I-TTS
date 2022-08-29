@@ -14,7 +14,7 @@ public class UnitDictionary implements Dictionary {
     private static final Pattern NUMBERS = Pattern.compile("\\d+");
 
     private static Pattern createPrefixAndUnitPattern() {
-        Pattern alphabet = Pattern.compile("[a-z|A-Z]+");
+        Pattern alphabet = Pattern.compile("[a-zA-Z]+");
         StringBuilder lastUnits = new StringBuilder();
         StringBuilder preOrUnitMiddle = new StringBuilder();
         for (Unit unit : Unit.values()) {
@@ -40,12 +40,22 @@ public class UnitDictionary implements Dictionary {
 
 
     @Override
-    public String replace(String text) {
-        text = UNIT_PREFIX.matcher(text).replaceAll(matchResult -> replaceUnitAndPrefix(matchResult.group()));
-        return text;
+    public String replace(final String text) {
+        String ntext = UNIT_PREFIX.matcher(text).replaceAll(matchResult -> {
+            String lst = null;
+            if (matchResult.end() < text.length())
+                lst = String.valueOf(text.charAt(matchResult.end()));
+
+            return replaceUnitAndPrefix(matchResult.group(), lst);
+        });
+        return ntext;
     }
 
-    private String replaceUnitAndPrefix(String text) {
+    private String replaceUnitAndPrefix(String text, String after) {
+        Pattern alphabets = Pattern.compile("[a-zA-Z-]+");
+        if (after != null && alphabets.matcher(after).matches())
+            return text;
+
         var nmc = NUMBERS.matcher(text);
         if (!nmc.find()) return text;
         String number = nmc.group();
@@ -183,7 +193,7 @@ public class UnitDictionary implements Dictionary {
         public boolean isEndMache(String text) {
             if (findPrefix(text))
                 return true;
-            Pattern alphabet = Pattern.compile("[a-z|A-Z]+");
+            Pattern alphabet = Pattern.compile("[a-zA-Z]+");
 
             text = alphabet.matcher(text).replaceAll(n -> n.group().toLowerCase(Locale.ROOT));
             if (findPrefix(text))

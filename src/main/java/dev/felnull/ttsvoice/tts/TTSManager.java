@@ -20,6 +20,7 @@ import dev.felnull.ttsvoice.voice.reinoare.cookie.CookieManager;
 import dev.felnull.ttsvoice.voice.reinoare.inm.INMManager;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceCategory;
 import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
+import dev.felnull.ttsvoice.voice.vvengine.VVEVoiceType;
 import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CIVoiceCategory;
 import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CoeiroInkManager;
 import dev.felnull.ttsvoice.voice.vvengine.voicevox.VVVoiceCategory;
@@ -129,7 +130,7 @@ public class TTSManager {
         }
 
         var rnd = new Random(userId);
-        var types = getVoiceTypes(userId, guildId);
+        var types = getVoiceTypes(userId, guildId).stream().filter(n -> n instanceof VTVoiceTypes || (n instanceof VVEVoiceType voiceType && !voiceType.isNeta())).toList();
         if (types.isEmpty())
             return null;
 
@@ -215,10 +216,14 @@ public class TTSManager {
 
         if (ignorePattern.matcher(text).matches()) return null;
 
-       // text = DiscordUtils.toCodeBlockSyoryaku(text);
+
         text = DiscordUtils.replaceMentionToText(botLocation, text);
-     //   text = URLUtils.replaceURLToText(text);
-        text = DictionaryManager.getInstance().replace(botLocation.guildId(), text);
+
+        try {
+            text = DictionaryManager.getInstance().replace(botLocation.guildId(), text);
+        } catch (Exception ex) {
+            LOGGER.error("Failed to process dictionary", ex);
+        }
 
         int pl = text.length();
         var vt = getUserVoiceType(userId, botLocation.guildId());

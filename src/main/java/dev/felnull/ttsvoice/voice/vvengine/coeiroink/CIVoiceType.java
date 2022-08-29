@@ -5,8 +5,8 @@ import dev.felnull.ttsvoice.voice.vvengine.VVEVoiceType;
 import dev.felnull.ttsvoice.voice.vvengine.VVEngineManager;
 
 public class CIVoiceType extends VVEVoiceType {
-    public CIVoiceType(int vveId, String name, String styleName) {
-        super(CoeiroInkManager.NAME, vveId, name, styleName);
+    public CIVoiceType(int vveId, String name, String styleName, boolean neta) {
+        super(CoeiroInkManager.NAME, vveId, name, styleName, neta);
     }
 
     @Override
