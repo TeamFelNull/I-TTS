@@ -226,7 +226,7 @@ public class TTSManager {
         int max = vt.getMaxTextLength(botLocation.guildId());
         String ika = "、以下";
         String shoryaku = "文字を省略";
-        if (text.length() >= max) text = text.substring(0, max - (ika + shoryaku).length());
+        if (text.length() >= max) text = text.substring(0, Math.max(1, max - (ika + shoryaku).length()));
         if (pl - text.length() > 0) text += ika + (pl - text.length()) + shoryaku;
 
         return Pair.of(new LiteralSayedText(text), vt);

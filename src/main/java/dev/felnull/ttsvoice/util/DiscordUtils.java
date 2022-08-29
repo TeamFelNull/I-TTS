@@ -42,7 +42,7 @@ public class DiscordUtils {
         int maxr = Main.getServerSaveData(botLocation.guildId()).getMaxReadAroundNameLimit();
         String ikaryaku = "いかりゃく";
         if (name.length() > maxr) {
-            name = name.substring(0, maxr - ikaryaku.length()) + ikaryaku;
+            name = name.substring(0, Math.max(1, maxr - ikaryaku.length())) + ikaryaku;
         }
         return name;
     }
