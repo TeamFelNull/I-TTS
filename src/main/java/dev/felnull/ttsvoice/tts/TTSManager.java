@@ -224,9 +224,10 @@ public class TTSManager {
         var vt = getUserVoiceType(userId, botLocation.guildId());
 
         int max = vt.getMaxTextLength(botLocation.guildId());
-        if (text.length() >= max) text = text.substring(0, max);
-
-        if (pl - text.length() > 0) text += "、以下" + (pl - text.length()) + "文字を省略";
+        String ika = "、以下";
+        String shoryaku = "文字を省略";
+        if (text.length() >= max) text = text.substring(0, max - (ika + shoryaku).length());
+        if (pl - text.length() > 0) text += ika + (pl - text.length()) + shoryaku;
 
         return Pair.of(new LiteralSayedText(text), vt);
     }
