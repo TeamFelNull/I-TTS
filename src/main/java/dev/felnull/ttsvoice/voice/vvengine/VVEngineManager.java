@@ -126,7 +126,7 @@ public abstract class VVEngineManager {
             var req = HttpRequest.newBuilder(URI.create(url + "/speakers")).version(HttpClient.Version.HTTP_1_1).timeout(Duration.of(500, ChronoUnit.MILLIS)).build();
             var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
-            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream)) {
+            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 ja = GSON.fromJson(reader, JsonArray.class);
             } finally {
                 loadEndEngine(url);
