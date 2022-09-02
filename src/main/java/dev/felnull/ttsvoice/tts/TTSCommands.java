@@ -547,7 +547,7 @@ public class TTSCommands {
         var attachment = file.getAsAttachment();
 
         JsonObject jo;
-        try (InputStream stream = attachment.getProxy().download().get(); InputStream bufStream = new BufferedInputStream(stream); Reader reader = new InputStreamReader(bufStream)) {
+        try (InputStream stream = attachment.getProxy().download().get(); InputStream bufStream = new BufferedInputStream(stream); Reader reader = new InputStreamReader(bufStream, StandardCharsets.UTF_8)) {
             jo = GSON.fromJson(reader, JsonObject.class);
         } catch (IOException | ExecutionException | InterruptedException ex) {
             e.reply("アップロードされたファイルの取得に失敗").queue();
