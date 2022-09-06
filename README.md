@@ -65,6 +65,8 @@ java17のディレクトリ\bin\java.exe -jar IDiscordTTSVoice-1.24.jar
 
 ### コマンド一覧
 
+1.34以降のバージョンではサーバーでスラッシュコマンドの権限を指定する必要があります
+
 - /join 読み上げBOTをVCに呼び出す、チャンネル指定(未指定の場合は自分が接続してるVC)できます
 - /leave 読み上げBOTをVCから切断する
 - /reconnect 読み上げBOTを再接続させます(読み上げるチャンネルを変更、調子が悪い時に利用してください)
@@ -84,3 +86,31 @@ java17のディレクトリ\bin\java.exe -jar IDiscordTTSVoice-1.24.jar
     - remove 読み上げ辞書から単語を削除する(単語指定必須)
     - download 現在の読み上げ辞書をダウンロードする(Jsonファイル)
     - upload 読み上げ辞書をアップロードする、downloadで取得したjsonファイルを改変してください(Jsonファイルのアップロード必須)
+
+### 開発
+
+このレポジトリを自分の開発ディレクトリにクローンしてください。
+
+#### IntelliJ IDEA
+
+開く -> 先ほどクローンしたディレクトリを選択  
+プロジェクト構造からSDKと言語レベルが17であるか確認  
+![プロジェクト構造](https://cdn.discordapp.com/attachments/358878159615164416/1016488502281638008/unknown.png)
+
+設定 -> GradleからGradle JVMが17であるか確認  
+![Gradle JVM](https://cdn.discordapp.com/attachments/358878159615164416/1016489831964090368/unknown.png)
+
+作業ディレクトリ内に.runフォルダを作成  
+![.run](https://cdn.discordapp.com/attachments/358878159615164416/1016490506265579580/2022-09-06_08h30_12.png)
+
+src/test/java内のdev.felnull.ttsvoicetest.TestMainを開く  
+実行ボタンを右クリックして、実行構成の変更  
+![実行構成の変更](https://cdn.discordapp.com/attachments/358878159615164416/1016491506695151667/2022-09-06_08h33_30.png)
+
+作業ディレクトリを先ほど作成した.runフォルダを指定  
+![作業ディレクトリ](https://cdn.discordapp.com/attachments/358878159615164416/1016491506913263727/2022-09-06_08h33_47.png)
+
+OKを押すと、新しく実行構成が追加される  
+![実行構成](https://cdn.discordapp.com/attachments/358878159615164416/1016492335648997386/2022-09-06_08h37_28.png)
+
+実行すると.runフォルダにコンフィグなどが生成されるので、必要な項目(↑起動方法、コンフィグ解説を参照)を記述し再度実行して起動することができます。

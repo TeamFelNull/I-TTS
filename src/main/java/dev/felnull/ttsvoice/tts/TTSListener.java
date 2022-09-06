@@ -49,6 +49,7 @@ public class TTSListener extends ListenerAdapter {
             case "inm" -> TTSCommands.playReinoare(e, INMManager.getInstance());
             case "cookie" -> TTSCommands.playReinoare(e, CookieManager.getInstance());
             case "vnick" -> TTSCommands.vnick(e);
+            case "about" -> TTSCommands.about(e);
         }
 
         if (e.getSubcommandName() != null) {

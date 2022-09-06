@@ -20,6 +20,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.managers.AudioManager;
 
 import java.io.*;
@@ -393,10 +395,10 @@ public class TTSCommands {
     }
 
     private static boolean checkNeedAdmin(Member member, IReplyCallback callback) {
-        if (!DiscordUtils.hasNeedAdminPermission(member)) {
+        /*if (!DiscordUtils.hasNeedAdminPermission(member)) {
             callback.reply("コマンドを実行する権限がありません").setEphemeral(true).queue();
             return false;
-        }
+        }*/
         return true;
     }
 
@@ -565,5 +567,36 @@ public class TTSCommands {
         }
 
         e.reply("アップロードされたファイルから単語が登録されました").queue();
+    }
+
+    public static void about(SlashCommandInteractionEvent e) {
+        var vstr = "v" + Main.VERSION;
+        if (Main.isTest())
+            vstr = "開発テスト";
+
+        EmbedBuilder about = DiscordUtils.createEmbedBuilder();
+        about.setTitle("I Discord TTS Voice BOT");
+        about.setDescription(vstr);
+        about.addField("License", "GNU LGPLv3", false);
+        about.setFooter("Developed by FelNull", "https://avatars.githubusercontent.com/u/59995376?s=200&v=4");
+
+        EmbedBuilder oss = DiscordUtils.createEmbedBuilder();
+        oss.setTitle("OSS Credit");
+        oss.addField("VOICEVOX", "voicevox.hiroshiba.jp", false);
+        oss.addField("COEIROINK", "coeiroink.com", false);
+        oss.addField("VoiceTextWebAPI", "cloud.voicetext.jp", false);
+        oss.addField("GoogleTranslateTTS", "translate.google.co.jp", false);
+
+        var sc = Main.getServerSaveData(e.getGuild().getIdLong());
+        if (sc.isInmMode(e.getGuild().getIdLong()) || sc.isCookieMode(e.getGuild().getIdLong()))
+            oss.addField("淫ク☆ Sounds", "www.morimori0317.net/inc-sounds-search/ and inc-sounds.net", false);
+
+        EmbedBuilder env = DiscordUtils.createEmbedBuilder();
+        env.setTitle("環境情報");
+        env.addField("Java", System.getProperty("java.runtime.name") + " - " + System.getProperty("java.version"), false);
+        env.addField("Java vm", System.getProperty("java.vm.name") + " - " + System.getProperty("java.vm.version"), false);
+        env.addField("Server", System.getProperty("os.name") + "(" + System.getProperty("os.arch") + ") - " + Runtime.getRuntime().availableProcessors() + "Processors", false);
+
+        e.reply("BOT情報").addEmbeds(about.build()).addEmbeds(oss.build()).addEmbeds(env.build()).addActionRow(Button.of(ButtonStyle.LINK, "https://github.com/TeamFelnull/IDiscordTTSVoice", "Source")).queue();
     }
 }
