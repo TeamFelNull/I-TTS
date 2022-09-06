@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import dev.felnull.ttsvoice.data.dictionary.Dictionary;
 import dev.felnull.ttsvoice.data.dictionary.DictionaryManager;
 import dev.felnull.ttsvoice.discord.BotLocation;
@@ -569,7 +570,7 @@ public class TTSCommands {
         e.reply("アップロードされたファイルから単語が登録されました").queue();
     }
 
-    public static void about(SlashCommandInteractionEvent e) {
+    public static void infoAbout(SlashCommandInteractionEvent e) {
         var vstr = "v" + Main.VERSION;
         if (Main.isTest())
             vstr = "開発テスト";
@@ -580,6 +581,10 @@ public class TTSCommands {
         about.addField("License", "GNU LGPLv3", false);
         about.setFooter("Developed by FelNull", "https://avatars.githubusercontent.com/u/59995376?s=200&v=4");
 
+        e.reply(DiscordUtils.createEmbedMessage(about.build())).addActionRow(Button.of(ButtonStyle.LINK, "https://github.com/TeamFelnull/IDiscordTTSVoice", "Source")).queue();
+    }
+
+    public static void infoOSS(SlashCommandInteractionEvent e) {
         EmbedBuilder oss = DiscordUtils.createEmbedBuilder();
         oss.setTitle("OSS Credit");
         oss.addField("VOICEVOX", "voicevox.hiroshiba.jp", false);
@@ -591,12 +596,32 @@ public class TTSCommands {
         if (sc.isInmMode(e.getGuild().getIdLong()) || sc.isCookieMode(e.getGuild().getIdLong()))
             oss.addField("淫ク☆ Sounds", "www.morimori0317.net/inc-sounds-search/ and inc-sounds.net", false);
 
+        e.reply(DiscordUtils.createEmbedMessage(oss.build())).queue();
+    }
+
+    public static void infoEnvironment(SlashCommandInteractionEvent e) {
         EmbedBuilder env = DiscordUtils.createEmbedBuilder();
         env.setTitle("環境情報");
         env.addField("Java", System.getProperty("java.runtime.name") + " - " + System.getProperty("java.version"), false);
         env.addField("Java vm", System.getProperty("java.vm.name") + " - " + System.getProperty("java.vm.version"), false);
         env.addField("Server", System.getProperty("os.name") + "(" + System.getProperty("os.arch") + ") - " + Runtime.getRuntime().availableProcessors() + "Processors", false);
 
-        e.reply("BOT情報").addEmbeds(about.build()).addEmbeds(oss.build()).addEmbeds(env.build()).addActionRow(Button.of(ButtonStyle.LINK, "https://github.com/TeamFelnull/IDiscordTTSVoice", "Source")).queue();
+        e.reply(DiscordUtils.createEmbedMessage(env.build())).queue();
+    }
+
+    public static void infoWork(SlashCommandInteractionEvent e) {
+        long tct = TTSManager.getInstance().getTTSCount();
+        var file = VoiceLoaderManager.getInstance().getTmpFolder().listFiles();
+        int fct = 0;
+        if (file != null)
+            fct = file.length;
+
+        EmbedBuilder work = DiscordUtils.createEmbedBuilder();
+        work.setTitle("稼働情報");
+        work.addField("参加サーバー数", e.getJDA().getGuilds().size() + "個", false);
+        work.addField("読み上げチャンネル数", tct + "個", false);
+        work.addField("TMPファイル数", fct + "個", false);
+
+        e.reply(DiscordUtils.createEmbedMessage(work.build())).queue();
     }
 }

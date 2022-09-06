@@ -157,7 +157,12 @@ public class Main {
 
         var dict = Commands.slash("dict", "読み上げ辞書").setGuildOnly(true).setDefaultPermissions(ownersDefaultPermissions).addSubcommands(new SubcommandData("show", "現在の読み上げ辞書を表示").addOptions(new OptionData(OptionType.STRING, "type", "辞書タイプ").addChoice("サーバー別辞書", "server").addChoice("グローバル辞書", "global"))).addSubcommands(new SubcommandData("add", "読み上げ辞書に単語を登録").addOption(OptionType.STRING, "word", "対象の単語", true).addOption(OptionType.STRING, "reading", "対象の読み", true)).addSubcommands(new SubcommandData("remove", "読み上げ辞書から単語を削除").addOption(OptionType.STRING, "word", "対象の単語", true, true)).addSubcommands(new SubcommandData("download", "現在の読み上げ辞書をダウンロード")).addSubcommands(new SubcommandData("upload", "読み上げ辞書をアップロード").addOption(OptionType.ATTACHMENT, "file", "辞書ファイル", true).addOption(OptionType.BOOLEAN, "overwrite", "上書き", true));
 
-        var about = Commands.slash("about", "BOTの情報を表示").setDefaultPermissions(membersDefaultPermissions);
+        var about = Commands.slash("info", "情報を表示")
+                .setGuildOnly(true).setDefaultPermissions(membersDefaultPermissions)
+                .addSubcommands(new SubcommandData("about", "BOT情報"))
+                .addSubcommands(new SubcommandData("oss", "OSS情報"))
+                .addSubcommands(new SubcommandData("environment", "環境情報"))
+                .addSubcommands(new SubcommandData("work", "稼働情報"));
 
         jda.updateCommands().addCommands(join, leave, reconnect, voice, deny, config, vnick, dict, about).queue();
     }

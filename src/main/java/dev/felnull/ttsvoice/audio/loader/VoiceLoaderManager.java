@@ -32,6 +32,10 @@ public class VoiceLoaderManager {
         return INSTANCE;
     }
 
+    public File getTmpFolder() {
+        return TMP_FOLDER;
+    }
+
     public void init(Timer timer) throws IOException {
         FileUtils.deleteDirectory(TMP_FOLDER);
         FNDataUtil.wishMkdir(TMP_FOLDER);

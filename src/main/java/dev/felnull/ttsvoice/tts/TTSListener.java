@@ -49,7 +49,6 @@ public class TTSListener extends ListenerAdapter {
             case "inm" -> TTSCommands.playReinoare(e, INMManager.getInstance());
             case "cookie" -> TTSCommands.playReinoare(e, CookieManager.getInstance());
             case "vnick" -> TTSCommands.vnick(e);
-            case "about" -> TTSCommands.about(e);
         }
 
         if (e.getSubcommandName() != null) {
@@ -83,6 +82,14 @@ public class TTSListener extends ListenerAdapter {
                         case "remove" -> TTSCommands.dictRemove(e);
                         case "download" -> TTSCommands.dictDownload(e);
                         case "upload" -> TTSCommands.dictUpload(e);
+                    }
+                }
+                case "info" -> {
+                    switch (e.getSubcommandName()) {
+                        case "about" -> TTSCommands.infoAbout(e);
+                        case "oss" -> TTSCommands.infoOSS(e);
+                        case "environment" -> TTSCommands.infoEnvironment(e);
+                        case "work" -> TTSCommands.infoWork(e);
                     }
                 }
             }
