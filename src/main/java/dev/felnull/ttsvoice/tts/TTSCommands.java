@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.audio.loader.VoiceLoaderManager;
 import dev.felnull.ttsvoice.data.dictionary.Dictionary;
@@ -587,8 +588,11 @@ public class TTSCommands {
     public static void infoOSS(SlashCommandInteractionEvent e) {
         EmbedBuilder oss = DiscordUtils.createEmbedBuilder();
         oss.setTitle("OSS Credit");
+
         oss.addField("VOICEVOX", "voicevox.hiroshiba.jp", false);
         oss.addField("COEIROINK", "coeiroink.com", false);
+        oss.addField("SHAREVOX", "sharevox.app", false);
+
         oss.addField("VoiceTextWebAPI", "cloud.voicetext.jp", false);
         oss.addField("GoogleTranslateTTS", "translate.google.co.jp", false);
 
@@ -616,11 +620,14 @@ public class TTSCommands {
         if (file != null)
             fct = file.length;
 
+        long kst = System.currentTimeMillis() - Main.START_TIME;
+
         EmbedBuilder work = DiscordUtils.createEmbedBuilder();
         work.setTitle("稼働情報");
         work.addField("参加サーバー数", e.getJDA().getGuilds().size() + "個", false);
         work.addField("読み上げチャンネル数", tct + "個", false);
         work.addField("TMPファイル数", fct + "個", false);
+        work.addField("稼働時間", FNStringUtil.getTimeFormat(kst), false);
 
         e.reply(DiscordUtils.createEmbedMessage(work.build())).queue();
     }

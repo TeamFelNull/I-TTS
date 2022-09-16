@@ -23,6 +23,8 @@ import dev.felnull.ttsvoice.voice.voicetext.VTVoiceTypes;
 import dev.felnull.ttsvoice.voice.vvengine.VVEVoiceType;
 import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CIVoiceCategory;
 import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CoeiroInkManager;
+import dev.felnull.ttsvoice.voice.vvengine.sharevox.SVVoiceCategory;
+import dev.felnull.ttsvoice.voice.vvengine.sharevox.ShareVoxManager;
 import dev.felnull.ttsvoice.voice.vvengine.voicevox.VVVoiceCategory;
 import dev.felnull.ttsvoice.voice.vvengine.voicevox.VoiceVoxManager;
 import net.dv8tion.jda.api.entities.Guild;
@@ -153,6 +155,8 @@ public class TTSManager {
             builder.addAll(VoiceVoxManager.getInstance().getSpeakers());
         if (vc.enableCoeiroInk())
             builder.addAll(CoeiroInkManager.getInstance().getSpeakers());
+        if (vc.enableShareVox())
+            builder.addAll(ShareVoxManager.getInstance().getSpeakers());
         if (vc.enableVoiceText())
             builder.add(VTVoiceTypes.values());
         if (vc.enableGoogleTranslateTts())
@@ -182,6 +186,7 @@ public class TTSManager {
                 .add(VVVoiceCategory.getInstance())
                 .add(CIVoiceCategory.getInstance())
                 .add(VTVoiceCategory.getInstance())
+                .add(SVVoiceCategory.getInstance())
                 .add(GoogleTranslateVoiceCategory.getInstance());
 
         var flg1 = Main.getServerSaveData(guildId).isInmMode(guildId);

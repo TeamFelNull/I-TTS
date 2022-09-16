@@ -11,7 +11,7 @@ import java.util.List;
 public class ShareVoxManager extends VVEngineManager {
     private static final ShareVoxManager INSTANCE = new ShareVoxManager();
     public static final String NAME = "sharevox";
-    public static final SimpleAliveChecker ALIVE_CHECKER = new SimpleAliveChecker(() -> Main.getConfig().voiceConfig().enableCoeiroInk(), () -> getInstance().aliveCheck());
+    public static final SimpleAliveChecker ALIVE_CHECKER = new SimpleAliveChecker(() -> Main.getConfig().voiceConfig().enableShareVox(), () -> getInstance().aliveCheck());
 
     public static ShareVoxManager getInstance() {
         return INSTANCE;
@@ -19,7 +19,7 @@ public class ShareVoxManager extends VVEngineManager {
 
     @Override
     public List<String> getAllEngineURLs() {
-        return Main.getConfig().coeiroInkURLs();
+        return Main.getConfig().sharevoxURLs();
     }
 
     @Override

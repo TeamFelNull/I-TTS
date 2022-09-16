@@ -26,6 +26,7 @@ public class ConfigAndSaveDataManager {
     private static final Jankson JANKSON = Jankson.builder().build();
     private final SaveData saveData = new SaveData(new File("./save.json"));
     private final Map<Long, ServerSaveData> serverSaveData = new HashMap<>();
+    private final ConfigUpdater updater = new ConfigUpdater();
     private Config config;
 
     public static ConfigAndSaveDataManager getInstance() {
@@ -33,6 +34,8 @@ public class ConfigAndSaveDataManager {
     }
 
     public boolean init(Timer timer) throws Exception {
+        updater.run(CONFIG_FILE);
+
         if (CONFIG_FILE.exists()) {
             config = Config.of(JANKSON.load(CONFIG_FILE));
             LOGGER.info("Config file was loaded");

@@ -9,18 +9,20 @@ import dev.felnull.ttsvoice.util.Json5Utils;
 import java.util.List;
 
 public record Config(int configVersion, List<String> botTokens, List<String> voiceVoxURLs, List<String> coeiroInkURLs,
-                     String voiceTextAPIKey, int cashTime, String ignoreRegex, List<Long> inmDenyUser,
+                     List<String> sharevoxURLs, String voiceTextAPIKey, int cashTime, String ignoreRegex,
+                     List<Long> inmDenyUser,
                      List<Long> cookieDenyUser, List<Long> adminRoles, List<Long> needAdminServers,
                      VoiceConfig voiceConfig) {
 
     public static Config createDefault() {
-        return new Config(Main.CONFIG_VERSION, ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L), VoiceConfig.createDefault());
+        return new Config(Main.CONFIG_VERSION, ImmutableList.of(), ImmutableList.of("http://localhost:50021"), ImmutableList.of("http://localhost:50031"), ImmutableList.of("http://127.0.0.1:50025"), "", 3, "(!|/|\\$|`).*", ImmutableList.of(), ImmutableList.of(), ImmutableList.of(939945132046827550L, 601000603354660864L), ImmutableList.of(930083398691733565L), VoiceConfig.createDefault());
     }
 
     public static Config of(JsonObject jo) {
         List<String> botTokens = Json5Utils.ofStringJsonArray(jo.get("BotToken"));
         List<String> voiceVoxURLs = Json5Utils.ofStringJsonArray(jo.get("VoiceVoxURL"));
         List<String> coeiroInkURLs = Json5Utils.ofStringJsonArray(jo.get("CoeiroInkURL"));
+        List<String> sharevoxURLs = Json5Utils.ofStringJsonArray(jo.get("ShareVoxURL"));
 
         String voiceTextAPIKey = jo.get(String.class, "VoiceTextAPIKey");
         int cashTime = jo.getInt("CashTime", 3);
@@ -34,7 +36,7 @@ public record Config(int configVersion, List<String> botTokens, List<String> voi
 
         VoiceConfig vc = VoiceConfig.of(jo.getObject("VoiceConfig"));
 
-        return new Config(jo.getInt("ConfigVersion", 0), botTokens, voiceVoxURLs, coeiroInkURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers, vc);
+        return new Config(jo.getInt("ConfigVersion", 0), botTokens, voiceVoxURLs, coeiroInkURLs, sharevoxURLs, voiceTextAPIKey, cashTime, ignoreRegex, inmDenyUsers, cookieDenyUsers, adminRoles, needAdminServers, vc);
     }
 
     public JsonObject toJson() {
@@ -43,6 +45,7 @@ public record Config(int configVersion, List<String> botTokens, List<String> voi
         jo.put("BotToken", Json5Utils.toJsonArray(botTokens), "BOTトークン指定");
         jo.put("VoiceVoxURL", Json5Utils.toJsonArray(voiceVoxURLs), "VoiceVoxのURL指定");
         jo.put("CoeiroInkURL", Json5Utils.toJsonArray(coeiroInkURLs), "CoeiroInkのURL指定");
+        jo.put("ShareVoxURL", Json5Utils.toJsonArray(sharevoxURLs), "ShareVoxのURL指定");
         jo.put("VoiceTextAPIKey", JsonPrimitive.of(voiceTextAPIKey), "VoiceTextのAPIキー指定");
         jo.put("CashTime", new JsonPrimitive(cashTime), "キャッシュを保存する期間(分)");
         jo.put("IgnoreRegex", JsonPrimitive.of(ignoreRegex), "無視する文字列");
@@ -60,6 +63,8 @@ public record Config(int configVersion, List<String> botTokens, List<String> voi
             if (voiceVoxURLs.isEmpty()) throw new IllegalStateException("VoiceVox url is empty");
         if (voiceConfig.enableCoeiroInk())
             if (coeiroInkURLs.isEmpty()) throw new IllegalStateException("CoeiroInk url is empty");
+        if (voiceConfig.enableShareVox())
+            if (sharevoxURLs.isEmpty()) throw new IllegalStateException("ShareVox url is empty");
         if (voiceConfig.enableVoiceText())
             if (voiceTextAPIKey.isEmpty()) throw new IllegalStateException("VoiceText api key is empty");
         if (cashTime < 0) throw new IllegalStateException("Cash time must be greater than or equal to 0");

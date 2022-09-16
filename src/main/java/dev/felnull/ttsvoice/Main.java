@@ -16,6 +16,7 @@ import dev.felnull.ttsvoice.voice.googletranslate.GoogleTranslateTTSManager;
 import dev.felnull.ttsvoice.voice.reinoare.ReinoareManager;
 import dev.felnull.ttsvoice.voice.voicetext.VoiceTextManager;
 import dev.felnull.ttsvoice.voice.vvengine.coeiroink.CoeiroInkManager;
+import dev.felnull.ttsvoice.voice.vvengine.sharevox.ShareVoxManager;
 import dev.felnull.ttsvoice.voice.vvengine.voicevox.VoiceVoxManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -38,7 +39,7 @@ public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
     private static final Timer TIMER = new Timer("main-timer", true);
     public static final long START_TIME = System.currentTimeMillis();
-    public static final int CONFIG_VERSION = 1;
+    public static final int CONFIG_VERSION = 2;
     public static final int THEME_COLOR = 0x114514;
     public static String VERSION;
     private static boolean TEST;
@@ -84,6 +85,7 @@ public class Main {
 
         VoiceVoxManager.ALIVE_CHECKER.init(TIMER);
         CoeiroInkManager.ALIVE_CHECKER.init(TIMER);
+        ShareVoxManager.ALIVE_CHECKER.init(TIMER);
         VoiceTextManager.ALIVE_CHECKER.init(TIMER);
         GoogleTranslateTTSManager.ALIVE_CHECKER.init(TIMER);
         ReinoareManager.ALIVE_CHECKER.init(TIMER);
