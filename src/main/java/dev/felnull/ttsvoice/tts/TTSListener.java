@@ -12,17 +12,18 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
-import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import org.apache.logging.log4j.LogManager;
@@ -136,6 +137,77 @@ public class TTSListener extends ListenerAdapter {
     }
 
     @Override
+    public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
+        var left = event.getChannelLeft();
+        var join = event.getChannelJoined();
+
+        if (join != null && left == null) {
+            onGuildVoiceJoin(event);
+        } else if (join == null && left != null) {
+            onGuildVoiceLeave(event);
+        } else {
+            onGuildVoiceMove(event);
+        }
+    }
+
+    private void onGuildVoiceJoin(GuildVoiceUpdateEvent event) {
+        if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+
+        if (vc == event.getChannelJoined()) {
+            if (event.getMember().getUser().isBot())
+                sayText(event, VCEventSayedText.EventType.CONNECT);
+            else
+                sayText(event, VCEventSayedText.EventType.JOIN);
+        }
+    }
+
+    private void onGuildVoiceLeave(GuildVoiceUpdateEvent event) {
+        if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+
+        if (vc == event.getChannelLeft()) {
+            if (canViewAuditLog(event.getGuild())) {
+                boolean wasKicked = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_KICK);
+                if (wasKicked) sayText(event, VCEventSayedText.EventType.FORCE_LEAVE);
+                else sayText(event, VCEventSayedText.EventType.LEAVE);
+            } else {
+                sayText(event, VCEventSayedText.EventType.LEAVE);
+            }
+        }
+        updateAuditLogMap(event.getGuild());
+    }
+
+    private void onGuildVoiceMove(GuildVoiceUpdateEvent event) {
+        if (event.getMember().getUser().equals(event.getJDA().getSelfUser()))
+            TTSManager.getInstance().reconnect(new BotLocation(event.getMember().getIdLong(), event.getGuild().getIdLong()), event.getChannelJoined().getIdLong());
+
+        if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
+        var vc = event.getGuild().getAudioManager().getConnectedChannel();
+        if (vc == event.getChannelJoined() || vc == event.getChannelLeft()) {
+            if (canViewAuditLog(event.getGuild())) {
+                boolean wasMoved = wasAuditLogChanged(event.getGuild(), ActionType.MEMBER_VOICE_MOVE);
+                //  System.out.println(wasMoved);
+                if (vc == event.getChannelLeft()) {
+                    if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_TO);
+                    else sayText(event, VCEventSayedText.EventType.MOVE_TO);
+                } else if (vc == event.getChannelJoined()) {
+                    if (wasMoved) sayText(event, VCEventSayedText.EventType.FORCE_MOVE_FROM);
+                    else sayText(event, VCEventSayedText.EventType.MOVE_FROM);
+                }
+            } else {
+                if (vc == event.getChannelLeft()) {
+                    sayText(event, VCEventSayedText.EventType.MOVE_TO);
+                } else if (vc == event.getChannelJoined()) {
+                    sayText(event, VCEventSayedText.EventType.MOVE_FROM);
+                }
+            }
+        }
+        if (getLogSeeableActiveJDAs(event.getGuild()).size() >= 1 && getLogSeeableActiveJDAs(event.getGuild()).get(0).equals(event.getJDA()))
+            updateAuditLogMap(event.getGuild());
+    }
+    /*
+    @Override
     public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
         if (!Main.getServerSaveData(event.getGuild().getIdLong()).isJoinSayName()) return;
         var vc = event.getGuild().getAudioManager().getConnectedChannel();
@@ -193,7 +265,7 @@ public class TTSListener extends ListenerAdapter {
         }
         if (getLogSeeableActiveJDAs(event.getGuild()).size() >= 1 && getLogSeeableActiveJDAs(event.getGuild()).get(0).equals(event.getJDA()))
             updateAuditLogMap(event.getGuild());
-    }
+    }*/
 
     public static List<JDA> getLogSeeableActiveJDAs(Guild guild) {
         return Main.getActiveJDAs(guild).stream().filter(jda -> canViewAuditLog(guild, jda)).toList();

@@ -26,10 +26,11 @@ public class CookieVoiceType implements HasSayVoiceMP3VoiceType {
     public String getSoundURL(String text) throws Exception {
         var im = CookieManager.getInstance();
         var ret = im.search(text);
-        var most = im.getMost(ret);
-        if (most == null)
-            return null;
-        return most.getURL();
+        //var most = im.getMost(ret);
+        //if (most == null)
+        //    return null;
+        //return most.getURL();
+        return ret.get(0).getURL();
     }
 
     @Override

@@ -15,9 +15,12 @@ import dev.felnull.ttsvoice.util.DiscordUtils;
 import dev.felnull.ttsvoice.voice.VoiceType;
 import dev.felnull.ttsvoice.voice.reinoare.ReinoareManager;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
@@ -25,6 +28,8 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.managers.AudioManager;
+import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -124,13 +129,14 @@ public class TTSCommands {
     }
 
     public static void voiceShow(SlashCommandInteractionEvent e) {
-        var msg = new MessageBuilder().append("読み上げ音声タイプ一覧\n");
+        var builder = new MessageCreateBuilder().addContent("読み上げ音声タイプ一覧\n");
         StringBuilder sb = new StringBuilder();
         for (VoiceType voiceType : TTSManager.getInstance().getVoiceTypes(e.getUser().getIdLong(), e.getGuild().getIdLong())) {
             sb.append(voiceType.getId()).append(" ").append(voiceType.getTitle()).append("\n");
         }
-        msg.appendCodeLine(sb.toString());
-        e.reply(msg.build()).setEphemeral(true).queue();
+//        builder.appendCodeLine(sb.toString());
+        builder.addContent("``" + sb + "``");
+        e.reply(builder.build()).setEphemeral(true).queue();
     }
 
     public static void voiceChange(SlashCommandInteractionEvent e) {
@@ -177,12 +183,13 @@ public class TTSCommands {
             return;
         }
 
-        var msg = new MessageBuilder().append("読み上げ拒否されたユーザ一覧\n");
+        var msg = new MessageCreateBuilder().addContent("読み上げ拒否されたユーザ一覧\n");
         StringBuilder sb = new StringBuilder();
         for (Long deny : lst) {
             sb.append(DiscordUtils.getName(BotLocation.of(e), e.getJDA().getUserById(deny), deny)).append("\n");
         }
-        msg.appendCodeLine(sb.toString());
+        msg.addContent("``" + sb + "``");
+        //msg.appendCodeLine(sb.toString());
         e.reply(msg.build()).setEphemeral(true).queue();
     }
 
@@ -244,7 +251,7 @@ public class TTSCommands {
 
     public static void configShow(SlashCommandInteractionEvent e) {
         var sc = Main.getServerSaveData(e.getGuild().getIdLong());
-        var msg = new MessageBuilder().append("現在のコンフィグ\n");
+        var msg = new MessageCreateBuilder().addContent("現在のコンフィグ\n");
         StringBuilder sbr = new StringBuilder();
 
         sbr.append("VCに参加時のみ読み上げ").append(" ").append(sc.isNeedJoin() ? "有効" : "無効").append("\n");
@@ -259,7 +266,8 @@ public class TTSCommands {
         sbr.append("最大名前読み上げ文字数").append(" ").append(sc.getMaxReadAroundNameLimit()).append("文字").append("\n");
         sbr.append("先頭につけると読み上げなくなる文字").append(" \"").append(sc.getNonReadingPrefix()).append("\"").append("\n");
 
-        msg.appendCodeLine(sbr.toString());
+//        msg.appendCodeLine(sbr.toString());
+        msg.addContent("``" + sbr + "``");
         e.reply(msg.build()).setEphemeral(true).queue();
     }
 
@@ -490,7 +498,7 @@ public class TTSCommands {
         eb.setTitle("登録された単語と読み");
         addDictWordAndReadingField(eb, worldStr, readingStr);
 
-        var msg = new MessageBuilder(eb).append(ex ? "以下の単語の読みを上書き登録しました" : "以下の単語の読みを登録しました").build();
+        var msg = new MessageCreateBuilder().addEmbeds(eb.build()).addContent(ex ? "以下の単語の読みを上書き登録しました" : "以下の単語の読みを登録しました").build();
         e.reply(msg).queue();
     }
 
@@ -514,7 +522,7 @@ public class TTSCommands {
             eb.setTitle("削除された単語と読み");
             addDictWordAndReadingField(eb, worldStr, preReadingStr);
 
-            var msg = new MessageBuilder(eb).append("以下の単語を辞書から削除しました").build();
+            var msg = new MessageCreateBuilder().addEmbeds(eb.build()).addContent("以下の単語を辞書から削除しました").build();
             e.reply(msg).queue();
         } else {
             e.reply("未登録の単語です").queue();
@@ -529,7 +537,8 @@ public class TTSCommands {
         var jo = gd.save();
 
         byte[] jobyte = GSON.toJson(jo).getBytes(StandardCharsets.UTF_8);
-        e.replyFile(jobyte, e.getGuild().getId() + "_dict.json").queue();
+
+        e.replyFiles(FileUpload.fromData(jobyte, e.getGuild().getId() + "_dict.json")).queue();
     }
 
     public static void dictUpload(SlashCommandInteractionEvent e) {
@@ -594,7 +603,7 @@ public class TTSCommands {
         oss.addField("SHAREVOX", "sharevox.app", false);
 
         oss.addField("VoiceTextWebAPI", "cloud.voicetext.jp", false);
-        oss.addField("GoogleTranslateTTS", "translate.google.co.jp", false);
+        oss.addField("GoogleTTS", "cloud.google.com", false);
 
         var sc = Main.getServerSaveData(e.getGuild().getIdLong());
         if (sc.isInmMode(e.getGuild().getIdLong()) || sc.isCookieMode(e.getGuild().getIdLong()))

@@ -34,6 +34,7 @@ public class CookieManager extends ReinoareManager {
     public List<ReinoareEntry> search(String text, int max) throws URISyntaxException, IOException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
         text = new URI(text).toASCIIString();
+      //  var ret = FNURLUtil.getResponse(new URL(INC_URL + "/search?s=" + text + "&t=cookie_star&st=learn&m=" + max));
         var ret = FNURLUtil.getResponse(new URL(INC_URL + "/search?s=" + text + "&t=cookie_star&m=" + max));
         var jo = GSON.fromJson(ret, JsonObject.class);
         if (!jo.has("result"))

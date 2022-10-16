@@ -3,9 +3,11 @@ package dev.felnull.ttsvoice.util;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.discord.BotLocation;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.util.regex.Pattern;
 
@@ -50,24 +52,18 @@ public class DiscordUtils {
 
     private static String getName_(BotLocation botLocation, User user, long userId) {
         var unn = Main.getSaveData().getUserNickName(userId);
-        if (unn != null)
-            return unn;
+        if (unn != null) return unn;
 
-        if (user == null)
-            user = botLocation.getJDA().getUserById(userId);
+        if (user == null) user = botLocation.getJDA().getUserById(userId);
 
-        if (user == null)
-            user = botLocation.getJDA().retrieveUserById(userId).complete();
+        if (user == null) user = botLocation.getJDA().retrieveUserById(userId).complete();
 
-        if (user == null)
-            return String.valueOf(userId);
+        if (user == null) return String.valueOf(userId);
         var member = botLocation.getGuild().getMember(user);
 
-        if (member == null)
-            member = botLocation.getGuild().retrieveMemberById(user.getIdLong()).complete();
+        if (member == null) member = botLocation.getGuild().retrieveMemberById(user.getIdLong()).complete();
 
-        if (member == null)
-            return user.getName();
+        if (member == null) return user.getName();
         return getName_(member);
     }
 
@@ -77,12 +73,10 @@ public class DiscordUtils {
 
     private static String getName_(Member member) {
         var unn = Main.getSaveData().getUserNickName(member.getIdLong());
-        if (unn != null)
-            return unn;
+        if (unn != null) return unn;
 
         var nick = member.getNickname();
-        if (nick == null)
-            return member.getUser().getName();
+        if (nick == null) return member.getUser().getName();
         return nick;
     }
 
@@ -92,8 +86,7 @@ public class DiscordUtils {
     }
 
     public static boolean hasNeedAdminPermission(Member member) {
-        if (Main.getConfig().needAdminServers().contains(member.getGuild().getIdLong()))
-            return hasPermission(member);
+        if (Main.getConfig().needAdminServers().contains(member.getGuild().getIdLong())) return hasPermission(member);
         return true;
     }
 
@@ -107,14 +100,10 @@ public class DiscordUtils {
     public static String replaceMentionToText(BotLocation botLocation, Message.MentionType mention, String text) {
         return mention.getPattern().matcher(text).replaceAll(n -> {
             var p = n.group();
-            if (mention == Message.MentionType.USER)
-                return toUserMentionToText(botLocation, p);
-            if (mention == Message.MentionType.CHANNEL)
-                return toChannelMentionToText(botLocation.getGuild(), p);
-            if (mention == Message.MentionType.ROLE)
-                return toRoleMentionToText(botLocation.getGuild(), p);
-            if (mention == Message.MentionType.EMOJI)
-                return toEmojiMentionToText(botLocation.getGuild(), p);
+            if (mention == Message.MentionType.USER) return toUserMentionToText(botLocation, p);
+            if (mention == Message.MentionType.CHANNEL) return toChannelMentionToText(botLocation.getGuild(), p);
+            if (mention == Message.MentionType.ROLE) return toRoleMentionToText(botLocation.getGuild(), p);
+            if (mention == Message.MentionType.EMOJI) return toEmojiMentionToText(botLocation.getGuild(), p);
             return p;
         });
     }
@@ -124,19 +113,15 @@ public class DiscordUtils {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
             long id = Long.parseLong(mentionText);
             var nick = Main.getSaveData().getUserNickName(id);
-            if (nick != null)
-                return nick;
+            if (nick != null) return nick;
             var guild = botLocation.getGuild();
             var m = guild.getMemberById(id);
-            if (m != null)
-                return getName(m);
+            if (m != null) return getName(m);
             var user = botLocation.getJDA().getUserById(id);
-            if (user != null)
-                return getName(botLocation, user, id);
+            if (user != null) return getName(botLocation, user, id);
 
             var user2 = botLocation.getJDA().retrieveUserById(id).complete();
-            if (user2 != null)
-                return getName(botLocation, user2, id);
+            if (user2 != null) return getName(botLocation, user2, id);
         }
         return mentionText;
     }
@@ -145,8 +130,7 @@ public class DiscordUtils {
         if (Message.MentionType.CHANNEL.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(2, mentionText.length() - 1);
             var m = guild.getGuildChannelById(mentionText);
-            if (m != null)
-                return m.getName();
+            if (m != null) return m.getName();
         }
         return mentionText;
     }
@@ -155,8 +139,7 @@ public class DiscordUtils {
         if (Message.MentionType.ROLE.getPattern().matcher(mentionText).matches()) {
             mentionText = mentionText.substring(3, mentionText.length() - 1);
             var m = guild.getRoleById(mentionText);
-            if (m != null)
-                return m.getName();
+            if (m != null) return m.getName();
         }
         return mentionText;
     }
@@ -195,7 +178,7 @@ public class DiscordUtils {
          */
     }
 
-    public static Message createEmbedMessage(MessageEmbed embed) {
-        return new MessageBuilder(embed).build();
+    public static MessageCreateData createEmbedMessage(MessageEmbed embed) {
+        return MessageCreateData.fromEmbeds(embed);
     }
 }

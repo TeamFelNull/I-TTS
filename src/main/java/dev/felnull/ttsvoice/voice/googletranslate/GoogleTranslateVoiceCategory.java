@@ -7,12 +7,12 @@ public class GoogleTranslateVoiceCategory implements VoiceCategory {
 
     @Override
     public String getTitle() {
-        return "Google翻訳TTS";
+        return "GoogleTTS";
     }
 
     @Override
     public String getId() {
-        return "google-translate-tts-";
+        return "google-tts-";
     }
 
     public static GoogleTranslateVoiceCategory getInstance() {

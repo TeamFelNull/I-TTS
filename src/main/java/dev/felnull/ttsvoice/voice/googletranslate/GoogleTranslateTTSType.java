@@ -24,12 +24,12 @@ public enum GoogleTranslateTTSType implements VoiceType {
 
     @Override
     public String getTitle() {
-        return "Google翻訳TTS(" + name + ")";
+        return "GoogleTTS(" + name + ")";
     }
 
     @Override
     public String getId() {
-        return "google-translate-tts-" + lang;
+        return "google-tts-" + lang;
     }
 
     public String getName() {
