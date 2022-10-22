@@ -1,10 +1,7 @@
 package dev.felnull.ttsvoice.voice.vvengine;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import dev.felnull.fnjl.tuple.FNPair;
 import dev.felnull.fnjl.util.FNURLUtil;
 import org.apache.commons.lang3.tuple.Pair;
@@ -153,8 +150,20 @@ public abstract class VVEngineManager {
             lastError = false;
             lastSpeakersLoadTime = System.currentTimeMillis();
         } catch (Exception e) {
-            if (!lastError)
-                LOGGER.error("Failed to get " + getName() + " speakers", e);
+            //    if (!lastError)
+            //       LOGGER.error("Failed to get " + getName() + " speakers", e);
+            if (!lastError) {
+                String errorName = e.getLocalizedMessage();
+                if (e instanceof JsonSyntaxException)
+                    errorName = "Json error";
+
+                if (e instanceof RuntimeException) {
+                    LOGGER.error("Failed to connect " + getName() + " server");
+                } else {
+                    LOGGER.error("Failed to connect " + getName() + " server: " + errorName);
+                }
+            }
+
             lastError = true;
             lastSpeakersLoadTime = System.currentTimeMillis() - 1000 * 60 * 7;
         }
