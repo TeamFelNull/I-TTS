@@ -1,6 +1,7 @@
 package dev.felnull.ttsvoice.core.util;
 
 import net.dv8tion.jda.api.entities.channel.Channel;
+import org.jetbrains.annotations.NotNull;
 
 public class DiscordUtils {
     /**
@@ -9,7 +10,8 @@ public class DiscordUtils {
      * @param channel チャンネル
      * @return チャンネルメンションテキスト
      */
-    public static String createChannelMention(Channel channel) {
+    @NotNull
+    public static String createChannelMention(@NotNull Channel channel) {
         return "<#" + channel.getId() + ">";
     }
 }

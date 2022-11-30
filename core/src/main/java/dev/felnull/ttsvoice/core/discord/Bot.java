@@ -11,21 +11,17 @@ import java.util.List;
 
 public class Bot {
     protected final List<BaseCommand> baseCommands = new ArrayList<>();
-    @NotNull
     private final TTSVoiceRuntime runtime;
-    @NotNull
-    private final String botToken;
     private JDA jda;
 
-    public Bot(@NotNull TTSVoiceRuntime runtime, @NotNull String botToken) {
+    public Bot(@NotNull TTSVoiceRuntime runtime) {
         this.runtime = runtime;
-        this.botToken = botToken;
     }
 
     public void init() {
         registeringCommands();
 
-        this.jda = JDABuilder.createDefault(botToken).addEventListeners(new EventListener(this)).build();
+        this.jda = JDABuilder.createDefault(runtime.getConfigManager().getConfig().getBotToken()).addEventListeners(new EventListener(this)).build();
         updateCommands(this.jda);
     }
 
@@ -48,5 +44,9 @@ public class Bot {
 
     private void updateCommands(JDA jda) {
         jda.updateCommands().addCommands(baseCommands.stream().map(BaseCommand::createSlashCommand).toList()).queue();
+    }
+
+    public JDA getJDA() {
+        return jda;
     }
 }
