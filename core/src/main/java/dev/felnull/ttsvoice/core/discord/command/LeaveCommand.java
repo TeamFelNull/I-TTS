@@ -28,6 +28,8 @@ public class LeaveCommand extends BaseCommand {
             var connectedChannel = audioManager.getConnectedChannel();
             event.reply(DiscordUtils.createChannelMention(connectedChannel) + "から切断します。").queue();
 
+            runtime.getTTSManager().disconnect(event.getGuild().getIdLong());
+
             audioManager.closeAudioConnection();
         } else {
             event.reply("現在VCに接続していません。").setEphemeral(true).queue();

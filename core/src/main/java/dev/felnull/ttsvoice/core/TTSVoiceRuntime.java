@@ -3,6 +3,7 @@ package dev.felnull.ttsvoice.core;
 import dev.felnull.ttsvoice.core.config.ConfigAccess;
 import dev.felnull.ttsvoice.core.config.ConfigManager;
 import dev.felnull.ttsvoice.core.discord.Bot;
+import dev.felnull.ttsvoice.core.tts.TTSManager;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,7 @@ public class TTSVoiceRuntime {
     private final Logger logger = LogManager.getLogger(TTSVoiceRuntime.class);
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-thread-%d").daemon(true).build());
     private final ConfigManager configManager;
+    private final TTSManager ttsManager = new TTSManager();
     private final Bot bot;
     private final boolean developmentEnvironment = true;
 
@@ -59,5 +61,9 @@ public class TTSVoiceRuntime {
 
     public Logger getLogger() {
         return logger;
+    }
+
+    public TTSManager getTTSManager() {
+        return ttsManager;
     }
 }

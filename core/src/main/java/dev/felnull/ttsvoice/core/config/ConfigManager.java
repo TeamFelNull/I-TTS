@@ -17,6 +17,11 @@ public class ConfigManager {
         if (this.config == null)
             return false;
 
+        if (this.config.getBotToken().isEmpty()) {
+            runtime.getLogger().error("Bot token is empty");
+            return false;
+        }
+
         return true;
     }
 

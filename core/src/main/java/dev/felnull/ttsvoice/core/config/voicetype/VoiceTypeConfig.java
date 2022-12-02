@@ -1,19 +1,13 @@
 package dev.felnull.ttsvoice.core.config.voicetype;
 
-public abstract class VoiceTypeConfig {
-    protected boolean enable = true;
-    protected long cashTime = 180000;
-    protected long checkTime = 15000;
+public interface VoiceTypeConfig {
+    boolean DEFAULT_ENABLE = true;
+    long DEFAULT_CACHE_TIME = 180000;
+    long DEFAULT_CHECK_TIME = 15000;
 
-    public boolean isEnable() {
-        return enable;
-    }
+    boolean isEnable();
 
-    public long getCashTime() {
-        return cashTime;
-    }
+    long getCacheTime();
 
-    public long getCheckTime() {
-        return checkTime;
-    }
+    long getCheckTime();
 }

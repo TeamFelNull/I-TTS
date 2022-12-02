@@ -37,6 +37,7 @@ public class InfoCommand extends BaseCommand {
 
     private void about(SlashCommandInteractionEvent e) {
         EmbedBuilder aboutEmbedBuilder = new EmbedBuilder();
+        aboutEmbedBuilder.setColor(runtime.getConfigManager().getConfig().getThemeColor());
         aboutEmbedBuilder.setTitle("I Discord TTS Voice BOT");
         aboutEmbedBuilder.setDescription(runtime.getVersionText());
         aboutEmbedBuilder.addField("License", "GNU LGPLv3", false);

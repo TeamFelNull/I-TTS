@@ -9,12 +9,10 @@ import java.util.List;
 /**
  * VOICEVOX系共通コンフィグ
  */
-public class VVEBVoiceTypeConfig extends VoiceTypeConfig {
-    protected List<String> apiUrls = ImmutableList.of();
+public interface VoiceVoxEngineBaseVoiceTypeConfig extends VoiceTypeConfig {
+    List<String> DEFAULT_API_URLS = ImmutableList.of();
 
     @NotNull
     @Unmodifiable
-    public List<String> getApiUrls() {
-        return apiUrls;
-    }
+    List<String> getApiUrls();
 }

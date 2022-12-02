@@ -1,30 +1,18 @@
 package dev.felnull.ttsvoice.core.config;
 
-import dev.felnull.ttsvoice.core.config.voicetype.VTVVoiceTypeConfig;
-import dev.felnull.ttsvoice.core.config.voicetype.VVEBVoiceTypeConfig;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class Config {
-    protected static final int VERSION = 0;
-    protected String name = "おしゃべり君";
-    protected String botToken = "";
-    protected int themeColor = 0xFF00FF;
-    protected VTVVoiceTypeConfig voiceTextConfig = new VTVVoiceTypeConfig();
-    protected VVEBVoiceTypeConfig voicevoxConfig = new VVEBVoiceTypeConfig();
-    protected VVEBVoiceTypeConfig coeirolnkConfig = new VVEBVoiceTypeConfig();
-    protected VVEBVoiceTypeConfig sharevoxConfig = new VVEBVoiceTypeConfig();
+public interface Config {
+    int VERSION = 0;
+    String DEFAULT_NAME = "おしゃべり君";
+    String DEFAULT_BOT_TOKEN = "";
+    int DEFAULT_THEME_COLOR = 0xFF00FF;
 
     @NotNull
-    public String getName() {
-        return name;
-    }
+    String getName();
 
     @NotNull
-    public String getBotToken() {
-        return botToken;
-    }
+    String getBotToken();
 
-    public int getThemeColor() {
-        return themeColor;
-    }
+    int getThemeColor();
 }

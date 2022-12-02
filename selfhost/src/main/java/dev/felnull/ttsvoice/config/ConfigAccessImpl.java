@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 public class ConfigAccessImpl implements ConfigAccess {
     private static final Jankson JANKSON = Jankson.builder().build();
@@ -29,7 +30,7 @@ public class ConfigAccessImpl implements ConfigAccess {
             }
         }
 
-        var config = new Json5Config(jo);
+        var config = new Json5Config(Optional.ofNullable(jo).orElseGet(JsonObject::new));
 
         if (jo == null) try (Writer writer = new BufferedWriter(new FileWriter(CONFIG_FILE, StandardCharsets.UTF_8))) {
             config.toJson().toJson(writer, JsonGrammar.JSON5, 0);

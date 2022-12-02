@@ -65,6 +65,8 @@ public class JoinCommand extends BaseCommand {
             return;
         }
 
+        runtime.getTTSManager().connect(event.getGuild().getIdLong(), joinTargetChannel.getIdLong());
+
         event.reply(DiscordUtils.createChannelMention(joinTargetChannel) + "に接続しました。").queue();
     }
 }
