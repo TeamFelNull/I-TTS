@@ -1,0 +1,44 @@
+package dev.felnull.ttsvoice.core.savedata;
+
+import org.jetbrains.annotations.Nullable;
+
+public interface ServerData {
+    int VERSION = 0;
+    String DEFAULT_DEFAULT_VOICE_TYPE = null;
+    String DEFAULT_IGNORE_REGEX = "(!|/|\\\\$|`).*";
+    boolean DEFAULT_NEED_JOIN = false;
+    boolean DEFAULT_OVERWRITE_ALOUD = true;
+    boolean DEFAULT_NOTIFY_MOVE = true;
+    int DEFAULT_READ_LIMIT = 200;
+    int DEFAULT_NAME_READ_LIMIT = 10;
+
+    @Nullable
+    String getDefaultVoiceType();
+
+    void setDefaultVoiceType(@Nullable String voiceType);
+
+    @Nullable
+    String getIgnoreRegex();
+
+    void setIgnoreRegex(@Nullable String ignoreRegex);
+
+    boolean isNeedJoin();
+
+    void setNeedJoin(boolean needJoin);
+
+    boolean isOverwriteAloud();
+
+    void setOverwriteAloud(boolean overwriteAloud);
+
+    boolean isNotifyMove();
+
+    void setNotifyMove(boolean notifyMove);
+
+    int getReadLimit();
+
+    void setReadLimit(int readLimit);
+
+    int getNameReadLimit();
+
+    void setNameReadLimit(int nameReadLimit);
+}

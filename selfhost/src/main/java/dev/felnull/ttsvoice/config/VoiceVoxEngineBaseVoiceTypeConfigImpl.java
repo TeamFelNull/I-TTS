@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.config.json5;
+package dev.felnull.ttsvoice.config;
 
 import blue.endless.jankson.JsonObject;
 import dev.felnull.ttsvoice.core.config.voicetype.VoiceVoxEngineBaseVoiceTypeConfig;
@@ -8,12 +8,13 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
-public class Json5VoiceVoxEngineBaseVoiceTypeConfig extends Json5VoiceTypeConfig implements VoiceVoxEngineBaseVoiceTypeConfig {
+public class VoiceVoxEngineBaseVoiceTypeConfigImpl extends VoiceTypeConfigImpl implements VoiceVoxEngineBaseVoiceTypeConfig {
     private final List<String> apiUrls;
 
-    protected Json5VoiceVoxEngineBaseVoiceTypeConfig(JsonObject jo) {
+    protected VoiceVoxEngineBaseVoiceTypeConfigImpl(JsonObject jo) {
         super(jo);
-        this.apiUrls = Json5Utils.getStringListOfJsonArray(jo, "api_url");
+        var loadApiUrals = Json5Utils.getStringListOfJsonArray(jo, "api_url");
+        this.apiUrls = loadApiUrals.isEmpty() ? DEFAULT_API_URLS : loadApiUrals;
     }
 
     @Override

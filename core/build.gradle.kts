@@ -7,6 +7,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10")
     implementation("com.google.guava:guava:31.1-jre")
     implementation("org.apache.logging.log4j:log4j-core:2.18.0")
+    implementation("dev.felnull:felnull-java-library:1.73")
 
     implementation("org.jetbrains:annotations:23.0.0")
 }

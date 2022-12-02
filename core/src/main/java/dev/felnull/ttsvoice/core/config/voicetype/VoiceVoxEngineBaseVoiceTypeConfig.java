@@ -10,7 +10,7 @@ import java.util.List;
  * VOICEVOX系共通コンフィグ
  */
 public interface VoiceVoxEngineBaseVoiceTypeConfig extends VoiceTypeConfig {
-    List<String> DEFAULT_API_URLS = ImmutableList.of();
+    List<String> DEFAULT_API_URLS = ImmutableList.of("");
 
     @NotNull
     @Unmodifiable

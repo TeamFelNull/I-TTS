@@ -1,4 +1,4 @@
-package dev.felnull.ttsvoice.config.json5;
+package dev.felnull.ttsvoice.config;
 
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
@@ -6,10 +6,10 @@ import dev.felnull.ttsvoice.core.config.voicetype.VoiceTextVoiceTypeConfig;
 import dev.felnull.ttsvoice.utils.Json5Utils;
 import org.jetbrains.annotations.NotNull;
 
-public class Json5VoiceTextVoiceTypeConfig extends Json5VoiceTypeConfig implements VoiceTextVoiceTypeConfig {
+public class VoiceTextVoiceTypeConfigImpl extends VoiceTypeConfigImpl implements VoiceTextVoiceTypeConfig {
     private final String apiKey;
 
-    protected Json5VoiceTextVoiceTypeConfig(JsonObject jo) {
+    protected VoiceTextVoiceTypeConfigImpl(JsonObject jo) {
         super(jo);
         this.apiKey = Json5Utils.getStringOrElse(jo, "api_key", DEFAULT_API_KEY);
     }

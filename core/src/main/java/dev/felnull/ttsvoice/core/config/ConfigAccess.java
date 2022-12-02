@@ -6,5 +6,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ConfigAccess {
     @Nullable
-    Config loadConfig(TTSVoiceRuntime runtime);
+    Config loadConfig();
 }

@@ -1,15 +1,15 @@
-package dev.felnull.ttsvoice.config.json5;
+package dev.felnull.ttsvoice.config;
 
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
 import dev.felnull.ttsvoice.core.config.voicetype.VoiceTypeConfig;
 
-public class Json5VoiceTypeConfig implements VoiceTypeConfig {
+public class VoiceTypeConfigImpl implements VoiceTypeConfig {
     private final boolean enable;
     private final long cacheTime;
     private final long checkTime;
 
-    protected Json5VoiceTypeConfig(JsonObject jo) {
+    protected VoiceTypeConfigImpl(JsonObject jo) {
         this.enable = jo.getBoolean("enable", DEFAULT_ENABLE);
         this.cacheTime = jo.getLong("cache_time", DEFAULT_CACHE_TIME);
         this.checkTime = jo.getLong("check_time", DEFAULT_CHECK_TIME);

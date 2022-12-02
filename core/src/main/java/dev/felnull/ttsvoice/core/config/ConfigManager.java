@@ -13,7 +13,7 @@ public class ConfigManager {
     }
 
     public boolean init() {
-        this.config = configAccess.loadConfig(runtime);
+        this.config = configAccess.loadConfig();
         if (this.config == null)
             return false;
 
