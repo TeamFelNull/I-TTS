@@ -55,7 +55,17 @@ public class ConfigCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
+        switch (event.getSubcommandName()) {
+            case "notify-move" -> notifyMove(event);
+        }
+    }
 
+    private void notifyMove(SlashCommandInteractionEvent event) {
+        var op = event.getOption("enable");
+        if (op.getType() == OptionType.BOOLEAN) {
+            var sd = runtime.getSaveDataManager().getServerData(event.getGuild().getIdLong());
+            sd.setNotifyMove(op.getAsBoolean());
+        }
     }
 
     @Override

@@ -9,6 +9,7 @@ dependencies {
     implementation("dev.felnull:felnull-java-library:1.73")
 
     implementation("org.jetbrains:annotations:23.0.0")
+    implementation("com.google.code.gson:gson:2.10")
 }
 
 tasks.getByName<Test>("test") {

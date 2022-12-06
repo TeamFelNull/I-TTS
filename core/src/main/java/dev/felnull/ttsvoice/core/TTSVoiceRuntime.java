@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 public class TTSVoiceRuntime {
     private final Logger logger = LogManager.getLogger(TTSVoiceRuntime.class);
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-thread-%d").daemon(true).build());
+    private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
     private final ConfigManager configManager;
     private final TTSManager ttsManager = new TTSManager();
     private final SaveDataManager saveDataManager;
@@ -48,8 +49,22 @@ public class TTSVoiceRuntime {
         bot.init();
     }
 
+    /**
+     * 軽い非同期処理を行うためのエクスキューター
+     *
+     * @return エクスキューター
+     */
     public Executor getAsyncWorkerExecutor() {
         return asyncWorkerExecutor;
+    }
+
+    /**
+     * CPUを利用する処理、大量のIOなどの重い処理を行うエクスキューター
+     *
+     * @return エクスキューター
+     */
+    public ExecutorService getHeavyProcessExecutor() {
+        return heavyProcessExecutor;
     }
 
     public boolean isDevelopmentEnvironment() {
