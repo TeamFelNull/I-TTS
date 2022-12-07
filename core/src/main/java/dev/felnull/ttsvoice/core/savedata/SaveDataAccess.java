@@ -13,7 +13,7 @@ public interface SaveDataAccess {
     ServerData getServerData(long guildId);
 
     @NotNull
-    UserData getServerUserData(long guildId, long userId);
+    ServerUserData getServerUserData(long guildId, long userId);
 
     @NotNull
     @Unmodifiable
@@ -39,4 +39,11 @@ public interface SaveDataAccess {
     void addDictData(long guildId, @NotNull String target, @NotNull String read);
 
     void removeDictData(long guildId, @NotNull String target);
+
+    @Nullable
+    DictData getGlobalDictData(@NotNull String target);
+
+    void addGlobalDictData(@NotNull String target, @NotNull String read);
+
+    void removeGlobalDictData(@NotNull String target);
 }

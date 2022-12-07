@@ -1,7 +1,5 @@
 package dev.felnull.ttsvoice.savedata;
 
-import dev.felnull.fnjl.util.FNDataUtil;
-import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.ttsvoice.Main;
 import dev.felnull.ttsvoice.core.savedata.*;
 import org.jetbrains.annotations.NotNull;
@@ -9,53 +7,49 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 public class SelfHostSaveDataManager implements SaveDataAccess {
     private static final SelfHostSaveDataManager INSTANCE = new SelfHostSaveDataManager();
     protected static final File SERVER_DATA_FOLDER = new File("./server_data");
-    private final Map<Long, ServerData> serverData = new ConcurrentHashMap<>();
+    private static final File SERVER_USER_DATA_PARENT_FOLDER = new File("./server_user_data");
+    private final Map<Long, CompletableFuture<ServerDataImpl>> serverData = new ConcurrentHashMap<>();
+    private final Map<GuildUserKey, CompletableFuture<ServerUserDataImpl>> serverUserData = new ConcurrentHashMap<>();
 
     public static SelfHostSaveDataManager getInstance() {
         return INSTANCE;
     }
 
+    protected static File getServerUserDataFolder(long guildId) {
+        return new File(SERVER_USER_DATA_PARENT_FOLDER, String.valueOf(guildId));
+    }
+
     @Override
     public boolean init() {
-        FNDataUtil.wishMkdir(SERVER_DATA_FOLDER);
-
-        var r = Arrays.stream(SERVER_DATA_FOLDER.listFiles()).filter(fw -> !fw.isDirectory()).mapToLong(fw -> {
-                    try {
-                        return Long.parseLong(FNStringUtil.removeExtension(fw.getName()));
-                    } catch (NumberFormatException numberFormatException) {
-                        return -1;
-                    }
-                }).filter(n -> n != -1).mapToObj(n -> {
-                    var sdi = new ServerDataImpl(n);
-                    serverData.put(n, sdi);
-                    return sdi;
-                }).map(sdi -> CompletableFuture.runAsync(sdi::loadExistingData, Main.RUNTIME.getHeavyProcessExecutor()))
-                .toArray(CompletableFuture<?>[]::new);
-
-        CompletableFuture.allOf(r).join();
-        Main.RUNTIME.getLogger().info("{} server data loading success.", r.length);
-
-
         return true;
     }
 
     @Override
     public @NotNull ServerData getServerData(long guildId) {
-        return serverData.computeIfAbsent(guildId, ServerDataImpl::new);
+        try {
+            return serverData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDataImpl(id))).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public @NotNull UserData getServerUserData(long guildId, long userId) {
-        return null;
+    public @NotNull ServerUserData getServerUserData(long guildId, long userId) {
+        try {
+            return serverUserData.computeIfAbsent(new GuildUserKey(guildId, userId), id -> computeInitAsync(() -> new ServerUserDataImpl(id.guildId(), id.userId()))).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -101,5 +95,35 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     @Override
     public void removeDictData(long guildId, @NotNull String target) {
 
+    }
+
+    @Override
+    public @Nullable DictData getGlobalDictData(@NotNull String target) {
+        return null;
+    }
+
+    @Override
+    public void addGlobalDictData(@NotNull String target, @NotNull String read) {
+
+    }
+
+    @Override
+    public void removeGlobalDictData(@NotNull String target) {
+
+    }
+
+    private <T extends SaveDataBase> CompletableFuture<T> computeInitAsync(Supplier<T> newInstance) {
+        return CompletableFuture.supplyAsync(() -> {
+            var ni = newInstance.get();
+            try {
+                ni.init();
+            } catch (Exception ex) {
+                Main.RUNTIME.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", ni.getName(), ex);
+            }
+            return ni;
+        }, Main.RUNTIME.getAsyncWorkerExecutor());
+    }
+
+    private static record GuildUserKey(long guildId, long userId) {
     }
 }

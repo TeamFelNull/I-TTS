@@ -29,7 +29,7 @@ public class SaveDataManager {
     }
 
     @NotNull
-    public UserData getServerUserData(long guildId, long userId) {
+    public ServerUserData getServerUserData(long guildId, long userId) {
         return saveDataAccess.getServerUserData(guildId, userId);
     }
 
@@ -74,5 +74,18 @@ public class SaveDataManager {
 
     public void removeDictData(long guildId, @NotNull String target) {
         saveDataAccess.removeDictData(guildId, target);
+    }
+
+    @Nullable
+    public DictData getGlobalDictData(@NotNull String target) {
+        return saveDataAccess.getGlobalDictData(target);
+    }
+
+    public void addGlobalDictData(@NotNull String target, @NotNull String read) {
+        saveDataAccess.addGlobalDictData(target, read);
+    }
+
+    public void removeGlobalDictData(@NotNull String target) {
+        saveDataAccess.removeGlobalDictData(target);
     }
 }

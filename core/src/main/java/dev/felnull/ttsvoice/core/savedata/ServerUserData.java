@@ -3,11 +3,11 @@ package dev.felnull.ttsvoice.core.savedata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface UserData {
+public interface ServerUserData {
     int VERSION = 0;
-    String DEFAULT_VOICE_TYPE = null;
-    boolean DEFAULT_DENY = false;
-    String DEFAULT_NICK_NAME = null;
+    String INIT_VOICE_TYPE = null;
+    boolean INIT_DENY = false;
+    String INIT_NICK_NAME = null;
 
     @Nullable
     String getVoiceType();

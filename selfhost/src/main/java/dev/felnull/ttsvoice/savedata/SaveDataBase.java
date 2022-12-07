@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.ttsvoice.Main;
+import dev.felnull.ttsvoice.core.util.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -17,20 +18,31 @@ public abstract class SaveDataBase {
     private final Object saveLock = new Object();
     private final AtomicLong dirtyTime = new AtomicLong(-1);
     private final File saveFile;
+    private boolean canSave;
 
     protected SaveDataBase(File saveFile) {
         this.saveFile = saveFile;
     }
 
-    public void loadExistingData() {
+    public void init() throws Exception {
         if (this.saveFile.exists()) {
             try (Reader reader = new FileReader(this.saveFile); Reader bufReader = new BufferedReader(reader)) {
-                loadFromJson(GSON.fromJson(bufReader, JsonObject.class));
+                var jo = GSON.fromJson(bufReader, JsonObject.class);
+                int version = JsonUtils.getInt(jo, "version", -1);
+
+                if (version != getVersion())
+                    throw new RuntimeException("Unsupported config version.");
+
+                loadFromJson(jo);
                 Main.RUNTIME.getLogger().debug("Succeeded in loading the existing save data. ({})", getName());
             } catch (Exception ex) {
                 Main.RUNTIME.getLogger().error("Failed in loading the existing save data. ({})", getName(), ex);
             }
+        } else {
+            saveOnly();
         }
+
+        canSave = true;
     }
 
     public abstract String getName();
@@ -39,10 +51,14 @@ public abstract class SaveDataBase {
 
     protected abstract void saveToJson(@NotNull JsonObject jo);
 
-    protected void setDirty() {
+    protected abstract int getVersion();
+
+    protected void dirty() {
+        if (!canSave)
+            return;
+
         synchronized (dirtyLock) {
-            boolean dirtied = this.dirtyTime.compareAndSet(-1, System.currentTimeMillis());
-            if (dirtied) {
+            if (this.dirtyTime.compareAndSet(-1, System.currentTimeMillis())) {
                 saveWaitStart();
             } else {
                 this.dirtyTime.set(System.currentTimeMillis());
@@ -69,15 +85,22 @@ public abstract class SaveDataBase {
 
     private void save() {
         synchronized (saveLock) {
-            FNDataUtil.wishMkdir(saveFile.getParentFile());
-            try (Writer writer = new FileWriter(saveFile); Writer bufWriter = new BufferedWriter(writer)) {
-                var jo = new JsonObject();
-                saveToJson(jo);
-                GSON.toJson(jo, bufWriter);
+            try {
+                saveOnly();
                 Main.RUNTIME.getLogger().debug("Succeeded to save saved data. ({})", getName());
             } catch (Exception ex) {
                 Main.RUNTIME.getLogger().error("Failed to save saved data. ({})", getName(), ex);
             }
+        }
+    }
+
+    private void saveOnly() throws Exception {
+        FNDataUtil.wishMkdir(saveFile.getParentFile());
+        try (Writer writer = new FileWriter(saveFile); Writer bufWriter = new BufferedWriter(writer)) {
+            var jo = new JsonObject();
+            saveToJson(jo);
+            jo.addProperty("version", getVersion());
+            GSON.toJson(jo, bufWriter);
         }
     }
 }

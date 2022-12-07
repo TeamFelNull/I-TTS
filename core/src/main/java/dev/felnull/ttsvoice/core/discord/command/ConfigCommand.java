@@ -64,7 +64,9 @@ public class ConfigCommand extends BaseCommand {
         var op = event.getOption("enable");
         if (op.getType() == OptionType.BOOLEAN) {
             var sd = runtime.getSaveDataManager().getServerData(event.getGuild().getIdLong());
-            sd.setNotifyMove(op.getAsBoolean());
+           // sd.setNotifyMove(op.getAsBoolean());
+
+            event.reply(String.valueOf(sd.isNotifyMove())).queue();
         }
     }
 

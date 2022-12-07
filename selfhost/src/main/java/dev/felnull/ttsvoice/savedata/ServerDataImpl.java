@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerDataImpl extends SaveDataBase implements ServerData {
+    private final long guildId;
     private final AtomicReference<String> defaultVoiceType = new AtomicReference<>(INIT_DEFAULT_VOICE_TYPE);
     private final AtomicReference<String> ignoreRegex = new AtomicReference<>(INIT_IGNORE_REGEX);
     private final AtomicBoolean needJoin = new AtomicBoolean(INIT_NEED_JOIN);
@@ -20,13 +21,14 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     private final AtomicInteger readLimit = new AtomicInteger(INIT_READ_LIMIT);
     private final AtomicInteger nameReadLimit = new AtomicInteger(INIT_NAME_READ_LIMIT);
 
-    public ServerDataImpl(long guildId) {
+    protected ServerDataImpl(long guildId) {
         super(new File(SelfHostSaveDataManager.SERVER_DATA_FOLDER, guildId + ".json"));
+        this.guildId = guildId;
     }
 
     @Override
     public String getName() {
-        return "Server Data";
+        return "Server Data: " + guildId;
     }
 
     @Override
@@ -51,6 +53,11 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
         jo.addProperty("name_read_limit", nameReadLimit.get());
     }
 
+    @Override
+    protected int getVersion() {
+        return VERSION;
+    }
+
 
     @Override
     public @Nullable String getDefaultVoiceType() {
@@ -60,7 +67,7 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setDefaultVoiceType(@Nullable String voiceType) {
         this.defaultVoiceType.set(voiceType);
-        setDirty();
+        dirty();
     }
 
     @Override
@@ -71,7 +78,7 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setIgnoreRegex(@Nullable String ignoreRegex) {
         this.ignoreRegex.set(ignoreRegex);
-        setDirty();
+        dirty();
     }
 
     @Override
@@ -82,7 +89,7 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setNeedJoin(boolean needJoin) {
         this.needJoin.set(needJoin);
-        setDirty();
+        dirty();
     }
 
     @Override
@@ -93,7 +100,7 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setOverwriteAloud(boolean overwriteAloud) {
         this.overwriteAloud.set(overwriteAloud);
-        setDirty();
+        dirty();
     }
 
     @Override
@@ -104,7 +111,7 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setNotifyMove(boolean notifyMove) {
         this.notifyMove.set(notifyMove);
-        setDirty();
+        dirty();
     }
 
     @Override
@@ -115,7 +122,7 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setReadLimit(int readLimit) {
         this.readLimit.set(readLimit);
-        setDirty();
+        dirty();
     }
 
     @Override
@@ -126,6 +133,6 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     @Override
     public void setNameReadLimit(int nameReadLimit) {
         this.nameReadLimit.set(nameReadLimit);
-        setDirty();
+        dirty();
     }
 }
