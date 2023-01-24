@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
+import java.util.Map;
 
 public class SaveDataManager {
     private final TTSVoiceRuntime runtime;
@@ -53,8 +54,14 @@ public class SaveDataManager {
     }
 
     @NotNull
-    public BotServerData getBotServerData(long botUserId, long guildId) {
-        return saveDataAccess.getBotServerData(botUserId, guildId);
+    public BotStateData getBotStateData(long guildId) {
+        return saveDataAccess.getBotStateData(guildId);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public Map<Long,BotStateData> getAllBotStateData() {
+        return saveDataAccess.getAllBotStateData();
     }
 
     @NotNull

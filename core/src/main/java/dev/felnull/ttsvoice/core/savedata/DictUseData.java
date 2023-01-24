@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface DictUseData {
     int VERSION = 0;
-    int DEFAULT_PRIORITY = 0;
+    int INIT_PRIORITY = 0;
 
     @NotNull
     String getDictId();

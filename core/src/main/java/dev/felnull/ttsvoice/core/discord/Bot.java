@@ -4,6 +4,7 @@ import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.discord.command.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,8 +22,12 @@ public class Bot {
     public void init() {
         registeringCommands();
 
-        this.jda = JDABuilder.createDefault(runtime.getConfigManager().getConfig().getBotToken()).addEventListeners(new EventListener(this)).build();
+        this.jda = JDABuilder.createDefault(runtime.getConfigManager().getConfig().getBotToken()).enableIntents(GatewayIntent.MESSAGE_CONTENT).addEventListeners(new EventListener(this)).build();
         updateCommands(this.jda);
+    }
+
+    public TTSVoiceRuntime getRuntime() {
+        return runtime;
     }
 
     private void registeringCommands() {

@@ -65,4 +65,19 @@ public class JsonUtils {
 
         return jo.get(key).getAsBoolean();
     }
+
+    /**
+     * JsonからLong値を取得する
+     *
+     * @param jo           Jsonオブジェクト
+     * @param key          キー
+     * @param defaultValue 存在しない場合の初期値
+     * @return long値
+     */
+    public static long getLong(@NotNull JsonObject jo, @NotNull String key, long defaultValue) {
+        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isNumber())
+            return defaultValue;
+
+        return jo.get(key).getAsLong();
+    }
 }

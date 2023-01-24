@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface SaveDataAccess {
     boolean init();
@@ -27,7 +28,11 @@ public interface SaveDataAccess {
     void removeDictUseData(long guildId, @NotNull String dictId);
 
     @NotNull
-    BotServerData getBotServerData(long botUserId, long guildId);
+    BotStateData getBotStateData(long guildId);
+
+    @NotNull
+    @Unmodifiable
+    Map<Long, BotStateData> getAllBotStateData();
 
     @NotNull
     @Unmodifiable

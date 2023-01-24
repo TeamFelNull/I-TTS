@@ -54,6 +54,8 @@ public class JoinCommand extends BaseCommand {
             return;
         }
 
+        runtime.getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel().getIdLong());
+
         try {
             audioManager.openAudioConnection(joinTargetChannel);
         } catch (InsufficientPermissionException ex) {
@@ -64,8 +66,6 @@ public class JoinCommand extends BaseCommand {
             }
             return;
         }
-
-        runtime.getTTSManager().connect(event.getGuild().getIdLong(), joinTargetChannel.getIdLong());
 
         event.reply(DiscordUtils.createChannelMention(joinTargetChannel) + "に接続しました。").queue();
     }

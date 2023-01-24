@@ -30,7 +30,6 @@ public class ReconnectCommand extends BaseCommand {
             var connectedChannel = audioManager.getConnectedChannel();
             event.reply(DiscordUtils.createChannelMention(connectedChannel) + "に再接続します。").queue();
 
-            runtime.getTTSManager().disconnect(event.getGuild().getIdLong());
             audioManager.closeAudioConnection();
 
             CompletableFuture.runAsync(() -> {
@@ -39,8 +38,8 @@ public class ReconnectCommand extends BaseCommand {
                 } catch (InterruptedException ignored) {
                 }
 
+                runtime.getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel().getIdLong());
                 audioManager.openAudioConnection(connectedChannel.asVoiceChannel());
-                runtime.getTTSManager().connect(event.getGuild().getIdLong(), connectedChannel.getIdLong());
             }, runtime.getAsyncWorkerExecutor());
         } else {
             event.reply("現在VCに接続していません。").setEphemeral(true).queue();

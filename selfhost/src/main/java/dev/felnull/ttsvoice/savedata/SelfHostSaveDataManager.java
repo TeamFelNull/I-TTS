@@ -13,13 +13,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class SelfHostSaveDataManager implements SaveDataAccess {
     private static final SelfHostSaveDataManager INSTANCE = new SelfHostSaveDataManager();
     protected static final File SERVER_DATA_FOLDER = new File("./server_data");
     private static final File SERVER_USER_DATA_PARENT_FOLDER = new File("./server_user_data");
+    protected static final File DICT_USE_DATA_FOLDER = new File("./dict_use_data");
+    protected static final File BOT_STATE_DATA_FOLDER = new File("./bot_state_data");
     private final Map<Long, CompletableFuture<ServerDataImpl>> serverData = new ConcurrentHashMap<>();
     private final Map<GuildUserKey, CompletableFuture<ServerUserDataImpl>> serverUserData = new ConcurrentHashMap<>();
+    private final Map<Long, CompletableFuture<ServerDictUseData>> serverDictUseData = new ConcurrentHashMap<>();
+    private final Map<Long, CompletableFuture<BotStateDataImpl>> botStateData = new ConcurrentHashMap<>();
 
     public static SelfHostSaveDataManager getInstance() {
         return INSTANCE;
@@ -31,6 +36,18 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
 
     @Override
     public boolean init() {
+        if (BOT_STATE_DATA_FOLDER.exists()) {
+            var files = BOT_STATE_DATA_FOLDER.listFiles();
+            for (File file : files) {
+                var name = file.getName();
+                if (name.length() <= ".json".length()) continue;
+                try {
+                    long id = Long.parseLong(name.substring(0, name.length() - ".json".length()));
+                    botStateData.put(id, computeInitAsync(() -> new BotStateDataImpl(id)));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
         return true;
     }
 
@@ -54,27 +71,58 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
 
     @Override
     public @NotNull @Unmodifiable List<DictUseData> getAllDictUseData(long guildId) {
-        return null;
+        try {
+            return serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().getAllDictUseData();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public @Nullable DictUseData getDictUseData(long guildId, @NotNull String dictId) {
-        return null;
+        try {
+            return serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().getDictUseData(dictId);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void addDictUseData(long guildId, @NotNull String dictId, int priority) {
-
+        try {
+            serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().addDictUserData(dictId, priority);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void removeDictUseData(long guildId, @NotNull String dictId) {
-
+        try {
+            serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().removeDictUseData(dictId);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public @NotNull BotServerData getBotServerData(long botUserId, long guildId) {
-        return null;
+    public @NotNull BotStateData getBotStateData(long guildId) {
+        try {
+            return botStateData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new BotStateDataImpl(id))).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public @NotNull @Unmodifiable Map<Long, BotStateData> getAllBotStateData() {
+        return botStateData.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+            try {
+                return entry.getValue().get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }));
     }
 
     @Override
