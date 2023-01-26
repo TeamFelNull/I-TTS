@@ -12,12 +12,9 @@ public abstract class BaseCommand {
     protected static final DefaultMemberPermissions MEMBERS_PERMISSIONS = DefaultMemberPermissions.enabledFor(Permission.VOICE_CONNECT, Permission.MESSAGE_SEND);
     protected static final DefaultMemberPermissions OWNERS_PERMISSIONS = DefaultMemberPermissions.enabledFor(Permission.MANAGE_SERVER);
     @NotNull
-    protected final TTSVoiceRuntime runtime;
-    @NotNull
     protected final String name;
 
-    protected BaseCommand(@NotNull TTSVoiceRuntime runtime, @NotNull String name) {
-        this.runtime = runtime;
+    protected BaseCommand(@NotNull String name) {
         this.name = name;
     }
 
@@ -35,5 +32,9 @@ public abstract class BaseCommand {
     abstract public void commandInteraction(SlashCommandInteractionEvent event);
 
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+    }
+
+    protected TTSVoiceRuntime getRuntime() {
+        return TTSVoiceRuntime.getInstance();
     }
 }

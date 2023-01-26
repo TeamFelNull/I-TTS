@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.util.DiscordUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -14,8 +13,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
 public class JoinCommand extends BaseCommand {
-    public JoinCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "join");
+    public JoinCommand() {
+        super("join");
     }
 
     @NotNull
@@ -54,7 +53,7 @@ public class JoinCommand extends BaseCommand {
             return;
         }
 
-        runtime.getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel().getIdLong());
+        getRuntime().getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
 
         try {
             audioManager.openAudioConnection(joinTargetChannel);

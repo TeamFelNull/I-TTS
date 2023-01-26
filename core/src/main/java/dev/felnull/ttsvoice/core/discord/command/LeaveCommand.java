@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.util.DiscordUtils;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -8,8 +7,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
 public class LeaveCommand extends BaseCommand {
-    public LeaveCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "leave");
+    public LeaveCommand() {
+        super("leave");
     }
 
     @NotNull

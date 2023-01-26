@@ -31,16 +31,16 @@ public class Bot {
     }
 
     private void registeringCommands() {
-        registerCommand(new JoinCommand(this.runtime));
-        registerCommand(new LeaveCommand(this.runtime));
-        registerCommand(new ReconnectCommand(this.runtime));
-        registerCommand(new VoiceCommand(this.runtime));
-        registerCommand(new VnickCommand(this.runtime));
-        registerCommand(new InfoCommand(this.runtime));
-        registerCommand(new ConfigCommand(this.runtime));
-        registerCommand(new DenyCommand(this.runtime));
-        registerCommand(new AdminCommand(this.runtime));
-        registerCommand(new DictCommand(this.runtime));
+        registerCommand(new JoinCommand());
+        registerCommand(new LeaveCommand());
+        registerCommand(new ReconnectCommand());
+        registerCommand(new VoiceCommand());
+        registerCommand(new VnickCommand());
+        registerCommand(new InfoCommand());
+        registerCommand(new ConfigCommand());
+        registerCommand(new DenyCommand());
+        registerCommand(new AdminCommand());
+        registerCommand(new DictCommand());
     }
 
     private void registerCommand(BaseCommand command) {

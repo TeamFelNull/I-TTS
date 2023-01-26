@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -11,8 +10,8 @@ import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import org.jetbrains.annotations.NotNull;
 
 public class InfoCommand extends BaseCommand {
-    public InfoCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "info");
+    public InfoCommand() {
+        super("info");
     }
 
     @NotNull
@@ -37,9 +36,9 @@ public class InfoCommand extends BaseCommand {
 
     private void about(SlashCommandInteractionEvent e) {
         EmbedBuilder aboutEmbedBuilder = new EmbedBuilder();
-        aboutEmbedBuilder.setColor(runtime.getConfigManager().getConfig().getThemeColor());
+        aboutEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
         aboutEmbedBuilder.setTitle("I Discord TTS Voice BOT");
-        aboutEmbedBuilder.setDescription(runtime.getVersionText());
+        aboutEmbedBuilder.setDescription(getRuntime().getVersionText());
         aboutEmbedBuilder.addField("License", "GNU LGPLv3", false);
         aboutEmbedBuilder.setFooter("Developed by FelNull", "https://avatars.githubusercontent.com/u/59995376?s=200&v=4");
 

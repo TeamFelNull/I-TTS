@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.util.DiscordUtils;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -10,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CompletableFuture;
 
 public class ReconnectCommand extends BaseCommand {
-    public ReconnectCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "reconnect");
+    public ReconnectCommand() {
+        super("reconnect");
     }
 
     @NotNull
@@ -38,9 +37,9 @@ public class ReconnectCommand extends BaseCommand {
                 } catch (InterruptedException ignored) {
                 }
 
-                runtime.getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel().getIdLong());
+                getRuntime().getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
                 audioManager.openAudioConnection(connectedChannel.asVoiceChannel());
-            }, runtime.getAsyncWorkerExecutor());
+            }, getRuntime().getAsyncWorkerExecutor());
         } else {
             event.reply("現在VCに接続していません。").setEphemeral(true).queue();
         }

@@ -1,6 +1,8 @@
 package dev.felnull.ttsvoice.core.discord;
 
+import dev.felnull.ttsvoice.core.tts.saidtext.SaidText;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -36,7 +38,9 @@ public class EventListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        this.bot.getRuntime().getTTSManager().receivedChat(event.getGuild().getIdLong(), event.getChannel().getIdLong(), event.getMessage().getContentDisplay());
+        var ti = this.bot.getRuntime().getTTSManager().getTTSInstance(event.getGuild().getIdLong());
+        if (ti != null && ti.getTextChannel() == event.getChannel().getIdLong())
+            ti.sayText(SaidText.literal(null, event.getMessage().getContentDisplay()));
     }
 
 
@@ -58,9 +62,12 @@ public class EventListener extends ListenerAdapter {
                         var audioChannel = guild.getChannelById(AudioChannel.class, data.getConnectedAudioChannel());
                         if (audioChannel == null) return;
 
-                        bot.getRuntime().getTTSManager().setReadAroundChannel(guild, data.getReadAroundTextChannel());
+                        var chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
+                        if (chatChannel == null) return;
+
+                        bot.getRuntime().getTTSManager().setReadAroundChannel(guild, chatChannel);
                         guild.getAudioManager().openAudioConnection(audioChannel);
-                        bot.getRuntime().getTTSManager().connect(guild, audioChannel.getIdLong());
+                        bot.getRuntime().getTTSManager().connect(guild, audioChannel);
                         bot.getRuntime().getLogger().info("Reconnected: {}", guild.getName());
                     } catch (Exception ex) {
                         bot.getRuntime().getLogger().error("Failed to reconnect: {}", guild.getName());
@@ -75,10 +82,12 @@ public class EventListener extends ListenerAdapter {
         var join = event.getChannelJoined();
         var left = event.getChannelLeft();
 
-        if (left != null)
-            bot.getRuntime().getTTSManager().disconnect(event.getGuild());
+        if (event.getMember().getUser().getIdLong() == bot.getJDA().getSelfUser().getIdLong()) {
+            if (left != null)
+                bot.getRuntime().getTTSManager().disconnect(event.getGuild());
 
-        if (join != null)
-            bot.getRuntime().getTTSManager().connect(event.getGuild(), join.getIdLong());
+            if (join != null)
+                bot.getRuntime().getTTSManager().connect(event.getGuild(), join);
+        }
     }
 }

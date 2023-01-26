@@ -1,14 +1,13 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.*;
 import org.jetbrains.annotations.NotNull;
 
 public class AdminCommand extends BaseCommand {
-    public AdminCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "admin");
+    public AdminCommand() {
+        super("admin");
     }
 
     @NotNull

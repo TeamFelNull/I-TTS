@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -10,8 +9,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
 public class DictCommand extends BaseCommand {
-    public DictCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "dict");
+    public DictCommand() {
+        super("dict");
     }
 
     @NotNull

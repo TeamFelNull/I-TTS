@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -11,8 +10,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfigCommand extends BaseCommand {
-    public ConfigCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "config");
+    public ConfigCommand() {
+        super("config");
     }
 
     @NotNull
@@ -63,8 +62,8 @@ public class ConfigCommand extends BaseCommand {
     private void notifyMove(SlashCommandInteractionEvent event) {
         var op = event.getOption("enable");
         if (op.getType() == OptionType.BOOLEAN) {
-            var sd = runtime.getSaveDataManager().getServerData(event.getGuild().getIdLong());
-           // sd.setNotifyMove(op.getAsBoolean());
+            var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+            // sd.setNotifyMove(op.getAsBoolean());
 
             event.reply(String.valueOf(sd.isNotifyMove())).queue();
         }

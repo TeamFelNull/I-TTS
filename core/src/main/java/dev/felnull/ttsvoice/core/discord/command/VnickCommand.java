@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord.command;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -10,8 +9,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
 public class VnickCommand extends BaseCommand {
-    public VnickCommand(@NotNull TTSVoiceRuntime runtime) {
-        super(runtime, "vnick");
+    public VnickCommand() {
+        super("vnick");
     }
 
     @NotNull
