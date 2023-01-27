@@ -8,7 +8,7 @@ import dev.felnull.ttsvoice.core.voice.VoiceType;
 public record VTVoiceType(VoiceTextSpeakers speakers) implements VoiceType {
     @Override
     public String getName() {
-        return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, speakers.getId()) + "(" + speakers.getName() + ")";
+        return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, speakers.getId()) + " (" + speakers.getName() + ")";
     }
 
     @Override
@@ -18,7 +18,7 @@ public record VTVoiceType(VoiceTextSpeakers speakers) implements VoiceType {
 
     @Override
     public boolean isAvailable() {
-        return true;
+        return getCategory().isAvailable();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package dev.felnull.ttsvoice.core.config;
 
+import dev.felnull.ttsvoice.core.config.voicetype.VoiceTextVoiceTypeConfig;
+import dev.felnull.ttsvoice.core.config.voicetype.VoiceVoxEngineBaseVoiceTypeConfig;
 import org.jetbrains.annotations.NotNull;
 
 public interface Config {
@@ -11,4 +13,12 @@ public interface Config {
     String getBotToken();
 
     int getThemeColor();
+
+    VoiceTextVoiceTypeConfig getVoiceTextConfig();
+
+    VoiceVoxEngineBaseVoiceTypeConfig getVoicevoxConfig();
+
+    VoiceVoxEngineBaseVoiceTypeConfig getCoeirolnkConfig();
+
+    VoiceVoxEngineBaseVoiceTypeConfig getSharevoxConfig();
 }

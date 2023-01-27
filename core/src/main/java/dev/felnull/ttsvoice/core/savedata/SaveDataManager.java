@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.savedata;
 
-import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -9,11 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SaveDataManager {
-    private final TTSVoiceRuntime runtime;
     private final SaveDataAccess saveDataAccess;
 
-    public SaveDataManager(TTSVoiceRuntime runtime, SaveDataAccess saveDataAccess) {
-        this.runtime = runtime;
+    public SaveDataManager(SaveDataAccess saveDataAccess) {
         this.saveDataAccess = saveDataAccess;
     }
 
@@ -60,7 +57,7 @@ public class SaveDataManager {
 
     @NotNull
     @Unmodifiable
-    public Map<Long,BotStateData> getAllBotStateData() {
+    public Map<Long, BotStateData> getAllBotStateData() {
         return saveDataAccess.getAllBotStateData();
     }
 

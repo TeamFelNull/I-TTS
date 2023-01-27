@@ -1,5 +1,6 @@
 package dev.felnull.ttsvoice.core.voice.voicetext;
 
+import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.voice.VoiceCategory;
 
 public class VTVoiceCategory implements VoiceCategory {
@@ -15,6 +16,6 @@ public class VTVoiceCategory implements VoiceCategory {
 
     @Override
     public boolean isAvailable() {
-        return true;
+        return TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceTextManager().isAvailable();
     }
 }

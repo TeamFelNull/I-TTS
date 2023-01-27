@@ -3,6 +3,8 @@ package dev.felnull.ttsvoice.config;
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
 import dev.felnull.ttsvoice.core.config.Config;
+import dev.felnull.ttsvoice.core.config.voicetype.VoiceTextVoiceTypeConfig;
+import dev.felnull.ttsvoice.core.config.voicetype.VoiceVoxEngineBaseVoiceTypeConfig;
 import dev.felnull.ttsvoice.utils.Json5Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,5 +48,25 @@ public class ConfigImpl implements Config {
     @Override
     public int getThemeColor() {
         return themeColor;
+    }
+
+    @Override
+    public VoiceTextVoiceTypeConfig getVoiceTextConfig() {
+        return voiceTextConfig;
+    }
+
+    @Override
+    public VoiceVoxEngineBaseVoiceTypeConfig getVoicevoxConfig() {
+        return voicevoxConfig;
+    }
+
+    @Override
+    public VoiceVoxEngineBaseVoiceTypeConfig getCoeirolnkConfig() {
+        return coeirolnkConfig;
+    }
+
+    @Override
+    public VoiceVoxEngineBaseVoiceTypeConfig getSharevoxConfig() {
+        return sharevoxConfig;
     }
 }

@@ -1,6 +1,5 @@
 package dev.felnull.ttsvoice.core.discord;
 
-import dev.felnull.ttsvoice.core.tts.saidtext.SaidText;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -38,9 +37,7 @@ public class EventListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        var ti = this.bot.getRuntime().getTTSManager().getTTSInstance(event.getGuild().getIdLong());
-        if (ti != null && ti.getTextChannel() == event.getChannel().getIdLong())
-            ti.sayText(SaidText.literal(null, event.getMessage().getContentDisplay()));
+        this.bot.getRuntime().getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getAuthor(), event.getMember(), event.getMessage().getContentDisplay());
     }
 
 

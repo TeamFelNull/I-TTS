@@ -3,12 +3,10 @@ package dev.felnull.ttsvoice.core.config;
 import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 
 public class ConfigManager {
-    private final TTSVoiceRuntime runtime;
     private final ConfigAccess configAccess;
     private Config config;
 
-    public ConfigManager(TTSVoiceRuntime runtime, ConfigAccess configAccess) {
-        this.runtime = runtime;
+    public ConfigManager(ConfigAccess configAccess) {
         this.configAccess = configAccess;
     }
 
@@ -18,7 +16,7 @@ public class ConfigManager {
             return false;
 
         if (this.config.getBotToken().isEmpty()) {
-            runtime.getLogger().error("Bot token is empty");
+            TTSVoiceRuntime.getInstance().getLogger().error("Bot token is empty");
             return false;
         }
 

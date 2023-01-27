@@ -1,6 +1,6 @@
 package dev.felnull.ttsvoice.core.util;
 
-public class StringUtils {
+public final class StringUtils {
 
     public static int getComplementPoint(String target, String text) {
         target = target.toLowerCase();

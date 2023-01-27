@@ -3,7 +3,7 @@ package dev.felnull.ttsvoice.core.util;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonUtils {
+public final class JsonUtils {
     /**
      * Jsonから文字列を取得する、存在しない場合は空の文字列を返す
      *

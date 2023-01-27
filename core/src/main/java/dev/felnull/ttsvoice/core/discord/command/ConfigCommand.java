@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class ConfigCommand extends BaseCommand {
     public ConfigCommand() {
         super("config");
@@ -54,19 +56,36 @@ public class ConfigCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        switch (event.getSubcommandName()) {
+        switch (Objects.requireNonNull(event.getSubcommandName())) {
             case "notify-move" -> notifyMove(event);
+            case "read-overwrite" -> readOverwrite(event);
+        }
+    }
+
+    private void readOverwrite(SlashCommandInteractionEvent event) {
+        var op = Objects.requireNonNull(event.getOption("enable"));
+        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+
+        boolean pre = sd.isOverwriteAloud();
+        String enStr = op.getAsBoolean() ? "有効" : "無効";
+
+        if (op.getAsBoolean() != pre) {
+            sd.setOverwriteAloud(op.getAsBoolean());
+            getRuntime().getTTSManager().reload(event.getGuild());
+
+            event.reply("読み上げの上書きを" + enStr + "にしました").queue();
+        } else {
+            event.reply("すでに読み上げの上書きは" + enStr + "です。").queue();
         }
     }
 
     private void notifyMove(SlashCommandInteractionEvent event) {
-        var op = event.getOption("enable");
-        if (op.getType() == OptionType.BOOLEAN) {
-            var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
-            // sd.setNotifyMove(op.getAsBoolean());
+        /*var op = Objects.requireNonNull(event.getOption("enable"));
 
-            event.reply(String.valueOf(sd.isNotifyMove())).queue();
-        }
+        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        sd.setNotifyMove(op.getAsBoolean());
+
+        event.reply(String.valueOf(sd.isNotifyMove())).queue();*/
     }
 
     @Override

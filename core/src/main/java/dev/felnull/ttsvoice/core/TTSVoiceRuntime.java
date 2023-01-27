@@ -35,9 +35,9 @@ public class TTSVoiceRuntime {
             throw new IllegalStateException("TTSVoiceRuntime must be a singleton instance");
         INSTANCE = this;
 
-        this.bot = new Bot(this);
-        this.configManager = new ConfigManager(this, configAccess);
-        this.saveDataManager = new SaveDataManager(this, saveDataAccess);
+        this.bot = new Bot();
+        this.configManager = new ConfigManager(configAccess);
+        this.saveDataManager = new SaveDataManager( saveDataAccess);
     }
 
     public static TTSVoiceRuntime getInstance() {
