@@ -63,21 +63,27 @@ public class SaveDataManager {
 
     @NotNull
     @Unmodifiable
-    public List<DictData> getAllDictData(long guildId) {
-        return saveDataAccess.getAllDictData(guildId);
+    public List<DictData> getAllServerDictData(long guildId) {
+        return saveDataAccess.getAllServerDictData(guildId);
     }
 
     @Nullable
-    public DictData getDictData(long guildId, @NotNull String target) {
-        return saveDataAccess.getDictData(guildId, target);
+    public DictData getServerDictData(long guildId, @NotNull String target) {
+        return saveDataAccess.getServerDictData(guildId, target);
     }
 
-    public void addDictData(long guildId, @NotNull String target, @NotNull String read) {
-        saveDataAccess.addDictData(guildId, target, read);
+    public void addServerDictData(long guildId, @NotNull String target, @NotNull String read) {
+        saveDataAccess.addServerDictData(guildId, target, read);
     }
 
-    public void removeDictData(long guildId, @NotNull String target) {
-        saveDataAccess.removeDictData(guildId, target);
+    public void removeServerDictData(long guildId, @NotNull String target) {
+        saveDataAccess.removeServerDictData(guildId, target);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<DictData> getAllGlobalDictData() {
+        return saveDataAccess.getAllGlobalDictData();
     }
 
     @Nullable

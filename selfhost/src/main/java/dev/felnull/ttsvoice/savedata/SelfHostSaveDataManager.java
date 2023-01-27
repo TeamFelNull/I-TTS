@@ -21,10 +21,14 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     private static final File SERVER_USER_DATA_PARENT_FOLDER = new File("./server_user_data");
     protected static final File DICT_USE_DATA_FOLDER = new File("./dict_use_data");
     protected static final File BOT_STATE_DATA_FOLDER = new File("./bot_state_data");
+    protected static final File SERVER_DICT_FOLDER = new File("./server_dict");
+    protected static final File GLOBAL_DICT_DIR = new File("./global_dict.json");
     private final Map<Long, CompletableFuture<ServerDataImpl>> serverData = new ConcurrentHashMap<>();
     private final Map<GuildUserKey, CompletableFuture<ServerUserDataImpl>> serverUserData = new ConcurrentHashMap<>();
     private final Map<Long, CompletableFuture<ServerDictUseData>> serverDictUseData = new ConcurrentHashMap<>();
     private final Map<Long, CompletableFuture<BotStateDataImpl>> botStateData = new ConcurrentHashMap<>();
+    private final Map<Long, CompletableFuture<ServerDictData>> serverDict = new ConcurrentHashMap<>();
+    private CompletableFuture<GlobalDictData> globalDict;
 
     public static SelfHostSaveDataManager getInstance() {
         return INSTANCE;
@@ -36,15 +40,19 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
 
     @Override
     public boolean init() {
+        globalDict = computeInitAsync(GlobalDictData::new);
+
         if (BOT_STATE_DATA_FOLDER.exists()) {
             var files = BOT_STATE_DATA_FOLDER.listFiles();
-            for (File file : files) {
-                var name = file.getName();
-                if (name.length() <= ".json".length()) continue;
-                try {
-                    long id = Long.parseLong(name.substring(0, name.length() - ".json".length()));
-                    botStateData.put(id, computeInitAsync(() -> new BotStateDataImpl(id)));
-                } catch (NumberFormatException ignored) {
+            if (files != null) {
+                for (File file : files) {
+                    var name = file.getName();
+                    if (name.length() <= ".json".length()) continue;
+                    try {
+                        long id = Long.parseLong(name.substring(0, name.length() - ".json".length()));
+                        botStateData.put(id, computeInitAsync(() -> new BotStateDataImpl(id)));
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
         }
@@ -126,38 +134,75 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     }
 
     @Override
-    public @NotNull @Unmodifiable List<DictData> getAllDictData(long guildId) {
-        return null;
+    public @NotNull @Unmodifiable List<DictData> getAllServerDictData(long guildId) {
+        try {
+            return serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().getAllDictData();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public @Nullable DictData getDictData(long guildId, @NotNull String target) {
-        return null;
+    public @Nullable DictData getServerDictData(long guildId, @NotNull String target) {
+        try {
+            return serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().getDictData(target);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void addDictData(long guildId, @NotNull String target, @NotNull String read) {
-
+    public void addServerDictData(long guildId, @NotNull String target, @NotNull String read) {
+        try {
+            serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().addDictData(target, read);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void removeDictData(long guildId, @NotNull String target) {
+    public void removeServerDictData(long guildId, @NotNull String target) {
+        try {
+            serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().removeDictData(target);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    @Override
+    public @NotNull @Unmodifiable List<DictData> getAllGlobalDictData() {
+        try {
+            return globalDict.get().getAllDictData();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public @Nullable DictData getGlobalDictData(@NotNull String target) {
-        return null;
+        try {
+            return globalDict.get().getDictData(target);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void addGlobalDictData(@NotNull String target, @NotNull String read) {
-
+        try {
+            globalDict.get().addDictData(target, read);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void removeGlobalDictData(@NotNull String target) {
-
+        try {
+            globalDict.get().removeDictData(target);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private <T extends SaveDataBase> CompletableFuture<T> computeInitAsync(Supplier<T> newInstance) {

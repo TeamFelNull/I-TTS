@@ -36,14 +36,18 @@ public interface SaveDataAccess {
 
     @NotNull
     @Unmodifiable
-    List<DictData> getAllDictData(long guildId);
+    List<DictData> getAllServerDictData(long guildId);
 
     @Nullable
-    DictData getDictData(long guildId, @NotNull String target);
+    DictData getServerDictData(long guildId, @NotNull String target);
 
-    void addDictData(long guildId, @NotNull String target, @NotNull String read);
+    void addServerDictData(long guildId, @NotNull String target, @NotNull String read);
 
-    void removeDictData(long guildId, @NotNull String target);
+    void removeServerDictData(long guildId, @NotNull String target);
+
+    @NotNull
+    @Unmodifiable
+    List<DictData> getAllGlobalDictData();
 
     @Nullable
     DictData getGlobalDictData(@NotNull String target);

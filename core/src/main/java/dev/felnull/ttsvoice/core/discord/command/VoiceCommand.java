@@ -88,10 +88,9 @@ public class VoiceCommand extends BaseCommand {
 
             event.reply("自分の現在の読み上げタイプは" + type + "です。").setEphemeral(true).queue();
         } else if ("show".equals(event.getSubcommandName())) {
-
-            EmbedBuilder aboutEmbedBuilder = new EmbedBuilder();
-            aboutEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
-            aboutEmbedBuilder.setTitle("読み上げ音声タイプ一覧");
+            EmbedBuilder showEmbedBuilder = new EmbedBuilder();
+            showEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
+            showEmbedBuilder.setTitle("読み上げ音声タイプ一覧");
 
             var currentVt = vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong());
             var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
@@ -106,16 +105,15 @@ public class VoiceCommand extends BaseCommand {
                         name += " [デフォルト]";
 
                     if (currentVt != null && type.getId().equals(currentVt.getId()))
-                        name += " [既定]";
+                        name += " [使用中]";
 
                     typeText.append(name).append("\n");
                 }
 
-                aboutEmbedBuilder.addField(cat.getName(), typeText.toString(), true);
+                showEmbedBuilder.addField(cat.getName(), typeText.toString(), false);
             });
 
-
-            event.replyEmbeds(aboutEmbedBuilder.build()).setEphemeral(true).queue();
+            event.replyEmbeds(showEmbedBuilder.build()).setEphemeral(true).queue();
         }
     }
 
@@ -126,10 +124,16 @@ public class VoiceCommand extends BaseCommand {
 
         if (!"change".equals(interact.getSubcommandName())) return;
 
+        voiceSelectComplete(event, true);
+    }
+
+    protected static void voiceSelectComplete(CommandAutoCompleteInteractionEvent event, boolean showUsed) {
+        var interact = event.getInteraction();
+
         var fcs = interact.getFocusedOption();
         var val = fcs.getValue();
 
-        var vm = getRuntime().getVoiceManager();
+        var vm = TTSVoiceRuntime.getInstance().getVoiceManager();
         var catAndTypes = vm.getAvailableVoiceTypes();
 
         if ("voice_category".equals(fcs.getName())) {
@@ -141,7 +145,8 @@ public class VoiceCommand extends BaseCommand {
                     .toList()).queue();
 
         } else if ("voice_type".equals(fcs.getName())) {
-            var currentVt = vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong());
+            var currentVt = showUsed ? vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong()) : null;
+
             var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
 
             var cat = Optional.ofNullable(event.getOption("voice_category"))
@@ -156,8 +161,8 @@ public class VoiceCommand extends BaseCommand {
                                 if (defaultVt != null && vt.getId().equals(defaultVt.getId()))
                                     name += " [デフォルト]";
 
-                                if (currentVt != null && vt.getId().equals(currentVt.getId()))
-                                    name += " [既定]";
+                                if (showUsed && currentVt != null && vt.getId().equals(currentVt.getId()))
+                                    name += " [使用中]";
 
                                 return new Command.Choice(name, vt.getId());
                             })
