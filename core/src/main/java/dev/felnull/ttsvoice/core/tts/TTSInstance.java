@@ -1,11 +1,14 @@
 package dev.felnull.ttsvoice.core.tts;
 
+import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.audio.LoadedSaidText;
 import dev.felnull.ttsvoice.core.audio.VoiceAudioScheduler;
 import dev.felnull.ttsvoice.core.tts.saidtext.SaidText;
+import dev.felnull.ttsvoice.core.voice.voicetext.VoiceTextSpeaker;
 import net.dv8tion.jda.api.entities.Guild;
 
+import java.io.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -57,6 +60,7 @@ public final class TTSInstance {
     }
 
     public void sayText(SaidText saidText) {
+
         if (saidTextQueue.size() >= MAX_COUNT)
             return;
 

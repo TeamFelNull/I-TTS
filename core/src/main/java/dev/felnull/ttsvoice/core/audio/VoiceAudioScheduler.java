@@ -11,6 +11,8 @@ import net.dv8tion.jda.api.managers.AudioManager;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VoiceAudioScheduler {
     private final AudioManager audioManager;
@@ -30,27 +32,47 @@ public class VoiceAudioScheduler {
     }
 
     public void test() {
-        voiceAudioManager.getAudioPlayerManager().loadItem("https://cdn.discordapp.com/attachments/358878159615164416/1067424548582068294/anaruzigoku.mp3", new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                audioPlayer.playTrack(track);
+        CompletableFuture.runAsync(() -> {
+            AtomicReference<AudioTrack> trk = new AtomicReference<>();
+
+            try {
+                voiceAudioManager.getAudioPlayerManager().loadItem("./bigyj.mp3", new AudioLoadResultHandler() {
+                    @Override
+                    public void trackLoaded(AudioTrack track) {
+                        trk.set(track);
+                    }
+
+                    @Override
+                    public void playlistLoaded(AudioPlaylist playlist) {
+
+                    }
+
+                    @Override
+                    public void noMatches() {
+
+                    }
+
+                    @Override
+                    public void loadFailed(FriendlyException exception) {
+
+                    }
+                }).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("ST");
+
+            try {
+                Thread.sleep(1000 * 10);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
 
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
+            System.out.println("EN");
+            audioPlayer.playTrack(trk.get());
 
-            }
 
-            @Override
-            public void noMatches() {
-
-            }
-
-            @Override
-            public void loadFailed(FriendlyException exception) {
-
-            }
-        });
+        }, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
     }
 
     public Pair<CompletableFuture<LoadedSaidText>, Runnable> load(SaidText saidText) {
@@ -60,7 +82,7 @@ public class VoiceAudioScheduler {
         return Pair.of(CompletableFuture.supplyAsync(() -> {
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
             return new LoadedSaidText(saidText);
         }, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor()), stopRun);

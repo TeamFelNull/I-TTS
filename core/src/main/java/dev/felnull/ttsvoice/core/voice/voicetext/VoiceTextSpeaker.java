@@ -1,6 +1,6 @@
 package dev.felnull.ttsvoice.core.voice.voicetext;
 
-public enum VoiceTextSpeakers {
+public enum VoiceTextSpeaker {
     SHOW("show", "男性"),
     HARUKA("haruka", "女性"),
     HIKARI("hikari", "女性"),
@@ -10,7 +10,7 @@ public enum VoiceTextSpeakers {
     private final String id;
     private final String name;
 
-    VoiceTextSpeakers(String id, String name) {
+    VoiceTextSpeaker(String id, String name) {
         this.id = id;
         this.name = name;
     }

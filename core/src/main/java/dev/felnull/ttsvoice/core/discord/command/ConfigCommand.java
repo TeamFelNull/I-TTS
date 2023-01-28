@@ -78,7 +78,7 @@ public class ConfigCommand extends BaseCommand {
         var vm = getRuntime().getVoiceManager();
         var dv = vm.getDefaultVoiceType(event.getGuild().getIdLong());
 
-        boolean inline = false;
+        final boolean inline = true;
         showEmbedBuilder.addField("VCの入退室時にユーザー名を読み上げ", sd.isNotifyMove() ? "有効" : "無効", inline);
         showEmbedBuilder.addField("読み上げ文字数上限", sd.getReadLimit() + "文字", inline);
         showEmbedBuilder.addField("名前の読み上げ文字数上限", sd.getNameReadLimit() + "文字", inline);

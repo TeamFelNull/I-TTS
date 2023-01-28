@@ -13,6 +13,7 @@ import java.util.Optional;
 public class ConfigImpl implements Config {
     private final String botToken;
     private final int themeColor;
+    private final long cacheTime;
     private final VoiceTextVoiceTypeConfigImpl voiceTextConfig;
     private final VoiceVoxEngineBaseVoiceTypeConfigImpl voicevoxConfig;
     private final VoiceVoxEngineBaseVoiceTypeConfigImpl coeirolnkConfig;
@@ -21,6 +22,7 @@ public class ConfigImpl implements Config {
     public ConfigImpl(JsonObject jo) {
         this.botToken = Json5Utils.getStringOrElse(jo, "bot_token", DEFAULT_BOT_TOKEN);
         this.themeColor = jo.getInt("theme_color", DEFAULT_THEME_COLOR);
+        this.cacheTime = jo.getLong("cache_time", DEFAULT_CACHE_TIME);
         this.voiceTextConfig = new VoiceTextVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("voice_text")).orElseGet(JsonObject::new));
         this.voicevoxConfig = new VoiceVoxEngineBaseVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("voicevox")).orElseGet(JsonObject::new));
         this.coeirolnkConfig = new VoiceVoxEngineBaseVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("coeirolnk")).orElseGet(JsonObject::new));
@@ -32,7 +34,7 @@ public class ConfigImpl implements Config {
         jo.put("config_version", new JsonPrimitive(VERSION), "コンフィグのバージョン 変更しないでください！");
         jo.put("bot_token", JsonPrimitive.of(this.botToken), "BOTのトークン");
         jo.put("theme_color", new JsonPrimitive(this.themeColor), "テーマカラー");
-
+        jo.put("cache_time", new JsonPrimitive(this.cacheTime), "キャッシュを保存する期間(ms)");
         jo.put("voice_text", this.voiceTextConfig.toJson(), "VoiceTextのコンフィグ");
         jo.put("voicevox", this.voicevoxConfig.toJson(), "VOICEVOXのコンフィグ");
         jo.put("coeirolnk", this.coeirolnkConfig.toJson(), "COEIROLNKのコンフィグ");
@@ -48,6 +50,11 @@ public class ConfigImpl implements Config {
     @Override
     public int getThemeColor() {
         return themeColor;
+    }
+
+    @Override
+    public long getCacheTime() {
+        return cacheTime;
     }
 
     @Override
@@ -69,4 +76,6 @@ public class ConfigImpl implements Config {
     public VoiceVoxEngineBaseVoiceTypeConfig getSharevoxConfig() {
         return sharevoxConfig;
     }
+
+
 }

@@ -1,6 +1,7 @@
 package dev.felnull.ttsvoice.core;
 
 import dev.felnull.ttsvoice.core.audio.VoiceAudioManager;
+import dev.felnull.ttsvoice.core.cache.CacheManager;
 import dev.felnull.ttsvoice.core.config.ConfigAccess;
 import dev.felnull.ttsvoice.core.config.ConfigManager;
 import dev.felnull.ttsvoice.core.discord.Bot;
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Timer;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,10 +24,12 @@ public class TTSVoiceRuntime {
     private final Logger logger = LogManager.getLogger(TTSVoiceRuntime.class);
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-thread-%d").daemon(true).build());
     private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
+    private final Timer timer = new Timer("ikisugi-timer", true);
     private final ConfigManager configManager;
     private final TTSManager ttsManager = new TTSManager();
     private final VoiceManager voiceManager = new VoiceManager();
     private final VoiceAudioManager voiceAudioManager = new VoiceAudioManager();
+    private final CacheManager cacheManager = new CacheManager(null);
     private final SaveDataManager saveDataManager;
     private final Bot bot;
     private final boolean developmentEnvironment = true;
@@ -37,7 +41,7 @@ public class TTSVoiceRuntime {
 
         this.bot = new Bot();
         this.configManager = new ConfigManager(configAccess);
-        this.saveDataManager = new SaveDataManager( saveDataAccess);
+        this.saveDataManager = new SaveDataManager(saveDataAccess);
     }
 
     public static TTSVoiceRuntime getInstance() {
@@ -85,6 +89,10 @@ public class TTSVoiceRuntime {
         return heavyProcessExecutor;
     }
 
+    public Timer getTimer() {
+        return timer;
+    }
+
     public boolean isDevelopmentEnvironment() {
         return developmentEnvironment;
     }
@@ -121,5 +129,9 @@ public class TTSVoiceRuntime {
 
     public VoiceManager getVoiceManager() {
         return voiceManager;
+    }
+
+    public CacheManager getCacheManager() {
+        return cacheManager;
     }
 }

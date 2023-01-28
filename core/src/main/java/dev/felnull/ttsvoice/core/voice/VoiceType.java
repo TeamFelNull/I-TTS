@@ -1,5 +1,7 @@
 package dev.felnull.ttsvoice.core.voice;
 
+import dev.felnull.ttsvoice.core.audio.loader.VoiceTrackLoader;
+
 public interface VoiceType {
     String getName();
 
@@ -8,4 +10,6 @@ public interface VoiceType {
     boolean isAvailable();
 
     VoiceCategory getCategory();
+
+    VoiceTrackLoader createVoiceTrackLoader(String text);
 }
