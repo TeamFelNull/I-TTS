@@ -3,7 +3,6 @@ package dev.felnull.ttsvoice.core.audio.loader;
 import com.google.common.hash.HashCode;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.felnull.ttsvoice.core.cache.StreamOpener;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -18,7 +17,7 @@ public class CachedVoiceTrackLoader implements VoiceTrackLoader {
 
 
     @Override
-    public Pair<CompletableFuture<AudioTrack>, Runnable> load() {
+    public CompletableFuture<AudioTrack> load() {
         return null;
     }
 

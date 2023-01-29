@@ -2,6 +2,7 @@ package dev.felnull.ttsvoice.core;
 
 import dev.felnull.ttsvoice.core.audio.VoiceAudioManager;
 import dev.felnull.ttsvoice.core.cache.CacheManager;
+import dev.felnull.ttsvoice.core.cache.GlobalCacheAccess;
 import dev.felnull.ttsvoice.core.config.ConfigAccess;
 import dev.felnull.ttsvoice.core.config.ConfigManager;
 import dev.felnull.ttsvoice.core.discord.Bot;
@@ -13,11 +14,13 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Timer;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 public class TTSVoiceRuntime {
     private static TTSVoiceRuntime INSTANCE;
@@ -29,12 +32,12 @@ public class TTSVoiceRuntime {
     private final TTSManager ttsManager = new TTSManager();
     private final VoiceManager voiceManager = new VoiceManager();
     private final VoiceAudioManager voiceAudioManager = new VoiceAudioManager();
-    private final CacheManager cacheManager = new CacheManager(null);
+    private final CacheManager cacheManager;
     private final SaveDataManager saveDataManager;
     private final Bot bot;
     private final boolean developmentEnvironment = true;
 
-    private TTSVoiceRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess) {
+    private TTSVoiceRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
         if (INSTANCE != null)
             throw new IllegalStateException("TTSVoiceRuntime must be a singleton instance");
         INSTANCE = this;
@@ -42,6 +45,7 @@ public class TTSVoiceRuntime {
         this.bot = new Bot();
         this.configManager = new ConfigManager(configAccess);
         this.saveDataManager = new SaveDataManager(saveDataAccess);
+        this.cacheManager = new CacheManager(globalCacheAccessFactory);
     }
 
     public static TTSVoiceRuntime getInstance() {
@@ -51,8 +55,8 @@ public class TTSVoiceRuntime {
         return INSTANCE;
     }
 
-    public static TTSVoiceRuntime newRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess) {
-        return new TTSVoiceRuntime(configAccess, saveDataAccess);
+    public static TTSVoiceRuntime newRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
+        return new TTSVoiceRuntime(configAccess, saveDataAccess, globalCacheAccessFactory);
     }
 
     public void execute() {

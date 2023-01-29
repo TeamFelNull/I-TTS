@@ -2,7 +2,6 @@ package dev.felnull.ttsvoice.core.cache;
 
 import com.google.common.hash.HashCode;
 import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.TimerTask;
@@ -24,7 +23,7 @@ public class LocalCache {
         this.file = file;
     }
 
-    public Pair<File, UseLock> restore() {
+    public CacheUseEntry restore() {
         if (isDestroy())
             throw new IllegalStateException("Already destroyed");
 
@@ -36,11 +35,12 @@ public class LocalCache {
             }
         };
 
-        return Pair.of(null, ul);
+        return new CacheUseEntry(file, ul);
     }
 
     protected void dispose() {
         destroy.set(true);
+        file.delete();
     }
 
     public boolean isDestroy() {
@@ -56,7 +56,7 @@ public class LocalCache {
         long eqTime = now - lastTime;
 
         if (eqTime >= getCacheTime()) {
-            TTSVoiceRuntime.getInstance().getCacheManager().disposeLocalCache(hashCode);
+            TTSVoiceRuntime.getInstance().getCacheManager().disposeCache(hashCode);
             return;
         }
 

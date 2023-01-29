@@ -10,6 +10,8 @@ dependencies {
 
     implementation("org.jetbrains:annotations:23.0.0")
     implementation("com.google.code.gson:gson:2.10")
+
+    implementation("redis.clients:jedis:4.4.0-m1")
 }
 
 tasks.getByName<Test>("test") {
