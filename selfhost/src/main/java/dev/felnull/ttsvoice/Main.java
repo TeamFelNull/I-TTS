@@ -11,7 +11,7 @@ public class Main {
     public static TTSVoiceRuntime RUNTIME;
 
     public static void main(String[] args) throws Exception {
-        RUNTIME = TTSVoiceRuntime.newRuntime(SelfHostConfigManager.getInstance(), SelfHostSaveDataManager.getInstance(), GlobalCacheTest::new);
+        RUNTIME = TTSVoiceRuntime.newRuntime(SelfHostConfigManager.getInstance(), SelfHostSaveDataManager.getInstance(), null/*GlobalCacheTest::new*/);
         RUNTIME.execute();
     }
 }

@@ -2,9 +2,11 @@ package dev.felnull.ttsvoice.core.audio;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
+import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.felnull.ttsvoice.core.TTSVoiceRuntime;
 import dev.felnull.ttsvoice.core.tts.saidtext.SaidText;
 import net.dv8tion.jda.api.managers.AudioManager;
@@ -14,15 +16,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VoiceAudioScheduler {
+public class VoiceAudioScheduler extends AudioEventAdapter {
     private final AudioManager audioManager;
     private final VoiceAudioManager voiceAudioManager;
     private final AudioPlayer audioPlayer;
+    private final AtomicReference<Pair<LoadedSaidText, Runnable>> currentLoaded = new AtomicReference<>();
 
     public VoiceAudioScheduler(AudioManager audioManager, VoiceAudioManager voiceAudioManager) {
         this.audioManager = audioManager;
         this.voiceAudioManager = voiceAudioManager;
         this.audioPlayer = voiceAudioManager.getAudioPlayerManager().createPlayer();
+        this.audioPlayer.addListener(this);
         this.audioManager.setSendingHandler(new VoiceAudioHandler(audioPlayer));
     }
 
@@ -31,12 +35,37 @@ public class VoiceAudioScheduler {
         this.audioManager.setSendingHandler(null);
     }
 
+    public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
+        var vtl = saidText.getVoice().getVoiceType().createVoiceTrackLoader(saidText.getText());
+        return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
+    }
+
+    public void stop() {
+        currentLoaded.set(null);
+        audioPlayer.stopTrack();
+    }
+
+    public void play(LoadedSaidText loadedSaidText, Runnable playEndRun) {
+        currentLoaded.set(Pair.of(loadedSaidText, playEndRun));
+        audioPlayer.playTrack(loadedSaidText.getTrack());
+    }
+
+    @Override
+    public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
+        var old = currentLoaded.getAndSet(null);
+        if (old != null) {
+            old.getLeft().setAlreadyUsed(true);
+            old.getRight().run();
+        }
+    }
+
+
     public void test() {
         CompletableFuture.runAsync(() -> {
             AtomicReference<AudioTrack> trk = new AtomicReference<>();
 
             try {
-                voiceAudioManager.getAudioPlayerManager().loadItem("./bigyj.mp3", new AudioLoadResultHandler() {
+                voiceAudioManager.getAudioPlayerManager().loadItem("./1e62b6541e6f335a222f3cc37df47cd8", new AudioLoadResultHandler() {
                     @Override
                     public void trackLoaded(AudioTrack track) {
                         trk.set(track);
@@ -60,49 +89,9 @@ public class VoiceAudioScheduler {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("ST");
-
-            try {
-                Thread.sleep(1000 * 10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            System.out.println("EN");
             audioPlayer.playTrack(trk.get());
 
 
-        }, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
-    }
-
-    public Pair<CompletableFuture<LoadedSaidText>, Runnable> load(SaidText saidText) {
-        Runnable stopRun = () -> {
-        };
-
-        return Pair.of(CompletableFuture.supplyAsync(() -> {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
-            return new LoadedSaidText(saidText);
-        }, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor()), stopRun);
-    }
-
-    public void stop() {
-        System.out.println("Say Stop");
-    }
-
-    public void play(LoadedSaidText loadedSaidText, Runnable playEndRun) {
-        CompletableFuture.runAsync(() -> {
-            System.out.println("Say Start:" + loadedSaidText.getSaidText());
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
-            System.out.println("Say End:" + loadedSaidText.getSaidText());
-
-            loadedSaidText.setAlreadyUsed(true);
-            playEndRun.run();
         }, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
     }
 }

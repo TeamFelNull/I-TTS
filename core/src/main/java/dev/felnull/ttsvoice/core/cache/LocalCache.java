@@ -28,7 +28,12 @@ public class LocalCache {
             throw new IllegalStateException("Already destroyed");
 
         useLockCount.incrementAndGet();
+
+        AtomicBoolean unlocked = new AtomicBoolean();
         UseLock ul = () -> {
+            if (!unlocked.compareAndSet(false, true))
+                return;
+
             if (useLockCount.decrementAndGet() <= 0) {
                 lastUseTime.set(System.currentTimeMillis());
                 scheduleCheckTimer(this::check, getCacheTime() + 300L);

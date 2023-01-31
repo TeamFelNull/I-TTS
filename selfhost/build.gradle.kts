@@ -1,19 +1,49 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+base {
+    archivesName.set("ittsvoice")
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes("Main-Class" to "dev.felnull.ttsvoice.Main")
+        attributes("Implementation-Version" to project.version)
+    }
+}
+
+plugins {
+    id("com.github.johnrengelman.shadow") version "7.0.0"
+}
+
+val shadowIn by configurations.creating
+configurations {
+    shadowIn
+    implementation.get().extendsFrom(shadowIn)
+}
+
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
 
-    implementation(project(":core"))
-    implementation("blue.endless:jankson:1.2.1")
-    implementation("com.google.guava:guava:31.1-jre")
-    implementation("org.apache.logging.log4j:log4j-core:2.18.0")
-    implementation("dev.felnull:felnull-java-library:1.75")
+    shadowIn(project(":core", "default"))
 
-    implementation("org.jetbrains:annotations:23.0.0")
-    implementation("com.google.code.gson:gson:2.10")
-
-    implementation("redis.clients:jedis:4.4.0-m1")
+    shadowIn("blue.endless:jankson:1.2.1")
+    shadowIn("redis.clients:jedis:4.4.0-m1")
 }
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+tasks.named<ShadowJar>("shadowJar") {
+    shadowIn.isTransitive = true
+    configurations = listOf(shadowIn)
+    archiveClassifier.set("")
+    dependencies {
+        // include(dependency(":core"))
+    }
+}
+
+tasks.named("build") {
+    dependsOn(tasks.named("shadowJar"))
 }

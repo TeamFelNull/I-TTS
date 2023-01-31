@@ -35,6 +35,7 @@ public class EventListener extends ListenerAdapter {
                 .forEach(r -> r.autoCompleteInteraction(event));
     }
 
+
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         this.bot.getRuntime().getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getAuthor(), event.getMember(), event.getMessage().getContentDisplay());

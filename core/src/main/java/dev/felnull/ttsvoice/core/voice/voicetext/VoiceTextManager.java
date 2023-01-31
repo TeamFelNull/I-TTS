@@ -41,8 +41,6 @@ public class VoiceTextManager {
     }
 
     public InputStream getVoice(@NotNull VoiceTextSpeaker speaker, @NotNull String text) throws IOException, InterruptedException {
-        System.out.println("Generate: " + text);
-
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
 
         var hc = HttpClient.newHttpClient();

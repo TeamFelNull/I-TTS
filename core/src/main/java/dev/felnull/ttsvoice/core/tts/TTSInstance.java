@@ -6,19 +6,18 @@ import dev.felnull.ttsvoice.core.audio.VoiceAudioScheduler;
 import dev.felnull.ttsvoice.core.tts.saidtext.SaidText;
 import net.dv8tion.jda.api.entities.Guild;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class TTSInstance {
     private static final int MAX_COUNT = 150;
     private static final int LOAD_COUNT = 10;
+    private static final int NEXT_WAIT_TIME = 1500;
     private final ConcurrentLinkedQueue<SaidText> saidTextQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<LoadedSaidTextEntry> loadSaidTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicReference<LoadedSaidTextEntry> currentSaidText = new AtomicReference<>();
+    private final AtomicBoolean next = new AtomicBoolean(true);
     private final AtomicBoolean destroyed = new AtomicBoolean();
     private final Object updateLock = new Object();
     private final VoiceAudioScheduler voiceAudioScheduler;
@@ -41,6 +40,7 @@ public final class TTSInstance {
         return textChannel;
     }
 
+
     public void dispose() {
         destroyed.set(true);
 
@@ -57,12 +57,6 @@ public final class TTSInstance {
     }
 
     public void sayText(SaidText saidText) {
-        if (true) {
-            TTSVoiceRuntime.getInstance().getCacheManager().test(saidText);
-            return;
-        }
-
-
         if (saidTextQueue.size() >= MAX_COUNT)
             return;
 
@@ -72,13 +66,12 @@ public final class TTSInstance {
             saidTextQueue.add(saidText);
             updateQueue();
         }
-
-        voiceAudioScheduler.test();
     }
 
     private void updateAloud(SaidText saidText) {
         synchronized (updateLock) {
-            if (destroyed.get()) return;
+            if (destroyed.get())
+                return;
 
             voiceAudioScheduler.stop();
 
@@ -92,15 +85,24 @@ public final class TTSInstance {
 
     private void updateQueue() {
         synchronized (updateLock) {
-            if (destroyed.get() || overwriteAloud) return;
+            if (destroyed.get() || overwriteAloud)
+                return;
 
-            loadSaidTextQueue.removeIf(LoadedSaidTextEntry::isFailure);
+            loadSaidTextQueue.removeIf(r -> {
+                if (r.isFailure()) {
+                    r.dispose();
+                    return true;
+                }
+                return false;
+            });
 
             while (loadSaidTextQueue.size() < LOAD_COUNT && !saidTextQueue.isEmpty())
                 loadSaidTextQueue.add(new LoadedSaidTextEntry(saidTextQueue.poll()));
 
             var cst = currentSaidText.get();
-            if ((cst == null || cst.isFailure() || cst.isAlreadyUsed())) {
+
+            if ((cst == null || cst.isFailure() || cst.isAlreadyUsed()) && next.get()) {
+
                 if (cst != null)
                     cst.dispose();
 
@@ -119,9 +121,11 @@ public final class TTSInstance {
 
     private void sayStart() {
         currentSaidText.get().completableFuture.whenCompleteAsync((loadedSaidText, throwable) -> {
+
             if (throwable != null) {
                 if (!(throwable instanceof CancellationException))
                     TTSVoiceRuntime.getInstance().getLogger().error("Failed to load voice audio", throwable);
+
                 if (!overwriteAloud) {
                     updateQueue();
                 }
@@ -132,38 +136,47 @@ public final class TTSInstance {
             if (loadedSaidText.isFailure()) {
                 updateQueue();
             } else {
+                next.set(false);
                 voiceAudioScheduler.play(loadedSaidText, () -> {
-                    if (overwriteAloud) {
+                    if (overwriteAloud)
                         loadedSaidText.dispose();
-                    } else {
+
+                    if (!overwriteAloud) {
+
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Thread.sleep(NEXT_WAIT_TIME);
+                            } catch (InterruptedException ignored) {
+                            }
+                            next.set(true);
+                            updateQueue();
+                        }, getExecutor());
+
                         updateQueue();
                     }
                 });
             }
-        }, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
+
+        }, getExecutor());
+    }
+
+    private Executor getExecutor() {
+        return TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor();
     }
 
     private class LoadedSaidTextEntry {
         private final CompletableFuture<LoadedSaidText> completableFuture;
-        private final Runnable stop;
+        private final AtomicBoolean failure = new AtomicBoolean();
 
         private LoadedSaidTextEntry(SaidText saidText) {
-            var rl = voiceAudioScheduler.load(saidText);
-            this.completableFuture = rl.getLeft();
-            this.stop = rl.getRight();
+            this.completableFuture = voiceAudioScheduler.load(saidText);
+            this.completableFuture.whenCompleteAsync((loadedSaidText, throwable) -> {
+                failure.set(throwable != null);
+            }, getExecutor());
         }
 
         private void dispose() {
-            if (completableFuture.isDone()) {
-                try {
-                    completableFuture.get().dispose();
-                } catch (InterruptedException | ExecutionException ignored) {
-                }
-            } else {
-                completableFuture.cancel(false);
-                stop.run();
-            }
-
+            completableFuture.thenAcceptAsync(LoadedSaidText::dispose, getExecutor());
         }
 
         private boolean isFailure() {
@@ -173,7 +186,7 @@ public final class TTSInstance {
                 } catch (InterruptedException | ExecutionException ignored) {
                 }
             }
-            return false;
+            return failure.get();
         }
 
         private boolean isAlreadyUsed() {
