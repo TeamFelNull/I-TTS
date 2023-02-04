@@ -8,7 +8,7 @@ public final class TTSUtils {
 
     @NotNull
     public static String getTTSName(@NotNull User user) {
-        return null;
+        return DiscordUtils.getName(user);
     }
 
     @NotNull

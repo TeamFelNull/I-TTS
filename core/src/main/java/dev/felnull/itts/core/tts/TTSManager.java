@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +85,7 @@ public class TTSManager {
         long userId = user.getIdLong();
 
         if (member == null) return;
+        if (user.isBot() || user.isSystem()) return;
 
         var ti = getTTSInstance(guildId);
         if (ti == null || ti.getTextChannel() != textChannelId) return;
@@ -103,5 +105,41 @@ public class TTSManager {
 
         String sayText = TTSVoiceRuntime.getInstance().getDictionaryManager().applyDict(message, guildId);
         ti.sayText(SaidText.literal(Voice.simple(vt), sayText));
+    }
+
+    public void onVCEvent(@NotNull Guild guild, @NotNull Member member, @Nullable AudioChannelUnion join, @Nullable AudioChannelUnion left) {
+        long guildId = guild.getIdLong();
+        var user = member.getUser();
+        long userId = user.getIdLong();
+
+        var ti = getTTSInstance(guildId);
+        if (ti == null || !((join != null && ti.getAudioChannel() == join.getIdLong()) || (left != null && ti.getAudioChannel() == left.getIdLong())))
+            return;
+
+        var sm = TTSVoiceRuntime.getInstance().getSaveDataManager();
+        if (!sm.getServerData(guildId).isNotifyMove()) return;
+
+        var vt = TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
+        if (vt == null) return;
+
+        VCEventType vce = null;
+
+        if (join != null && left == null) {
+            vce = VCEventType.JOIN;
+        } else if (join == null) {
+            vce = VCEventType.LEAVE;
+        } else if (join.getIdLong() == ti.getAudioChannel() && left.getIdLong() != ti.getAudioChannel()) {
+            vce = VCEventType.MOVE_FROM;
+        } else if (join.getIdLong() != ti.getAudioChannel() && left.getIdLong() == ti.getAudioChannel()) {
+            vce = VCEventType.MOVE_TO;
+        }
+
+        sayVCEvent(vce, ti, Voice.simple(vt), member, join, left);
+    }
+
+    private void sayVCEvent(VCEventType vcEventType, TTSInstance ttsInstance, Voice voice, Member member, AudioChannelUnion join, AudioChannelUnion left) {
+        if (vcEventType == null) return;
+
+        ttsInstance.sayText(SaidText.vcEvent(voice, vcEventType, member, join, left));
     }
 }

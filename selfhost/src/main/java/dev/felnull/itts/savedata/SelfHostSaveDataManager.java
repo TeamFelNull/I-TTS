@@ -1,7 +1,7 @@
 package dev.felnull.itts.savedata;
 
-import dev.felnull.itts.core.savedata.*;
 import dev.felnull.itts.Main;
+import dev.felnull.itts.core.savedata.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -10,7 +10,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -23,11 +22,11 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     protected static final File BOT_STATE_DATA_FOLDER = new File("./bot_state_data");
     protected static final File SERVER_DICT_FOLDER = new File("./server_dict");
     protected static final File GLOBAL_DICT_DIR = new File("./global_dict.json");
-    private final Map<Long, CompletableFuture<ServerDataImpl>> serverData = new ConcurrentHashMap<>();
-    private final Map<GuildUserKey, CompletableFuture<ServerUserDataImpl>> serverUserData = new ConcurrentHashMap<>();
-    private final Map<Long, CompletableFuture<ServerDictUseData>> serverDictUseData = new ConcurrentHashMap<>();
-    private final Map<Long, CompletableFuture<BotStateDataImpl>> botStateData = new ConcurrentHashMap<>();
-    private final Map<Long, CompletableFuture<ServerDictData>> serverDict = new ConcurrentHashMap<>();
+    private final KeySaveDataManage<Long, ServerDataImpl> serverData = new KeySaveDataManage<>(ServerDataImpl::new);
+    private final KeySaveDataManage<GuildUserKey, ServerUserDataImpl> serverUserData = new KeySaveDataManage<>(id -> new ServerUserDataImpl(id.guildId(), id.userId()));
+    private final KeySaveDataManage<Long, ServerDictUseData> serverDictUseData = new KeySaveDataManage<>(ServerDictUseData::new);
+    private final KeySaveDataManage<Long, BotStateDataImpl> botStateData = new KeySaveDataManage<>(BotStateDataImpl::new);
+    private final KeySaveDataManage<Long, ServerDictData> serverDict = new KeySaveDataManage<>(ServerDictData::new);
     private CompletableFuture<GlobalDictData> globalDict;
 
     public static SelfHostSaveDataManager getInstance() {
@@ -50,7 +49,7 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
                     if (name.length() <= ".json".length()) continue;
                     try {
                         long id = Long.parseLong(name.substring(0, name.length() - ".json".length()));
-                        botStateData.put(id, computeInitAsync(() -> new BotStateDataImpl(id)));
+                        botStateData.load(id);
                     } catch (NumberFormatException ignored) {
                     }
                 }
@@ -61,112 +60,63 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
 
     @Override
     public @NotNull ServerData getServerData(long guildId) {
-        try {
-            return serverData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDataImpl(id))).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return serverData.get(guildId);
     }
 
     @Override
     public @NotNull ServerUserData getServerUserData(long guildId, long userId) {
-        try {
-            return serverUserData.computeIfAbsent(new GuildUserKey(guildId, userId), id -> computeInitAsync(() -> new ServerUserDataImpl(id.guildId(), id.userId()))).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return serverUserData.get(new GuildUserKey(guildId, userId));
     }
 
     @Override
     public @NotNull @Unmodifiable List<DictUseData> getAllDictUseData(long guildId) {
-        try {
-            return serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().getAllDictUseData();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return serverDictUseData.get(guildId).getAllDictUseData();
     }
 
     @Override
     public @Nullable DictUseData getDictUseData(long guildId, @NotNull String dictId) {
-        try {
-            return serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().getDictUseData(dictId);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return serverDictUseData.get(guildId).getDictUseData(dictId);
     }
 
     @Override
     public void addDictUseData(long guildId, @NotNull String dictId, int priority) {
-        try {
-            serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().addDictUserData(dictId, priority);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        serverDictUseData.get(guildId).addDictUserData(dictId, priority);
     }
 
     @Override
     public void removeDictUseData(long guildId, @NotNull String dictId) {
-        try {
-            serverDictUseData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictUseData(id))).get().removeDictUseData(dictId);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        serverDictUseData.get(guildId).removeDictUseData(dictId);
     }
 
     @Override
     public @NotNull BotStateData getBotStateData(long guildId) {
-        try {
-            return botStateData.computeIfAbsent(guildId, id -> computeInitAsync(() -> new BotStateDataImpl(id))).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return botStateData.get(guildId);
     }
 
     @Override
     public @NotNull @Unmodifiable Map<Long, BotStateData> getAllBotStateData() {
-        return botStateData.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            try {
-                return entry.getValue().get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }));
+        return botStateData.getAllLoaded().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @Override
     public @NotNull @Unmodifiable List<DictData> getAllServerDictData(long guildId) {
-        try {
-            return serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().getAllDictData();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return serverDict.get(guildId).getAllDictData();
     }
 
     @Override
     public @Nullable DictData getServerDictData(long guildId, @NotNull String target) {
-        try {
-            return serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().getDictData(target);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        return serverDict.get(guildId).getDictData(target);
     }
 
     @Override
     public void addServerDictData(long guildId, @NotNull String target, @NotNull String read) {
-        try {
-            serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().addDictData(target, read);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        serverDict.get(guildId).addDictData(target, read);
     }
 
     @Override
     public void removeServerDictData(long guildId, @NotNull String target) {
-        try {
-            serverDict.computeIfAbsent(guildId, id -> computeInitAsync(() -> new ServerDictData(id))).get().removeDictData(target);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        serverDict.get(guildId).removeDictData(target);
     }
 
     @Override

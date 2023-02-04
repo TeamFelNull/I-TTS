@@ -68,16 +68,16 @@ public class TTSVoiceRuntime {
     }
 
     public void execute() {
-        logger.info("The Ikisugi TTS (" + getVersionText() + ")");
+        logger.info("The Ikisugi TTS ({})", getVersionText());
 
         logger.info("--System info--");
-        logger.info("Java runtime: " + System.getProperty("java.runtime.name"));
-        logger.info("Java version: " + System.getProperty("java.version"));
-        logger.info("Java vm name: " + System.getProperty("java.vm.name"));
-        logger.info("Java vm version: " + System.getProperty("java.vm.version"));
-        logger.info("OS: " + System.getProperty("os.name"));
-        logger.info("Arch: " + System.getProperty("os.arch"));
-        logger.info("Available Processors: " + Runtime.getRuntime().availableProcessors());
+        logger.info("Java runtime: {}", System.getProperty("java.runtime.name"));
+        logger.info("Java version: {}", System.getProperty("java.version"));
+        logger.info("Java vm name: {}", System.getProperty("java.vm.name"));
+        logger.info("Java vm version: {}", System.getProperty("java.vm.version"));
+        logger.info("OS: {}", System.getProperty("os.name"));
+        logger.info("Arch: {}", System.getProperty("os.arch"));
+        logger.info("Available Processors: {}", Runtime.getRuntime().availableProcessors());
         logger.info("---------------");
 
         if (!configManager.init()) {

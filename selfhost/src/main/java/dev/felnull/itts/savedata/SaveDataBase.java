@@ -39,11 +39,15 @@ public abstract class SaveDataBase {
                 Main.RUNTIME.getLogger().error("Failed in loading the existing save data. ({})", getName(), ex);
             }
         } else {
-            //saveOnly();
             setDefault();
         }
 
         canSave = true;
+    }
+
+    public void dispose() throws Exception {
+        saveOnly();
+        Main.RUNTIME.getLogger().debug("Successfully unloaded save data. ({})", getName());
     }
 
     public void setDefault() {

@@ -87,5 +87,7 @@ public class EventListener extends ListenerAdapter {
             if (join != null)
                 bot.getRuntime().getTTSManager().connect(event.getGuild(), join);
         }
+
+        bot.getRuntime().getTTSManager().onVCEvent(event.getGuild(), event.getMember(), join, left);
     }
 }
