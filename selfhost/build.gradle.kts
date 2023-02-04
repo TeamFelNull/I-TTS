@@ -6,7 +6,7 @@ base {
 
 tasks.named<Jar>("jar") {
     manifest {
-        attributes("Main-Class" to "dev.felnull.ttsvoice.Main")
+        attributes("Main-Class" to "dev.felnull.itts.Main")
         attributes("Implementation-Version" to project.version)
     }
 }

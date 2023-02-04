@@ -122,7 +122,7 @@ public class TTSVoiceRuntime {
     }
 
     public String getVersion() {
-        return "2.0.0";
+        return version;
     }
 
     public String getVersionText() {
