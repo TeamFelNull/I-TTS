@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 base {
-    archivesName.set("ittsvoice")
+    archivesName.set("itts-selfhost")
 }
 
 tasks.named<Jar>("jar") {

@@ -1,0 +1,15 @@
+package dev.felnull.itts.core.savedata;
+
+import org.jetbrains.annotations.NotNull;
+
+public interface DictUseData {
+    int VERSION = 0;
+    int INIT_PRIORITY = 0;
+
+    @NotNull
+    String getDictId();
+
+    int getPriority();
+
+    void setPriority(int priority);
+}

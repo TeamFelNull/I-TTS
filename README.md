@@ -1,6 +1,6 @@
-# IDiscordTTSVoice
+# I-TTS
 
-The Ikisugi Discord TTS BOT  
+The Ikisugi TTS BOT  
 DiscordのVCチャンネルで、指定されたテキストチャンネルに入力された文字を読み上げるBOT
 
 ### 対応済み読み上げAPI一覧
