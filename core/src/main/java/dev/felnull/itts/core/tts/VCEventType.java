@@ -6,19 +6,20 @@ import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 
 public enum VCEventType {
-    JOIN((member, join, left) -> getMemberTTSName(member) + "が接続しました"),
-    LEAVE((member, join, left) -> getMemberTTSName(member) + "が切断しました"),
-    MOVE_FROM((member, join, left) -> getMemberTTSName(member) + "が" + getChannelTTSName(left) + "から移動してきました"),
-    MOVE_TO((member, join, left) -> getMemberTTSName(member) + "が" + getChannelTTSName(join) + "へ移動しました");
-
-    /*
-    FORCE_MOVE_FROM((user, join, left) -> TTSUtils.getTTSName(user) + "が" + getChannelTTS(left, user) + "から移動させられました"),
-    FORCE_LEAVE((user, join, left) -> TTSUtils.getTTSName(user) + "が切断されました"),
-    FORCE_MOVE_TO((user, join, left) -> TTSUtils.getTTSName(user) + "が" + getChannelTTS(join, user) + "へ移動させられました");*/
+    JOIN((member, join, left) -> getMemberTTSName(member) + "が接続しました", true),
+    LEAVE((member, join, left) -> getMemberTTSName(member) + "が切断しました", false),
+    MOVE_FROM((member, join, left) -> getMemberTTSName(member) + "が" + getChannelTTSName(left) + "から移動してきました", true),
+    MOVE_TO((member, join, left) -> getMemberTTSName(member) + "が" + getChannelTTSName(join) + "へ移動しました", false);
     private final VCEventMessage vcEventMessage;
+    private final boolean join;
 
-    VCEventType(VCEventMessage saidMessage) {
+    VCEventType(VCEventMessage saidMessage, boolean join) {
         this.vcEventMessage = saidMessage;
+        this.join = join;
+    }
+
+    public boolean isJoin() {
+        return join;
     }
 
     public String getMessage(Member member, AudioChannelUnion join, AudioChannelUnion left) {

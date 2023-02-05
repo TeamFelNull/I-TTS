@@ -122,6 +122,12 @@ public class TTSManager {
         var vt = TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) return;
 
+        if (join != null && join.getIdLong() == ti.getAudioChannel()) {
+            var vcs = member.getVoiceState();
+            if (vcs != null && vcs.isGuildMuted())
+                return;
+        }
+
         VCEventType vce = null;
 
         if (join != null && left == null) {

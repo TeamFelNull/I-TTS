@@ -1,11 +1,13 @@
 package dev.felnull.itts.core.tts;
 
+import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.TTSVoiceRuntime;
 import dev.felnull.itts.core.audio.LoadedSaidText;
 import dev.felnull.itts.core.audio.VoiceAudioScheduler;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import net.dv8tion.jda.api.entities.Guild;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +70,19 @@ public final class TTSInstance {
         }
     }
 
+    private List<SaidText> getCurrentQueue() {
+        ImmutableList.Builder<SaidText> cq = ImmutableList.builder();
+
+        var crntST = currentSaidText.get();
+        if (crntST != null)
+            cq.add(crntST.saidText);
+
+        cq.addAll(loadSaidTextQueue.stream().map(r -> r.saidText).toList());
+        cq.addAll(saidTextQueue);
+
+        return cq.build();
+    }
+
     private void updateAloud(SaidText saidText) {
         synchronized (updateLock) {
             if (destroyed.get())
@@ -116,6 +131,17 @@ public final class TTSInstance {
                 while (!saidTextQueue.isEmpty())
                     loadSaidTextQueue.add(new LoadedSaidTextEntry(saidTextQueue.poll()));
             }
+
+            var cq = getCurrentQueue();
+
+            saidTextQueue.removeIf(r -> !r.updateSurvive(cq));
+            loadSaidTextQueue.removeIf(r -> {
+                if (!r.saidText.updateSurvive(cq)) {
+                    r.dispose();
+                    return true;
+                }
+                return false;
+            });
         }
     }
 
@@ -165,10 +191,12 @@ public final class TTSInstance {
     }
 
     private class LoadedSaidTextEntry {
+        private final SaidText saidText;
         private final CompletableFuture<LoadedSaidText> completableFuture;
         private final AtomicBoolean failure = new AtomicBoolean();
 
         private LoadedSaidTextEntry(SaidText saidText) {
+            this.saidText = saidText;
             this.completableFuture = voiceAudioScheduler.load(saidText);
             this.completableFuture.whenCompleteAsync((loadedSaidText, throwable) -> {
                 failure.set(throwable != null);

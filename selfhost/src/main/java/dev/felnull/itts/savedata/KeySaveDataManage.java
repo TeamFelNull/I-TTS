@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class KeySaveDataManage<K, S extends SaveDataBase> {
-    private static final long HOLD_DATA_TIME = 1000 * 10;
+    private static final long HOLD_DATA_TIME = 1000 * 60 * 60;
     private final Map<K, SaveDataEntry> saveDataEntries = new ConcurrentHashMap<>();
     private final Map<K, Object> locks = new ConcurrentHashMap<>();
     private final Function<K, S> newSaveDataFactory;

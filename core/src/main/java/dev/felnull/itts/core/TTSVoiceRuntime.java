@@ -127,7 +127,7 @@ public class TTSVoiceRuntime {
 
     public String getVersionText() {
         if (isDevelopmentEnvironment())
-            return "Dev Env";
+            return "開発環境";
         return "v" + getVersion();
     }
 
