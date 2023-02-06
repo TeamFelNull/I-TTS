@@ -6,10 +6,10 @@ import dev.felnull.itts.core.voice.Voice;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceType;
 
-public class VTVoiceType implements VoiceType {
+public class VoiceTextVoiceType implements VoiceType {
     private final VoiceTextSpeaker speakers;
 
-    public VTVoiceType(VoiceTextSpeaker speakers) {
+    public VoiceTextVoiceType(VoiceTextSpeaker speakers) {
         this.speakers = speakers;
     }
 
@@ -35,7 +35,7 @@ public class VTVoiceType implements VoiceType {
 
     @Override
     public Voice createVoice(long guildId, long userId) {
-        return new VTVoice(this, speakers);
+        return new VoiceTextVoice(this, speakers);
     }
 
     private VoiceTextManager getVoiceTextManager() {

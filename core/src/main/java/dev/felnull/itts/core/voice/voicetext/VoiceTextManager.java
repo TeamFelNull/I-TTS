@@ -21,10 +21,10 @@ import java.util.List;
 public class VoiceTextManager {
     private static final String API_URL = "https://api.voicetext.jp/v1/tts";
     private static final Gson GSON = new Gson();
-    private final VTVoiceCategory category = new VTVoiceCategory();
-    private final List<VoiceType> voiceTypes = Arrays.stream(VoiceTextSpeaker.values()).map(VTVoiceType::new).map(t -> (VoiceType) t).toList();
+    private final VoiceTextVoiceCategory category = new VoiceTextVoiceCategory();
+    private final List<VoiceType> voiceTypes = Arrays.stream(VoiceTextSpeaker.values()).map(VoiceTextVoiceType::new).map(t -> (VoiceType) t).toList();
 
-    public VTVoiceCategory getCategory() {
+    public VoiceTextVoiceCategory getCategory() {
         return category;
     }
 
@@ -32,7 +32,7 @@ public class VoiceTextManager {
         return voiceTypes;
     }
 
-    public String getApiKey() {
+    private String getApiKey() {
         return TTSVoiceRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
     }
 
@@ -40,7 +40,7 @@ public class VoiceTextManager {
         return TTSVoiceRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().isEnable();
     }
 
-    public InputStream getVoice(@NotNull VoiceTextSpeaker speaker, @NotNull String text) throws IOException, InterruptedException {
+    public InputStream openVoiceStream(@NotNull VoiceTextSpeaker speaker, @NotNull String text) throws IOException, InterruptedException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
 
         var hc = HttpClient.newHttpClient();

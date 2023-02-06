@@ -7,17 +7,17 @@ import dev.felnull.itts.core.voice.VoiceType;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class VTVoice extends CachedVoice {
+public class VoiceTextVoice extends CachedVoice {
     private final VoiceTextSpeaker speakers;
 
-    protected VTVoice(VoiceType voiceType, VoiceTextSpeaker speakers) {
+    protected VoiceTextVoice(VoiceType voiceType, VoiceTextSpeaker speakers) {
         super(voiceType);
         this.speakers = speakers;
     }
 
     @Override
     protected InputStream openVoiceStream(String text) throws IOException, InterruptedException {
-        return getVoiceTextManager().getVoice(speakers, text);
+        return getVoiceTextManager().openVoiceStream(speakers, text);
     }
 
     @Override

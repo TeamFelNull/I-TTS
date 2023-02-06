@@ -3,7 +3,7 @@ package dev.felnull.itts.core.voice.voicetext;
 import dev.felnull.itts.core.TTSVoiceRuntime;
 import dev.felnull.itts.core.voice.VoiceCategory;
 
-public class VTVoiceCategory implements VoiceCategory {
+public class VoiceTextVoiceCategory implements VoiceCategory {
     @Override
     public String getName() {
         return "VoiceText";

@@ -16,7 +16,7 @@ public class ConfigManager {
             return false;
 
         if (this.config.getBotToken().isEmpty()) {
-            TTSVoiceRuntime.getInstance().getLogger().error("Bot token is empty");
+            TTSVoiceRuntime.getInstance().getLogger().error("Bot token is empty/Botトークンが空です");
             return false;
         }
 

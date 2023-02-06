@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 public class TTSVoiceRuntime {
     private static TTSVoiceRuntime INSTANCE;
     private final Logger logger = LogManager.getLogger(TTSVoiceRuntime.class);
-    private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-thread-%d").daemon(true).build());
+    private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-%d").daemon(true).build());
     private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
     private final Timer timer = new Timer("ikisugi-timer", true);
     private final String version;
@@ -43,7 +43,7 @@ public class TTSVoiceRuntime {
 
     private TTSVoiceRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
         if (INSTANCE != null)
-            throw new IllegalStateException("TTSVoiceRuntime must be a singleton instance");
+            throw new IllegalStateException("TTSVoiceRuntime must be a singleton instance/TTSVoiceRuntimeはシングルトンインスタンスである必要があります");
         INSTANCE = this;
 
         var v = TTSVoiceRuntime.class.getPackage().getImplementationVersion();
@@ -58,7 +58,7 @@ public class TTSVoiceRuntime {
 
     public static TTSVoiceRuntime getInstance() {
         if (INSTANCE == null)
-            throw new IllegalStateException("Instance does not exist");
+            throw new IllegalStateException("Instance does not exist/インスタンスが存在しません");
 
         return INSTANCE;
     }

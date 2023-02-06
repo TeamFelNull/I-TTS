@@ -188,6 +188,10 @@ public final class TTSInstance {
             completableFuture.thenAcceptAsync(LoadedSaidText::dispose, getExecutor());
         }
 
+        public SaidText getSaidText() {
+            return saidText;
+        }
+
         private boolean isFailure() {
             if (completableFuture.isDone()) {
                 try {
