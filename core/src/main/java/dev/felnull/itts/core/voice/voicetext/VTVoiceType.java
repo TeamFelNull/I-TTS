@@ -2,13 +2,11 @@ package dev.felnull.itts.core.voice.voicetext;
 
 import com.google.common.base.CaseFormat;
 import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.voice.Voice;
 import dev.felnull.itts.core.voice.VoiceCategory;
-import dev.felnull.itts.core.voice.CachedVoiceType;
+import dev.felnull.itts.core.voice.VoiceType;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-public class VTVoiceType extends CachedVoiceType {
+public class VTVoiceType implements VoiceType {
     private final VoiceTextSpeaker speakers;
 
     public VTVoiceType(VoiceTextSpeaker speakers) {
@@ -36,10 +34,9 @@ public class VTVoiceType extends CachedVoiceType {
     }
 
     @Override
-    public InputStream openVoiceStream(String text) throws IOException, InterruptedException {
-        return getVoiceTextManager().getVoice(speakers, text);
+    public Voice createVoice(long guildId, long userId) {
+        return new VTVoice(this, speakers);
     }
-
 
     private VoiceTextManager getVoiceTextManager() {
         return TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceTextManager();

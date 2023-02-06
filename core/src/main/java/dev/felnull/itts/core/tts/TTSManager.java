@@ -104,7 +104,7 @@ public class TTSManager {
         if (vt == null) return;
 
         String sayText = TTSVoiceRuntime.getInstance().getDictionaryManager().applyDict(message, guildId);
-        ti.sayText(SaidText.literal(Voice.simple(vt), sayText));
+        ti.sayText(SaidText.literal(vt.createVoice(guildId, userId), sayText));
     }
 
     public void onVCEvent(@NotNull Guild guild, @NotNull Member member, @Nullable AudioChannelUnion join, @Nullable AudioChannelUnion left) {
@@ -140,7 +140,7 @@ public class TTSManager {
             vce = VCEventType.MOVE_TO;
         }
 
-        sayVCEvent(vce, ti, Voice.simple(vt), member, join, left);
+        sayVCEvent(vce, ti, vt.createVoice(guildId, userId), member, join, left);
     }
 
     private void sayVCEvent(VCEventType vcEventType, TTSInstance ttsInstance, Voice voice, Member member, AudioChannelUnion join, AudioChannelUnion left) {

@@ -1,11 +1,11 @@
 package dev.felnull.itts.core.voice;
 
+import dev.felnull.itts.core.audio.loader.VoiceTrackLoader;
+
 public interface Voice {
-    static Voice simple(VoiceType voiceType) {
-        return new SimpleVoice(voiceType);
-    }
+    boolean isAvailable();
+
+    VoiceTrackLoader createVoiceTrackLoader(String text);
 
     VoiceType getVoiceType();
-
-
 }

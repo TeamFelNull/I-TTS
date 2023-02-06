@@ -36,7 +36,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter {
     }
 
     public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
-        var vtl = saidText.getVoice().getVoiceType().createVoiceTrackLoader(saidText.getText());
+        var vtl = saidText.getVoice().createVoiceTrackLoader(saidText.getText());
         return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
     }
 

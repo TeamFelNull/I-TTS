@@ -1,7 +1,5 @@
 package dev.felnull.itts.core.voice;
 
-import dev.felnull.itts.core.audio.loader.VoiceTrackLoader;
-
 public interface VoiceType {
     String getName();
 
@@ -11,5 +9,5 @@ public interface VoiceType {
 
     VoiceCategory getCategory();
 
-    VoiceTrackLoader createVoiceTrackLoader(String text);
+    Voice createVoice(long guildId, long userId);
 }

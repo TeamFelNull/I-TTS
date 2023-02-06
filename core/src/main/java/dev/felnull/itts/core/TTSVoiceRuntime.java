@@ -126,9 +126,7 @@ public class TTSVoiceRuntime {
     }
 
     public String getVersionText() {
-        if (isDevelopmentEnvironment())
-            return "開発環境";
-        return "v" + getVersion();
+        return isDevelopmentEnvironment() ? "開発環境" : "v" + getVersion();
     }
 
     public ConfigManager getConfigManager() {

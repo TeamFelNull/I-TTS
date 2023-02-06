@@ -1,21 +1,19 @@
 package dev.felnull.itts.savedata;
 
 import dev.felnull.itts.Main;
+import dev.felnull.itts.core.util.ApoptosisObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class KeySaveDataManage<K, S extends SaveDataBase> {
-    private static final long HOLD_DATA_TIME = 1000 * 60 * 60;
+    private static final long HOLD_DATA_TIME = 1000 * 60 * 10;
     private final Map<K, SaveDataEntry> saveDataEntries = new ConcurrentHashMap<>();
     private final Map<K, Object> locks = new ConcurrentHashMap<>();
     private final Function<K, S> newSaveDataFactory;
@@ -47,7 +45,6 @@ public class KeySaveDataManage<K, S extends SaveDataBase> {
             locks.remove(key);
             p = saveDataEntries.remove(key);
             if (p == null) return;
-            p.brake();
             SaveDataBase sd;
             try {
                 sd = p.getSaveData().get();
@@ -87,49 +84,24 @@ public class KeySaveDataManage<K, S extends SaveDataBase> {
         }, Main.RUNTIME.getAsyncWorkerExecutor());
     }
 
-    private class SaveDataEntry {
-        private final AtomicLong lastUseTime = new AtomicLong(System.currentTimeMillis());
-        private final AtomicBoolean broken = new AtomicBoolean();
+    private class SaveDataEntry extends ApoptosisObject {
         private final K key;
         private final CompletableFuture<S> saveData;
 
         private SaveDataEntry(K key, CompletableFuture<S> saveData) {
+            super(HOLD_DATA_TIME);
             this.key = key;
             this.saveData = saveData;
-            scheduleCheckTimer(this::check, HOLD_DATA_TIME + 300L);
-        }
-
-        private void brake() {
-            broken.set(true);
         }
 
         public CompletableFuture<S> getSaveData() {
-            this.lastUseTime.set(System.currentTimeMillis());
+            extensionLife();
             return saveData;
         }
 
-        private void check() {
-            if (broken.get()) return;
-
-            long now = System.currentTimeMillis();
-            long lastTime = lastUseTime.get();
-            long eqTime = now - lastTime;
-
-            if (eqTime >= HOLD_DATA_TIME) {
-                unload(key);
-                return;
-            }
-
-            scheduleCheckTimer(this::check, HOLD_DATA_TIME - eqTime + 300L);
-        }
-
-        private void scheduleCheckTimer(Runnable runnable, long delay) {
-            Main.RUNTIME.getTimer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    CompletableFuture.runAsync(runnable, Main.RUNTIME.getAsyncWorkerExecutor());
-                }
-            }, delay);
+        @Override
+        protected void lifeEnd(boolean force) {
+            unload(key);
         }
     }
 }

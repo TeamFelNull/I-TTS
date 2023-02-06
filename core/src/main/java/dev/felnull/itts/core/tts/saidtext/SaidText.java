@@ -23,8 +23,4 @@ public interface SaidText {
     String getText();
 
     Voice getVoice();
-
-    default boolean updateSurvive(@NotNull @Unmodifiable List<SaidText> currentQueue) {
-        return true;
-    }
 }
