@@ -5,22 +5,16 @@ import dev.felnull.itts.core.savedata.BotStateData;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class BotStateDataImpl extends SaveDataBase implements BotStateData {
-    private final long guildId;
     private final AtomicLong connectedAudioChannel = new AtomicLong(INIT_CONNECTED_AUDIO_CHANNEL);
     private final AtomicLong readAroundTextChannel = new AtomicLong(INIT_READ_AROUND_TEXT_CHANNEL);
 
-    protected BotStateDataImpl(long guildId) {
-        super(new File(SelfHostSaveDataManager.BOT_STATE_DATA_FOLDER, guildId + ".json"));
-        this.guildId = guildId;
-    }
 
     @Override
     public String getName() {
-        return "Bot State Data: " + guildId;
+        return "Bot State Data";
     }
 
     @Override

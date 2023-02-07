@@ -98,4 +98,10 @@ public class SaveDataManager {
     public void removeGlobalDictData(@NotNull String target) {
         saveDataAccess.removeGlobalDictData(target);
     }
+
+    @NotNull
+    @Unmodifiable
+    public List<Long> getAllDenyUser(long guildId) {
+        return saveDataAccess.getAllDenyUser(guildId);
+    }
 }

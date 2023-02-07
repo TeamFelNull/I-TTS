@@ -55,4 +55,8 @@ public interface SaveDataAccess {
     void addGlobalDictData(@NotNull String target, @NotNull String read);
 
     void removeGlobalDictData(@NotNull String target);
+
+    @NotNull
+    @Unmodifiable
+    List<Long> getAllDenyUser(long guildId);
 }

@@ -21,5 +21,5 @@ public interface ServerUserData {
     @Nullable
     String getNickName();
 
-    void setNickName(@NotNull String nickName);
+    void setNickName(@Nullable String nickName);
 }

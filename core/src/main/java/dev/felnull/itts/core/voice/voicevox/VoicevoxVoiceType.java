@@ -20,7 +20,7 @@ public class VoicevoxVoiceType implements VoiceType {
 
     @Override
     public String getId() {
-        return this.voicevoxSpeaker.uuid().toString();
+        return manager.getName() + "-" + this.voicevoxSpeaker.uuid().toString();
     }
 
     @Override

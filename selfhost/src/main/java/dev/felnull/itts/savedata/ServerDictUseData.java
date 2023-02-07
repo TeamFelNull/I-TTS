@@ -8,24 +8,18 @@ import dev.felnull.itts.core.savedata.DictUseData;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerDictUseData extends SaveDataBase {
-    private final long guildId;
     private final Map<String, DictUseData> serverDictUseData = new ConcurrentHashMap<>();
 
-    protected ServerDictUseData(long guildId) {
-        super(new File(SelfHostSaveDataManager.DICT_USE_DATA_FOLDER, guildId + ".json"));
-        this.guildId = guildId;
-    }
 
     @Override
     public String getName() {
-        return "Server Dict Use Data: " + guildId;
+        return "Server Dict Use Data";
     }
 
     @Override

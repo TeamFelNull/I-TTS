@@ -40,6 +40,7 @@ public class TTSVoiceRuntime {
     private final CacheManager cacheManager;
     private final SaveDataManager saveDataManager;
     private final Bot bot;
+    private long startupTime;
 
     private TTSVoiceRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
         if (INSTANCE != null)
@@ -68,6 +69,8 @@ public class TTSVoiceRuntime {
     }
 
     public void execute() {
+        startupTime = System.currentTimeMillis();
+
         logger.info("The Ikisugi TTS ({})", getVersionText());
 
         logger.info("--System info--");
@@ -93,6 +96,10 @@ public class TTSVoiceRuntime {
         voiceManager.init();
 
         bot.init();
+    }
+
+    public long getStartupTime() {
+        return startupTime;
     }
 
     /**

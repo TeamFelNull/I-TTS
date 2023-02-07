@@ -8,17 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class DictDataBase extends SaveDataBase {
     private final Map<String, DictData> dictEntries = new ConcurrentHashMap<>();
-
-    protected DictDataBase(File saveFile) {
-        super(saveFile);
-    }
 
     @Override
     protected int getVersion() {

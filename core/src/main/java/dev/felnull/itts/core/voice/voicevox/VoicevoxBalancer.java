@@ -6,24 +6,29 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public class VoicevoxBalancer {
     private final VoicevoxManager manager;
     private final Supplier<List<String>> enginUrls;
     private final Object checkLock = new Object();
+    private final Map<VVURL, AtomicInteger> useCounter = new ConcurrentHashMap<>();
     private List<VVURL> availableUrls;
     private List<VoicevoxSpeaker> availableSpeakers;
 
     public VoicevoxBalancer(VoicevoxManager manager, Supplier<List<String>> enginUrls) {
         this.manager = manager;
         this.enginUrls = enginUrls;
+    }
+
+    private AtomicInteger getUseCounter(VVURL vvurl) {
+        return useCounter.computeIfAbsent(vvurl, k -> new AtomicInteger());
     }
 
     protected List<VoicevoxSpeaker> getAvailableSpeakers() {
@@ -36,7 +41,7 @@ public class VoicevoxBalancer {
     }
 
     public void init() {
-        check();
+        CompletableFuture.runAsync(this::check, getExecutor());
     }
 
     private void check() {
@@ -102,19 +107,27 @@ public class VoicevoxBalancer {
     }
 
     public boolean isAvailable() {
-        return !enginUrls.get().isEmpty();
+        return enginUrls != null && !enginUrls.get().isEmpty();
     }
 
     protected VoicevoxUseURL getUseURL() {
+        if (availableUrls == null || availableUrls.isEmpty())
+            throw new RuntimeException("No URL available.");
+
+        VVURL vvurl = availableUrls.stream()
+                .min(Comparator.comparingInt(r -> getUseCounter(r).get()))
+                .get();
+
+        getUseCounter(vvurl).incrementAndGet();
         return new VoicevoxUseURL() {
             @Override
             public VVURL getVVURL() {
-                return availableUrls.get(0);
+                return vvurl;
             }
 
             @Override
             public void close() {
-
+                getUseCounter(vvurl).decrementAndGet();
             }
         };
     }

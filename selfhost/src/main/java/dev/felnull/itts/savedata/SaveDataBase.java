@@ -17,14 +17,14 @@ public abstract class SaveDataBase {
     private final Object dirtyLock = new Object();
     private final Object saveLock = new Object();
     private final AtomicLong dirtyTime = new AtomicLong(-1);
-    private final File saveFile;
+    private File saveFile;
+    private SaveDataKey saveDataKey;
     private boolean canSave;
 
-    protected SaveDataBase(File saveFile) {
+    public void init(File saveFile, SaveDataKey saveDataKey) throws Exception {
         this.saveFile = saveFile;
-    }
+        this.saveDataKey = saveDataKey;
 
-    public void init() throws Exception {
         if (this.saveFile.exists()) {
             try (Reader reader = new FileReader(this.saveFile); Reader bufReader = new BufferedReader(reader)) {
                 var jo = GSON.fromJson(bufReader, JsonObject.class);
@@ -34,9 +34,6 @@ public abstract class SaveDataBase {
                     throw new RuntimeException("Unsupported config version.");
 
                 loadFromJson(jo);
-                Main.RUNTIME.getLogger().debug("Succeeded in loading the existing save data. ({})", getName());
-            } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed in loading the existing save data. ({})", getName(), ex);
             }
         } else {
             setDefault();
@@ -47,7 +44,6 @@ public abstract class SaveDataBase {
 
     public void dispose() throws Exception {
         saveOnly();
-        Main.RUNTIME.getLogger().debug("Successfully unloaded save data. ({})", getName());
     }
 
     public void setDefault() {
@@ -75,7 +71,8 @@ public abstract class SaveDataBase {
     }
 
     private void saveWaitStart() {
-        CompletableFuture.runAsync(this::saveWait, Main.RUNTIME.getAsyncWorkerExecutor()).thenAcceptAsync(v -> save(), Main.RUNTIME.getAsyncWorkerExecutor());
+        CompletableFuture.runAsync(this::saveWait, Main.RUNTIME.getAsyncWorkerExecutor())
+                .thenAcceptAsync(v -> save(), Main.RUNTIME.getAsyncWorkerExecutor());
     }
 
     private void saveWait() {
@@ -93,11 +90,15 @@ public abstract class SaveDataBase {
 
     private void save() {
         synchronized (saveLock) {
+            String name = getName();
+            if (saveDataKey != null)
+                name += ": " + saveDataKey;
+
             try {
                 saveOnly();
-                Main.RUNTIME.getLogger().debug("Succeeded to save saved data. ({})", getName());
+                Main.RUNTIME.getLogger().debug("Succeeded to save saved data. ({})", name);
             } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed to save saved data. ({})", getName(), ex);
+                Main.RUNTIME.getLogger().error("Failed to save saved data. ({})", name, ex);
             }
         }
     }

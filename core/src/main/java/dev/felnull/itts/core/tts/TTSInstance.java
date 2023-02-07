@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class TTSInstance {
     private static final int MAX_COUNT = 150;
     private static final int LOAD_COUNT = 10;
-    private static final int NEXT_WAIT_TIME = 1500;
+    private static final int NEXT_WAIT_TIME = 0;
     private final ConcurrentLinkedQueue<SaidText> saidTextQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<LoadedSaidTextEntry> loadSaidTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicReference<LoadedSaidTextEntry> currentSaidText = new AtomicReference<>();

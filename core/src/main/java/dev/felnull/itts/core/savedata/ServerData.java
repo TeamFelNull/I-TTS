@@ -7,7 +7,7 @@ public interface ServerData {
     String INIT_DEFAULT_VOICE_TYPE = null;
     String INIT_IGNORE_REGEX = "(!|/|\\\\$|`).*";
     boolean INIT_NEED_JOIN = false;
-    boolean INIT_OVERWRITE_ALOUD = true;
+    boolean INIT_OVERWRITE_ALOUD = false;
     boolean INIT_NOTIFY_MOVE = true;
     int INIT_READ_LIMIT = 200;
     int INIT_NAME_READ_LIMIT = 10;

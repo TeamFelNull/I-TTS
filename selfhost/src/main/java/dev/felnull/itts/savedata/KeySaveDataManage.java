@@ -5,20 +5,23 @@ import dev.felnull.itts.core.util.ApoptosisObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.File;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class KeySaveDataManage<K, S extends SaveDataBase> {
+public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDataBase> {
     private static final long HOLD_DATA_TIME = 1000 * 60 * 10;
     private final Map<K, SaveDataEntry> saveDataEntries = new ConcurrentHashMap<>();
     private final Map<K, Object> locks = new ConcurrentHashMap<>();
-    private final Function<K, S> newSaveDataFactory;
+    private final File saveFolder;
+    private final Supplier<S> newSaveDataFactory;
 
-    public KeySaveDataManage(Function<K, S> newSaveDataFactory) {
+    public KeySaveDataManage(File saveFolder, Supplier<S> newSaveDataFactory) {
+        this.saveFolder = saveFolder;
         this.newSaveDataFactory = newSaveDataFactory;
     }
 
@@ -52,10 +55,13 @@ public class KeySaveDataManage<K, S extends SaveDataBase> {
                 throw new RuntimeException(e);
             }
 
+            String name = sd.getName() + ": " + key;
+
             try {
                 sd.dispose();
+                Main.RUNTIME.getLogger().debug("Successfully unloaded save data. ({})", name);
             } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed to unloaded save data ({}).", sd.getName(), ex);
+                Main.RUNTIME.getLogger().error("Failed to unloaded save data ({}).", name, ex);
             }
         }
     }
@@ -74,11 +80,13 @@ public class KeySaveDataManage<K, S extends SaveDataBase> {
 
     private CompletableFuture<S> computeInitAsync(K key) {
         return CompletableFuture.supplyAsync(() -> {
-            var ni = newSaveDataFactory.apply(key);
+            var ni = newSaveDataFactory.get();
+            String name = ni.getName() + ": " + key;
             try {
-                ni.init();
+                ni.init(key.getSavedFile(saveFolder), key);
+                Main.RUNTIME.getLogger().debug("Succeeded in loading the existing save data. ({})", name);
             } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", ni.getName(), ex);
+                Main.RUNTIME.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", name, ex);
             }
             return ni;
         }, Main.RUNTIME.getAsyncWorkerExecutor());

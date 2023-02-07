@@ -13,13 +13,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DictionaryManager {
+    private final Dictionary globalDictionary = new GlobalDictionary();
     private final Dictionary abbreviationDictionary = new AbbreviationDictionary();
     private final Dictionary unitDictionary = new UnitDictionary();
-    private final List<Dictionary> buildInDictionaries = ImmutableList.of(abbreviationDictionary, unitDictionary);
+    private final List<Dictionary> dictionaries = ImmutableList.of(globalDictionary, abbreviationDictionary, unitDictionary);
 
     @Nullable
     public Dictionary getDictionary(@NotNull String id, long guildId) {
-        return buildInDictionaries.stream()
+        return dictionaries.stream()
                 .filter(r -> id.equals(r.getId()))
                 .findAny()
                 .orElse(null);
@@ -28,7 +29,7 @@ public class DictionaryManager {
     @Unmodifiable
     @NotNull
     public List<Dictionary> getAllDictionaries(long guildId) {
-        return buildInDictionaries;
+        return dictionaries;
     }
 
     public String applyDict(String text, long guildId) {
@@ -48,6 +49,6 @@ public class DictionaryManager {
     @NotNull
     @Unmodifiable
     public List<Pair<String, Integer>> getDefault() {
-        return ImmutableList.of(Pair.of(abbreviationDictionary.getId(), 0));
+        return ImmutableList.of(Pair.of(globalDictionary.getId(), 0), Pair.of(abbreviationDictionary.getId(), 0));
     }
 }

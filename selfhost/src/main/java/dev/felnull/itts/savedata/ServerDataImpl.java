@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerDataImpl extends SaveDataBase implements ServerData {
-    private final long guildId;
     private final AtomicReference<String> defaultVoiceType = new AtomicReference<>(INIT_DEFAULT_VOICE_TYPE);
     private final AtomicReference<String> ignoreRegex = new AtomicReference<>(INIT_IGNORE_REGEX);
     private final AtomicBoolean needJoin = new AtomicBoolean(INIT_NEED_JOIN);
@@ -21,14 +20,9 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     private final AtomicInteger readLimit = new AtomicInteger(INIT_READ_LIMIT);
     private final AtomicInteger nameReadLimit = new AtomicInteger(INIT_NAME_READ_LIMIT);
 
-    protected ServerDataImpl(long guildId) {
-        super(new File(SelfHostSaveDataManager.SERVER_DATA_FOLDER, guildId + ".json"));
-        this.guildId = guildId;
-    }
-
     @Override
     public String getName() {
-        return "Server Data: " + guildId;
+        return "Server Data";
     }
 
     @Override
