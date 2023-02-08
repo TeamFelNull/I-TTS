@@ -10,6 +10,8 @@ dependencies {
     implementation("dev.felnull:felnull-java-library:1.75")
     implementation("com.github.walkyst:lavaplayer-fork:1.3.99.2")
     implementation("commons-io:commons-io:2.11.0")
+    implementation("com.ibm.icu:icu4j:72.1")
+
 
     implementation("org.jetbrains:annotations:23.0.0")
 }

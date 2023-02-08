@@ -16,7 +16,8 @@ public class DictionaryManager {
     private final Dictionary globalDictionary = new GlobalDictionary();
     private final Dictionary abbreviationDictionary = new AbbreviationDictionary();
     private final Dictionary unitDictionary = new UnitDictionary();
-    private final List<Dictionary> dictionaries = ImmutableList.of(globalDictionary, abbreviationDictionary, unitDictionary);
+    private final Dictionary romajiDictionary = new RomajiDictionary();
+    private final List<Dictionary> dictionaries = ImmutableList.of(globalDictionary, abbreviationDictionary, unitDictionary, romajiDictionary);
 
     @Nullable
     public Dictionary getDictionary(@NotNull String id, long guildId) {
@@ -49,6 +50,6 @@ public class DictionaryManager {
     @NotNull
     @Unmodifiable
     public List<Pair<String, Integer>> getDefault() {
-        return ImmutableList.of(Pair.of(globalDictionary.getId(), 0), Pair.of(abbreviationDictionary.getId(), 0));
+        return ImmutableList.of(Pair.of(globalDictionary.getId(), 0), Pair.of(abbreviationDictionary.getId(), 0), Pair.of(romajiDictionary.getId(), 0));
     }
 }

@@ -28,7 +28,7 @@ public final class TTSInstance {
     private final boolean overwriteAloud;
 
     public TTSInstance(Guild guild, long audioChannel, long textChannel, boolean overwriteAloud) {
-        this.voiceAudioScheduler = new VoiceAudioScheduler(guild.getAudioManager(), TTSVoiceRuntime.getInstance().getVoiceAudioManager());
+        this.voiceAudioScheduler = new VoiceAudioScheduler(guild.getAudioManager(), TTSVoiceRuntime.getInstance().getVoiceAudioManager(), guild.getIdLong());
         this.audioChannel = audioChannel;
         this.textChannel = textChannel;
         this.overwriteAloud = overwriteAloud;

@@ -103,8 +103,7 @@ public class TTSManager {
         var vt = TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) return;
 
-        String sayText = TTSVoiceRuntime.getInstance().getDictionaryManager().applyDict(message, guildId);
-        ti.sayText(SaidText.literal(vt.createVoice(guildId, userId), sayText));
+        ti.sayText(SaidText.literal(vt.createVoice(guildId, userId), message));
     }
 
     public void onVCEvent(@NotNull Guild guild, @NotNull Member member, @Nullable AudioChannelUnion join, @Nullable AudioChannelUnion left) {

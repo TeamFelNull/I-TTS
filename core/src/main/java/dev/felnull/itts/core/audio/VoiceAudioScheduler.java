@@ -21,11 +21,13 @@ public class VoiceAudioScheduler extends AudioEventAdapter {
     private final VoiceAudioManager voiceAudioManager;
     private final AudioPlayer audioPlayer;
     private final AtomicReference<Pair<LoadedSaidText, Runnable>> currentLoaded = new AtomicReference<>();
+    private final long guildId;
 
-    public VoiceAudioScheduler(AudioManager audioManager, VoiceAudioManager voiceAudioManager) {
+    public VoiceAudioScheduler(AudioManager audioManager, VoiceAudioManager voiceAudioManager, long guildId) {
         this.audioManager = audioManager;
         this.voiceAudioManager = voiceAudioManager;
         this.audioPlayer = voiceAudioManager.getAudioPlayerManager().createPlayer();
+        this.guildId = guildId;
         this.audioPlayer.addListener(this);
         this.audioManager.setSendingHandler(new VoiceAudioHandler(audioPlayer));
     }
@@ -36,7 +38,9 @@ public class VoiceAudioScheduler extends AudioEventAdapter {
     }
 
     public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
-        var vtl = saidText.getVoice().createVoiceTrackLoader(saidText.getText());
+        String sayText = TTSVoiceRuntime.getInstance().getDictionaryManager().applyDict(saidText.getText(), guildId);
+
+        var vtl = saidText.getVoice().createVoiceTrackLoader(sayText);
         return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
     }
 
