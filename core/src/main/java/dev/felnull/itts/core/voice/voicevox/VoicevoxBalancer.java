@@ -1,20 +1,18 @@
 package dev.felnull.itts.core.voice.voicevox;
 
 import com.google.common.collect.ImmutableList;
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-public class VoicevoxBalancer {
+public class VoicevoxBalancer implements ITTSRuntimeUse {
     private final VoicevoxManager manager;
     private final Supplier<List<String>> enginUrls;
     private final Object checkLock = new Object();
@@ -40,8 +38,8 @@ public class VoicevoxBalancer {
         }
     }
 
-    public void init() {
-        CompletableFuture.runAsync(this::check, getExecutor());
+    public CompletableFuture<?> init() {
+        return CompletableFuture.runAsync(this::check, getAsyncExecutor());
     }
 
     private void check() {
@@ -51,10 +49,10 @@ public class VoicevoxBalancer {
             availableSpeakers = cr.getRight();
         }
 
-        ITTSRuntime.getInstance().getTimer().schedule(new TimerTask() {
+        getITTSTimer().schedule(new TimerTask() {
             @Override
             public void run() {
-                CompletableFuture.runAsync(() -> check(), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+                CompletableFuture.runAsync(() -> check(), getAsyncExecutor());
             }
         }, manager.getConfig().getCheckTime());
     }
@@ -68,7 +66,7 @@ public class VoicevoxBalancer {
                     } catch (IOException | InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                }, getExecutor())))
+                }, getAsyncExecutor())))
                 .toList();
 
         List<VVURL> rurls = new ArrayList<>();
@@ -87,23 +85,15 @@ public class VoicevoxBalancer {
                 rurls.add(vu);
 
                 if (availableUrls == null || !availableUrls.contains(vu))
-                    getLogger().info("Available {} URL: {}", manager.getName(), vu.url());
+                    getITTSLogger().info("Available {} URL: {}", manager.getName(), vu.url());
             } catch (InterruptedException | ExecutionException e) {
                 if (availableUrls == null || availableUrls.contains(vu))
-                    getLogger().warn("Unavailable {} URL: {}", manager.getName(), vu.url());
+                    getITTSLogger().warn("Unavailable {} URL: {}", manager.getName(), vu.url());
             }
 
         }
 
         return Pair.of(rurls, rspeakers);
-    }
-
-    private Executor getExecutor() {
-        return ITTSRuntime.getInstance().getAsyncWorkerExecutor();
-    }
-
-    private Logger getLogger() {
-        return ITTSRuntime.getInstance().getLogger();
     }
 
     public boolean isAvailable() {

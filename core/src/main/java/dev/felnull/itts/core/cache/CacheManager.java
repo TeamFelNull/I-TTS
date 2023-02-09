@@ -2,7 +2,7 @@ package dev.felnull.itts.core.cache;
 
 import com.google.common.hash.HashCode;
 import dev.felnull.fnjl.util.FNDataUtil;
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,10 +15,9 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
-public class CacheManager {
+public class CacheManager implements ITTSRuntimeUse {
     private static final File LOCAL_CACHE_FOLDER = new File("./tmp");
     private final Map<HashCode, CompletableFuture<LocalCache>> localCaches = new ConcurrentHashMap<>();
     private final Supplier<GlobalCacheAccess> globalCacheAccessFactory;
@@ -35,7 +34,7 @@ public class CacheManager {
     }
 
     public CompletableFuture<CacheUseEntry> loadOrRestore(@NotNull HashCode key, @NotNull StreamOpener loadOpener) {
-        return localCaches.computeIfAbsent(key, ky -> createLocalCache(ky, loadOpener)).thenApplyAsync(LocalCache::restore, getExecutor());
+        return localCaches.computeIfAbsent(key, ky -> createLocalCache(ky, loadOpener)).thenApplyAsync(LocalCache::restore, getAsyncExecutor());
     }
 
     private CompletableFuture<LocalCache> createLocalCache(HashCode key, StreamOpener loadOpener) {
@@ -67,7 +66,7 @@ public class CacheManager {
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
-            }, getExecutor());
+            }, getAsyncExecutor());
 
         } else {
             cf = CompletableFuture.supplyAsync(() -> {
@@ -79,22 +78,18 @@ public class CacheManager {
                 }
 
                 return lcFile;
-            }, getExecutor());
+            }, getAsyncExecutor());
         }
-        return cf.thenApplyAsync((file) -> new LocalCache(key, file), getExecutor());
+        return cf.thenApplyAsync((file) -> new LocalCache(key, file), getAsyncExecutor());
     }
 
     private File getLocalCacheFile(HashCode hashCode) {
         return new File(LOCAL_CACHE_FOLDER, hashCode.toString());
     }
 
-    private Executor getExecutor() {
-        return ITTSRuntime.getInstance().getAsyncWorkerExecutor();
-    }
-
     protected void disposeCache(HashCode hashCode) {
         var lc = localCaches.remove(hashCode);
         if (lc != null)
-            lc.thenAcceptAsync(LocalCache::dispose, getExecutor());
+            lc.thenAcceptAsync(LocalCache::dispose, getAsyncExecutor());
     }
 }

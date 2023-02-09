@@ -5,7 +5,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.cache.CacheUseEntry;
 import dev.felnull.itts.core.cache.StreamOpener;
 
@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CachedVoiceTrackLoader implements VoiceTrackLoader {
+public class CachedVoiceTrackLoader implements VoiceTrackLoader, ITTSRuntimeUse {
     private final HashCode hash;
     private final StreamOpener streamOpener;
     private final AtomicReference<CacheUseEntry> cacheEntry = new AtomicReference<>();
@@ -25,13 +25,13 @@ public class CachedVoiceTrackLoader implements VoiceTrackLoader {
 
     @Override
     public CompletableFuture<AudioTrack> load() {
-        return ITTSRuntime.getInstance().getCacheManager().loadOrRestore(hash, streamOpener)
-                .thenApplyAsync(this::loadTack, ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+        return getCacheManager().loadOrRestore(hash, streamOpener)
+                .thenApplyAsync(this::loadTack, getAsyncExecutor());
     }
 
     private AudioTrack loadTack(CacheUseEntry cacheUseEntry) {
         cacheEntry.set(cacheUseEntry);
-        var vam = ITTSRuntime.getInstance().getVoiceAudioManager();
+        var vam = getVoiceAudioManager();
         AtomicReference<AudioTrack> retTrack = new AtomicReference<>();
 
         try {

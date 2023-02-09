@@ -53,7 +53,7 @@ public class JoinCommand extends BaseCommand {
             return;
         }
 
-        getRuntime().getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
+        getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
 
         try {
             audioManager.openAudioConnection(joinTargetChannel);

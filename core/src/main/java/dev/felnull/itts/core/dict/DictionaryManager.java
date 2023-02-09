@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.dict;
 
 import com.google.common.collect.ImmutableList;
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.DictUseData;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DictionaryManager {
+public class DictionaryManager implements ITTSRuntimeUse {
     private final Dictionary globalDictionary = new GlobalDictionary();
     private final Dictionary abbreviationDictionary = new AbbreviationDictionary();
     private final Dictionary unitDictionary = new UnitDictionary();
@@ -34,7 +34,7 @@ public class DictionaryManager {
     }
 
     public String applyDict(String text, long guildId) {
-        var allDict = ITTSRuntime.getInstance().getSaveDataManager().getAllDictUseData(guildId).stream()
+        var allDict = getSaveDataManager().getAllDictUseData(guildId).stream()
                 .sorted(Comparator.comparingInt(DictUseData::getPriority));
         AtomicReference<String> retText = new AtomicReference<>(text);
 

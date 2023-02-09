@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.voice;
 
+import dev.felnull.itts.core.ITTSBaseManager;
 import dev.felnull.itts.core.ITTSRuntime;
-import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -9,10 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class VoiceManager {
+public class VoiceManager implements ITTSBaseManager {
     private final VoiceTextManager voiceTextManager = new VoiceTextManager();
     private final VoicevoxManager voicevoxManager = new VoicevoxManager("voicevox", () -> getConfigManager().getConfig().getVoicevoxConfig().getApiUrls(), () -> getConfigManager().getConfig().getVoicevoxConfig());
     private final VoicevoxManager coeiroinkManager = new VoicevoxManager("coeiroink", () -> getConfigManager().getConfig().getCoeirolnkConfig().getApiUrls(), () -> getConfigManager().getConfig().getCoeirolnkConfig());
@@ -24,19 +25,20 @@ public class VoiceManager {
         voiceTypes.add(availableVoiceTypes);
     }
 
-    private ConfigManager getConfigManager() {
-        return ITTSRuntime.getInstance().getConfigManager();
-    }
+    @Override
+    public @NotNull CompletableFuture<?> init() {
+        return CompletableFuture.allOf(
+                        voicevoxManager.init(),
+                        coeiroinkManager.init(),
+                        sharevoxManager.init()).
+                thenAcceptAsync(v -> {
+                    registerVoiceTypes(voiceTextManager::getVoiceTypes);
+                    registerVoiceTypes(voicevoxManager::getAvailableVoiceTypes);
+                    registerVoiceTypes(coeiroinkManager::getAvailableVoiceTypes);
+                    registerVoiceTypes(sharevoxManager::getAvailableVoiceTypes);
 
-    public void init() {
-        voicevoxManager.init();
-        coeiroinkManager.init();
-        sharevoxManager.init();
-
-        registerVoiceTypes(voiceTextManager::getVoiceTypes);
-        registerVoiceTypes(voicevoxManager::getAvailableVoiceTypes);
-        registerVoiceTypes(coeiroinkManager::getAvailableVoiceTypes);
-        registerVoiceTypes(sharevoxManager::getAvailableVoiceTypes);
+                    getITTSLogger().info("Voice initial setup complete");
+                }, getAsyncExecutor());
     }
 
     public VoiceTextManager getVoiceTextManager() {
@@ -86,7 +88,7 @@ public class VoiceManager {
 
     @Nullable
     public VoiceType getDefaultVoiceType(long guildId) {
-        var defaultVt = ITTSRuntime.getInstance().getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
+        var defaultVt = getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
 
         if (defaultVt == null)
             return getDefaultVoiceType();
@@ -96,7 +98,7 @@ public class VoiceManager {
 
     @Nullable
     public VoiceType getVoiceType(long guildId, long userId) {
-        var sdm = ITTSRuntime.getInstance().getSaveDataManager();
+        var sdm = getSaveDataManager();
         var serverUserData = sdm.getServerUserData(guildId, userId);
         var vt = getVoiceType(serverUserData.getVoiceType());
 

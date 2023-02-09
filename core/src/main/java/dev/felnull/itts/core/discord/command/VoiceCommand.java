@@ -45,8 +45,8 @@ public class VoiceCommand extends BaseCommand {
     public void commandInteraction(SlashCommandInteractionEvent event) {
         Objects.requireNonNull(event.getGuild());
 
-        var vm = getRuntime().getVoiceManager();
-        var sdm = ITTSRuntime.getInstance().getSaveDataManager();
+        var vm = getVoiceManager();
+        var sdm = getSaveDataManager();
         var serverUserData = sdm.getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
 
         if ("change".equals(event.getSubcommandName())) {
@@ -76,7 +76,7 @@ public class VoiceCommand extends BaseCommand {
 
             event.reply("自分の読み上げ音声タイプを" + vt.get().getName() + "に変更しました。").setEphemeral(true).queue();
         } else if ("check".equals(event.getSubcommandName())) {
-            var vt = getRuntime().getVoiceManager().getVoiceType(serverUserData.getVoiceType());
+            var vt = getVoiceManager().getVoiceType(serverUserData.getVoiceType());
 
             String type = vt.map(VoiceType::getName).orElseGet(() -> {
                 var dvt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
@@ -89,7 +89,7 @@ public class VoiceCommand extends BaseCommand {
             event.reply("自分の現在の読み上げタイプは" + type + "です。").setEphemeral(true).queue();
         } else if ("show".equals(event.getSubcommandName())) {
             EmbedBuilder showEmbedBuilder = new EmbedBuilder();
-            showEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
+            showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
             showEmbedBuilder.setTitle("読み上げ音声タイプ一覧");
 
             var currentVt = vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong());

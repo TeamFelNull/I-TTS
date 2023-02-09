@@ -1,8 +1,11 @@
 package dev.felnull.itts.core.config;
 
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSBaseManager;
+import org.jetbrains.annotations.NotNull;
 
-public class ConfigManager {
+import java.util.concurrent.CompletableFuture;
+
+public class ConfigManager implements ITTSBaseManager {
     private final ConfigAccess configAccess;
     private Config config;
 
@@ -10,17 +13,20 @@ public class ConfigManager {
         this.configAccess = configAccess;
     }
 
-    public boolean init() {
-        this.config = configAccess.loadConfig();
-        if (this.config == null)
-            return false;
+    @Override
+    public @NotNull CompletableFuture<?> init() {
+        return CompletableFuture.supplyAsync(configAccess::loadConfig, getAsyncExecutor())
+                .thenAcceptAsync(cfg -> {
+                    this.config = cfg;
 
-        if (this.config.getBotToken().isEmpty()) {
-            ITTSRuntime.getInstance().getLogger().error("Bot token is empty/Botトークンが空です");
-            return false;
-        }
+                    if (this.config == null)
+                        throw new RuntimeException("config access does not exist");
 
-        return true;
+                    if (this.config.getBotToken().isEmpty())
+                        throw new RuntimeException("Bot token is empty/Botトークンが空です");
+
+                    getITTSLogger().info("Configuration setup completed");
+                }, getAsyncExecutor());
     }
 
     public Config getConfig() {

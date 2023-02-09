@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.discord;
 
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-public class EventListener extends ListenerAdapter {
+public class EventListener extends ListenerAdapter implements ITTSRuntimeUse {
     private final Bot bot;
 
     public EventListener(@NotNull Bot bot) {
@@ -38,7 +39,7 @@ public class EventListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        this.bot.getRuntime().getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getAuthor(), event.getMember(), event.getMessage().getContentDisplay());
+        getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getAuthor(), event.getMember(), event.getMessage().getContentDisplay());
     }
 
 
@@ -51,7 +52,7 @@ public class EventListener extends ListenerAdapter {
                 throw new RuntimeException(e);
             }
 
-            var allData = this.bot.getRuntime().getSaveDataManager().getAllBotStateData();
+            var allData = getSaveDataManager().getAllBotStateData();
             allData.forEach((guildId, data) -> {
                 var guild = bot.getJDA().getGuildById(guildId);
 
@@ -63,16 +64,16 @@ public class EventListener extends ListenerAdapter {
                         var chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
                         if (chatChannel == null) return;
 
-                        bot.getRuntime().getTTSManager().setReadAroundChannel(guild, chatChannel);
+                        getTTSManager().setReadAroundChannel(guild, chatChannel);
                         guild.getAudioManager().openAudioConnection(audioChannel);
-                        bot.getRuntime().getTTSManager().connect(guild, audioChannel);
-                        bot.getRuntime().getLogger().info("Reconnected: {}", guild.getName());
+                        getTTSManager().connect(guild, audioChannel);
+                        getITTSLogger().info("Reconnected: {}", guild.getName());
                     } catch (Exception ex) {
-                        bot.getRuntime().getLogger().error("Failed to reconnect: {}", guild.getName());
+                        getITTSLogger().error("Failed to reconnect: {}", guild.getName());
                     }
                 }
             });
-        }, bot.getRuntime().getAsyncWorkerExecutor());
+        }, getAsyncExecutor());
     }
 
     @Override
@@ -82,12 +83,12 @@ public class EventListener extends ListenerAdapter {
 
         if (event.getMember().getUser().getIdLong() == bot.getJDA().getSelfUser().getIdLong()) {
             if (left != null)
-                bot.getRuntime().getTTSManager().disconnect(event.getGuild());
+                getTTSManager().disconnect(event.getGuild());
 
             if (join != null)
-                bot.getRuntime().getTTSManager().connect(event.getGuild(), join);
+                getTTSManager().connect(event.getGuild(), join);
         }
 
-        bot.getRuntime().getTTSManager().onVCEvent(event.getGuild(), event.getMember(), join, left);
+        getTTSManager().onVCEvent(event.getGuild(), event.getMember(), join, left);
     }
 }

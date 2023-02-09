@@ -1,24 +1,29 @@
 package dev.felnull.itts.core.savedata;
 
+import dev.felnull.itts.core.ITTSBaseManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-public class SaveDataManager {
+public class SaveDataManager implements ITTSBaseManager {
     private final SaveDataAccess saveDataAccess;
 
     public SaveDataManager(SaveDataAccess saveDataAccess) {
         this.saveDataAccess = saveDataAccess;
     }
 
-    public boolean init() {
-        if (!saveDataAccess.init())
-            return false;
+    @Override
+    public @NotNull CompletableFuture<?> init() {
+        return CompletableFuture.runAsync(() -> {
+            if (!saveDataAccess.init())
+                throw new RuntimeException("Failed to initialize");
 
-        return true;
+            getITTSLogger().info("Save data setup complete");
+        }, getAsyncExecutor());
     }
 
     @NotNull

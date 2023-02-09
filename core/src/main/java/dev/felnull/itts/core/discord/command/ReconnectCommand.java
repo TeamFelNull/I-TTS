@@ -37,9 +37,9 @@ public class ReconnectCommand extends BaseCommand {
                 } catch (InterruptedException ignored) {
                 }
 
-                getRuntime().getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
+                getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
                 audioManager.openAudioConnection(connectedChannel.asVoiceChannel());
-            }, getRuntime().getAsyncWorkerExecutor());
+            }, getAsyncExecutor());
         } else {
             event.reply("現在VCに接続していません。").setEphemeral(true).queue();
         }

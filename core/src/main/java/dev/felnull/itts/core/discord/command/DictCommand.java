@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -59,8 +58,8 @@ public class DictCommand extends BaseCommand {
         boolean enabled = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
         var enStr = enabled ? "有効" : "無効";
         long guildId = event.getGuild().getIdLong();
-        var dm = ITTSRuntime.getInstance().getDictionaryManager();
-        var sm = ITTSRuntime.getInstance().getSaveDataManager();
+        var dm = getDictionaryManager();
+        var sm = getSaveDataManager();
         var dic = dm.getDictionary(dictId, guildId);
 
         if (dic == null) {
@@ -90,7 +89,7 @@ public class DictCommand extends BaseCommand {
         var fcs = interact.getFocusedOption();
 
         if ("toggle".equals(interact.getSubcommandName()) && "name".equals(fcs.getName())) {
-            var dm = ITTSRuntime.getInstance().getDictionaryManager();
+            var dm = getDictionaryManager();
             event.replyChoices(dm.getAllDictionaries(event.getGuild().getIdLong()).stream()
                     .sorted(Comparator.comparingInt(d -> -StringUtils.getComplementPoint(d.getName(), fcs.getValue())))
                     .map(n -> new Command.Choice(n.getName(), n.getId()))

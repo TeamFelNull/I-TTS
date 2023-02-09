@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public class VoicevoxManager {
@@ -36,8 +37,8 @@ public class VoicevoxManager {
         return configSupplier.get();
     }
 
-    public void init() {
-        balancer.init();
+    public CompletableFuture<?> init() {
+        return balancer.init();
     }
 
     public VoicevoxVoiceCategory getCategory() {

@@ -54,7 +54,7 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        ServerUserData sud = getRuntime().getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
+        ServerUserData sud = getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
         if (!sud.isDeny()) {
             event.reply("読み上げ拒否をされていないユーザです。").setEphemeral(true).queue();
             return;
@@ -65,7 +65,7 @@ public class DenyCommand extends BaseCommand {
     }
 
     private void show(SlashCommandInteractionEvent event) {
-        List<Long> denyUsers = getRuntime().getSaveDataManager().getAllDenyUser(event.getGuild().getIdLong());
+        List<Long> denyUsers = getSaveDataManager().getAllDenyUser(event.getGuild().getIdLong());
 
         if (denyUsers.isEmpty()) {
             event.reply("読み上げ拒否されたユーザは存在しません。").setEphemeral(true).queue();
@@ -90,7 +90,7 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        ServerUserData sud = getRuntime().getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
+        ServerUserData sud = getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
         if (sud.isDeny()) {
             event.reply("すでに読み上げ拒否をされているユーザです。").setEphemeral(true).queue();
             return;

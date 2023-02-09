@@ -7,7 +7,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.apache.commons.lang3.tuple.Pair;
@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VoiceAudioScheduler extends AudioEventAdapter {
+public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntimeUse {
     private final AudioManager audioManager;
     private final VoiceAudioManager voiceAudioManager;
     private final AudioPlayer audioPlayer;
@@ -38,10 +38,10 @@ public class VoiceAudioScheduler extends AudioEventAdapter {
     }
 
     public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
-        String sayText = ITTSRuntime.getInstance().getDictionaryManager().applyDict(saidText.getText(), guildId);
+        String sayText = getDictionaryManager().applyDict(saidText.getText(), guildId);
 
         var vtl = saidText.getVoice().createVoiceTrackLoader(sayText);
-        return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+        return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), getAsyncExecutor());
     }
 
     public void stop() {
@@ -96,6 +96,6 @@ public class VoiceAudioScheduler extends AudioEventAdapter {
             audioPlayer.playTrack(trk.get());
 
 
-        }, ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+        }, getAsyncExecutor());
     }
 }

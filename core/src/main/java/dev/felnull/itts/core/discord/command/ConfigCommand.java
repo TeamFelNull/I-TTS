@@ -72,11 +72,11 @@ public class ConfigCommand extends BaseCommand {
 
     private void show(SlashCommandInteractionEvent event) {
         EmbedBuilder showEmbedBuilder = new EmbedBuilder();
-        showEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
+        showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         showEmbedBuilder.setTitle("現在のコンフィグ");
 
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
-        var vm = getRuntime().getVoiceManager();
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var vm = getVoiceManager();
         var dv = vm.getDefaultVoiceType(event.getGuild().getIdLong());
 
         final boolean inline = true;
@@ -95,8 +95,8 @@ public class ConfigCommand extends BaseCommand {
         var odVc = event.getOption("voice_category", OptionMapping::getAsString);
         var odVt = event.getOption("voice_type", OptionMapping::getAsString);
 
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
-        var vm = getRuntime().getVoiceManager();
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var vm = getVoiceManager();
         var cat = vm.getVoiceCategory(odVc);
 
         if (cat.isEmpty()) {
@@ -124,7 +124,7 @@ public class ConfigCommand extends BaseCommand {
 
     private void readIgnore(SlashCommandInteractionEvent event) {
         var op = event.getOption("regex", OptionMapping::getAsString);
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         String pre = sd.getIgnoreRegex();
         if (!op.equals(pre)) {
@@ -138,14 +138,14 @@ public class ConfigCommand extends BaseCommand {
 
     private void readOverwrite(SlashCommandInteractionEvent event) {
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         boolean pre = sd.isOverwriteAloud();
         String enStr = op ? "有効" : "無効";
 
         if (op != pre) {
             sd.setOverwriteAloud(op);
-            getRuntime().getTTSManager().reload(event.getGuild());
+            getTTSManager().reload(event.getGuild());
 
             event.reply("読み上げの上書きを" + enStr + "にしました。").queue();
         } else {
@@ -155,7 +155,7 @@ public class ConfigCommand extends BaseCommand {
 
     private void needJoin(SlashCommandInteractionEvent event) {
         var op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         boolean pre = sd.isNeedJoin();
         String enStr = op ? "有効" : "無効";
@@ -172,7 +172,7 @@ public class ConfigCommand extends BaseCommand {
     private void nameReadLimit(SlashCommandInteractionEvent event) {
         Integer op = event.getOption("max-count", OptionMapping::getAsInt);
         if (op == null) op = 0;
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         int pre = sd.getNameReadLimit();
         if (op != pre) {
@@ -187,7 +187,7 @@ public class ConfigCommand extends BaseCommand {
     private void readLimit(SlashCommandInteractionEvent event) {
         Integer op = event.getOption("max-count", OptionMapping::getAsInt);
         if (op == null) op = 0;
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         int pre = sd.getReadLimit();
         if (op != pre) {
@@ -202,7 +202,7 @@ public class ConfigCommand extends BaseCommand {
 
     private void notifyMove(SlashCommandInteractionEvent event) {
         var op = Objects.requireNonNull(event.getOption("enable"));
-        var sd = getRuntime().getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         boolean pre = sd.isNotifyMove();
         String enStr = op.getAsBoolean() ? "有効" : "無効";

@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.discord;
 
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.discord.command.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -14,32 +15,28 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
-public class Bot {
+public class Bot implements ITTSRuntimeUse {
     protected final List<BaseCommand> baseCommands = new ArrayList<>();
     private JDA jda;
 
     public Bot() {
     }
 
-    public void init() {
+    public void start() {
         registeringCommands();
 
-        this.jda = JDABuilder.createDefault(getRuntime().getConfigManager().getConfig().getBotToken()).enableIntents(GatewayIntent.MESSAGE_CONTENT).addEventListeners(new EventListener(this)).build();
+        this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken()).enableIntents(GatewayIntent.MESSAGE_CONTENT).addEventListeners(new EventListener(this)).build();
         updateCommands(this.jda);
 
         this.jda.getPresence().setStatus(OnlineStatus.ONLINE);
         updateActivity(this.jda.getPresence());
 
-        ITTSRuntime.getInstance().getTimer().schedule(new TimerTask() {
+        getITTSTimer().schedule(new TimerTask() {
             @Override
             public void run() {
                 updateActivityAsync();
             }
         }, 0, 1000 * 10);
-    }
-
-    public ITTSRuntime getRuntime() {
-        return ITTSRuntime.getInstance();
     }
 
     private void registeringCommands() {
@@ -64,12 +61,12 @@ public class Bot {
     }
 
     public void updateActivityAsync() {
-        CompletableFuture.runAsync(() -> updateActivity(jda.getPresence()), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+        CompletableFuture.runAsync(() -> updateActivity(jda.getPresence()), getAsyncExecutor());
     }
 
     public void updateActivity(Presence presence) {
-        var vstr = ITTSRuntime.getInstance().getVersionText();
-        int ct = ITTSRuntime.getInstance().getTTSManager().getTTSCount();
+        var vstr = getITTSRuntime().getVersionText();
+        int ct = getTTSManager().getTTSCount();
 
         if (ct > 0) {
             presence.setActivity(Activity.listening(vstr + " - " + ct + "個のサーバーで読み上げ"));

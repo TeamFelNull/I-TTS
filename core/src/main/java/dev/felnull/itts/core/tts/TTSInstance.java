@@ -1,17 +1,20 @@
 package dev.felnull.itts.core.tts;
 
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.audio.LoadedSaidText;
 import dev.felnull.itts.core.audio.VoiceAudioScheduler;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.tts.saidtext.VCEventSaidText;
 import net.dv8tion.jda.api.entities.Guild;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class TTSInstance {
+public final class TTSInstance implements ITTSRuntimeUse {
     private static final int MAX_COUNT = 150;
     private static final int LOAD_COUNT = 10;
     private static final int NEXT_WAIT_TIME = 0;
@@ -28,7 +31,7 @@ public final class TTSInstance {
     private final boolean overwriteAloud;
 
     public TTSInstance(Guild guild, long audioChannel, long textChannel, boolean overwriteAloud) {
-        this.voiceAudioScheduler = new VoiceAudioScheduler(guild.getAudioManager(), ITTSRuntime.getInstance().getVoiceAudioManager(), guild.getIdLong());
+        this.voiceAudioScheduler = new VoiceAudioScheduler(guild.getAudioManager(), getVoiceAudioManager(), guild.getIdLong());
         this.audioChannel = audioChannel;
         this.textChannel = textChannel;
         this.overwriteAloud = overwriteAloud;
@@ -131,7 +134,7 @@ public final class TTSInstance {
 
             if (throwable != null) {
                 if (!(throwable instanceof CancellationException))
-                    ITTSRuntime.getInstance().getLogger().error("Failed to load voice audio", throwable);
+                    getITTSLogger().error("Failed to load voice audio", throwable);
 
                 if (!overwriteAloud) {
                     updateQueue();
@@ -157,18 +160,14 @@ public final class TTSInstance {
                             }
                             next.set(true);
                             updateQueue();
-                        }, getExecutor());
+                        }, getAsyncExecutor());
 
                         updateQueue();
                     }
                 });
             }
 
-        }, getExecutor());
-    }
-
-    private Executor getExecutor() {
-        return ITTSRuntime.getInstance().getAsyncWorkerExecutor();
+        }, getAsyncExecutor());
     }
 
     private class LoadedSaidTextEntry {
@@ -181,11 +180,11 @@ public final class TTSInstance {
             this.completableFuture = voiceAudioScheduler.load(saidText);
             this.completableFuture.whenCompleteAsync((loadedSaidText, throwable) -> {
                 failure.set(throwable != null);
-            }, getExecutor());
+            }, getAsyncExecutor());
         }
 
         private void dispose() {
-            completableFuture.thenAcceptAsync(LoadedSaidText::dispose, getExecutor());
+            completableFuture.thenAcceptAsync(LoadedSaidText::dispose, getAsyncExecutor());
         }
 
         public SaidText getSaidText() {

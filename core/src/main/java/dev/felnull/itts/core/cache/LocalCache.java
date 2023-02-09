@@ -2,6 +2,7 @@ package dev.felnull.itts.core.cache;
 
 import com.google.common.hash.HashCode;
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 
 import java.io.File;
 import java.util.TimerTask;
@@ -10,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class LocalCache {
+public class LocalCache implements ITTSRuntimeUse {
     private final AtomicLong lastUseTime = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger useLockCount = new AtomicInteger();
     private final AtomicBoolean runningTimer = new AtomicBoolean();
@@ -61,7 +62,7 @@ public class LocalCache {
         long eqTime = now - lastTime;
 
         if (eqTime >= getCacheTime()) {
-            ITTSRuntime.getInstance().getCacheManager().disposeCache(hashCode);
+            getCacheManager().disposeCache(hashCode);
             return;
         }
 
@@ -69,18 +70,18 @@ public class LocalCache {
     }
 
     private long getCacheTime() {
-        return ITTSRuntime.getInstance().getConfigManager().getConfig().getCacheTime();
+        return getConfigManager().getConfig().getCacheTime();
     }
 
     private void scheduleCheckTimer(Runnable runnable, long delay) {
         if (!runningTimer.compareAndSet(false, true))
             return;
 
-        ITTSRuntime.getInstance().getTimer().schedule(new TimerTask() {
+       getITTSTimer().schedule(new TimerTask() {
             @Override
             public void run() {
                 runningTimer.set(false);
-                CompletableFuture.runAsync(runnable, ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+                CompletableFuture.runAsync(runnable, getAsyncExecutor());
             }
         }, delay);
     }

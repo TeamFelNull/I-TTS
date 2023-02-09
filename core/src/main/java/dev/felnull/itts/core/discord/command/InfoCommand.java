@@ -1,7 +1,6 @@
 package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.fnjl.util.FNStringUtil;
-import dev.felnull.itts.core.ITTSRuntime;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -40,9 +39,9 @@ public class InfoCommand extends BaseCommand {
 
     private void about(SlashCommandInteractionEvent e) {
         EmbedBuilder aboutEmbedBuilder = new EmbedBuilder();
-        aboutEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
+        aboutEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         aboutEmbedBuilder.setTitle("Ikisugi TTS BOT");
-        aboutEmbedBuilder.setDescription(getRuntime().getVersionText());
+        aboutEmbedBuilder.setDescription(getITTSRuntime().getVersionText());
         aboutEmbedBuilder.addField("License", "GNU LGPLv3", false);
         aboutEmbedBuilder.setFooter("Developed by FelNull", "https://avatars.githubusercontent.com/u/59995376?s=200&v=4");
 
@@ -51,7 +50,7 @@ public class InfoCommand extends BaseCommand {
 
     private void oss(SlashCommandInteractionEvent e) {
         EmbedBuilder ossEmbedBuilder = new EmbedBuilder();
-        ossEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
+        ossEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
 
         ossEmbedBuilder.setTitle("OSSクレジット");
 
@@ -66,13 +65,13 @@ public class InfoCommand extends BaseCommand {
 
     private void work(SlashCommandInteractionEvent e) {
         EmbedBuilder workEmbedBuilder = new EmbedBuilder();
-        workEmbedBuilder.setColor(getRuntime().getConfigManager().getConfig().getThemeColor());
+        workEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
 
         workEmbedBuilder.setTitle("稼働情報");
 
-        workEmbedBuilder.addField("稼働時間", FNStringUtil.getTimeFormat(System.currentTimeMillis() - ITTSRuntime.getInstance().getStartupTime()), false);
+        workEmbedBuilder.addField("稼働時間", FNStringUtil.getTimeFormat(System.currentTimeMillis() - getITTSRuntime().getStartupTime()), false);
         workEmbedBuilder.addField("参加サーバー数", e.getJDA().getGuilds().size() + "個", false);
-        workEmbedBuilder.addField("読み上げサーバー数", getRuntime().getTTSManager().getTTSCount() + "個", false);
+        workEmbedBuilder.addField("読み上げサーバー数", getTTSManager().getTTSCount() + "個", false);
 
         e.replyEmbeds(workEmbedBuilder.build()).setEphemeral(true).queue();
     }

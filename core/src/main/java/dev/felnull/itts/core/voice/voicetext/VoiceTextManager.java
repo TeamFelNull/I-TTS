@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNStringUtil;
-import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.voice.VoiceType;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-public class VoiceTextManager {
+public class VoiceTextManager implements ITTSRuntimeUse {
     private static final String API_URL = "https://api.voicetext.jp/v1/tts";
     private static final Gson GSON = new Gson();
     private final VoiceTextVoiceCategory category = new VoiceTextVoiceCategory();
@@ -33,11 +33,11 @@ public class VoiceTextManager {
     }
 
     private String getApiKey() {
-        return ITTSRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
+        return getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
     }
 
     public boolean isAvailable() {
-        return ITTSRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().isEnable();
+        return getConfigManager().getConfig().getVoiceTextConfig().isEnable();
     }
 
     public InputStream openVoiceStream(@NotNull VoiceTextSpeaker speaker, @NotNull String text) throws IOException, InterruptedException {
