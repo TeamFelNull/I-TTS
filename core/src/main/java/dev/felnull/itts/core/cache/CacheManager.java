@@ -2,7 +2,7 @@ package dev.felnull.itts.core.cache;
 
 import com.google.common.hash.HashCode;
 import dev.felnull.fnjl.util.FNDataUtil;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +89,7 @@ public class CacheManager {
     }
 
     private Executor getExecutor() {
-        return TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor();
+        return ITTSRuntime.getInstance().getAsyncWorkerExecutor();
     }
 
     protected void disposeCache(HashCode hashCode) {

@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.voice.voicevox;
 
 import com.google.common.collect.ImmutableList;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Logger;
 
@@ -51,10 +51,10 @@ public class VoicevoxBalancer {
             availableSpeakers = cr.getRight();
         }
 
-        TTSVoiceRuntime.getInstance().getTimer().schedule(new TimerTask() {
+        ITTSRuntime.getInstance().getTimer().schedule(new TimerTask() {
             @Override
             public void run() {
-                CompletableFuture.runAsync(() -> check(), TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
+                CompletableFuture.runAsync(() -> check(), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
             }
         }, manager.getConfig().getCheckTime());
     }
@@ -99,11 +99,11 @@ public class VoicevoxBalancer {
     }
 
     private Executor getExecutor() {
-        return TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor();
+        return ITTSRuntime.getInstance().getAsyncWorkerExecutor();
     }
 
     private Logger getLogger() {
-        return TTSVoiceRuntime.getInstance().getLogger();
+        return ITTSRuntime.getInstance().getLogger();
     }
 
     public boolean isAvailable() {

@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.voice.voicetext;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.voice.CachedVoice;
 import dev.felnull.itts.core.voice.VoiceType;
 
@@ -26,6 +26,6 @@ public class VoiceTextVoice extends CachedVoice {
     }
 
     private VoiceTextManager getVoiceTextManager() {
-        return TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceTextManager();
+        return ITTSRuntime.getInstance().getVoiceManager().getVoiceTextManager();
     }
 }

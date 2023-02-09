@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.voice.voicetext;
 
 import com.google.common.base.CaseFormat;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.voice.Voice;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -39,6 +39,6 @@ public class VoiceTextVoiceType implements VoiceType {
     }
 
     private VoiceTextManager getVoiceTextManager() {
-        return TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceTextManager();
+        return ITTSRuntime.getInstance().getVoiceManager().getVoiceTextManager();
     }
 }

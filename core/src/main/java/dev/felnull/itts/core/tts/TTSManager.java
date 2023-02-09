@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.tts;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.Guild;
@@ -24,7 +24,7 @@ public class TTSManager {
 
     public void setReadAroundChannel(@NotNull Guild guild, @NotNull MessageChannel textChannel) {
         long guildId = guild.getIdLong();
-        var data = TTSVoiceRuntime.getInstance().getSaveDataManager().getBotStateData(guildId);
+        var data = ITTSRuntime.getInstance().getSaveDataManager().getBotStateData(guildId);
         data.setReadAroundTextChannel(textChannel.getIdLong());
     }
 
@@ -40,8 +40,8 @@ public class TTSManager {
             disconnect(guild);
         }
 
-        var data = TTSVoiceRuntime.getInstance().getSaveDataManager().getBotStateData(guildId);
-        var serverData = TTSVoiceRuntime.getInstance().getSaveDataManager().getServerData(guildId);
+        var data = ITTSRuntime.getInstance().getSaveDataManager().getBotStateData(guildId);
+        var serverData = ITTSRuntime.getInstance().getSaveDataManager().getServerData(guildId);
         instances.put(guildId, new TTSInstance(guild, channelId, data.getReadAroundTextChannel(), serverData.isOverwriteAloud()));
         data.setConnectedAudioChannel(channelId);
     }
@@ -56,7 +56,7 @@ public class TTSManager {
         instance.dispose();
         instances.remove(guildId);
 
-        var data = TTSVoiceRuntime.getInstance().getSaveDataManager().getBotStateData(guildId);
+        var data = ITTSRuntime.getInstance().getSaveDataManager().getBotStateData(guildId);
         data.setConnectedAudioChannel(-1);
     }
 
@@ -90,7 +90,7 @@ public class TTSManager {
         var ti = getTTSInstance(guildId);
         if (ti == null || ti.getTextChannel() != textChannelId) return;
 
-        var sm = TTSVoiceRuntime.getInstance().getSaveDataManager();
+        var sm = ITTSRuntime.getInstance().getSaveDataManager();
 
         if (sm.getServerData(guildId).isNeedJoin()) {
             var vs = member.getVoiceState();
@@ -100,7 +100,7 @@ public class TTSManager {
             if (vc == null || vc.getIdLong() != ti.getAudioChannel()) return;
         }
 
-        var vt = TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
+        var vt = ITTSRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) return;
 
         ti.sayText(SaidText.literal(vt.createVoice(guildId, userId), message));
@@ -115,10 +115,10 @@ public class TTSManager {
         if (ti == null || !((join != null && ti.getAudioChannel() == join.getIdLong()) || (left != null && ti.getAudioChannel() == left.getIdLong())))
             return;
 
-        var sm = TTSVoiceRuntime.getInstance().getSaveDataManager();
+        var sm = ITTSRuntime.getInstance().getSaveDataManager();
         if (!sm.getServerData(guildId).isNotifyMove()) return;
 
-        var vt = TTSVoiceRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
+        var vt = ITTSRuntime.getInstance().getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) return;
 
         if (join != null && join.getIdLong() == ti.getAudioChannel()) {

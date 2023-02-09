@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -34,7 +34,7 @@ public abstract class BaseCommand {
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
     }
 
-    protected TTSVoiceRuntime getRuntime() {
-        return TTSVoiceRuntime.getInstance();
+    protected ITTSRuntime getRuntime() {
+        return ITTSRuntime.getInstance();
     }
 }

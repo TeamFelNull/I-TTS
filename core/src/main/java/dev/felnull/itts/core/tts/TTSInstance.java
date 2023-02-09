@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.tts;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.audio.LoadedSaidText;
 import dev.felnull.itts.core.audio.VoiceAudioScheduler;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
@@ -28,7 +28,7 @@ public final class TTSInstance {
     private final boolean overwriteAloud;
 
     public TTSInstance(Guild guild, long audioChannel, long textChannel, boolean overwriteAloud) {
-        this.voiceAudioScheduler = new VoiceAudioScheduler(guild.getAudioManager(), TTSVoiceRuntime.getInstance().getVoiceAudioManager(), guild.getIdLong());
+        this.voiceAudioScheduler = new VoiceAudioScheduler(guild.getAudioManager(), ITTSRuntime.getInstance().getVoiceAudioManager(), guild.getIdLong());
         this.audioChannel = audioChannel;
         this.textChannel = textChannel;
         this.overwriteAloud = overwriteAloud;
@@ -131,7 +131,7 @@ public final class TTSInstance {
 
             if (throwable != null) {
                 if (!(throwable instanceof CancellationException))
-                    TTSVoiceRuntime.getInstance().getLogger().error("Failed to load voice audio", throwable);
+                    ITTSRuntime.getInstance().getLogger().error("Failed to load voice audio", throwable);
 
                 if (!overwriteAloud) {
                     updateQueue();
@@ -168,7 +168,7 @@ public final class TTSInstance {
     }
 
     private Executor getExecutor() {
-        return TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor();
+        return ITTSRuntime.getInstance().getAsyncWorkerExecutor();
     }
 
     private class LoadedSaidTextEntry {

@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.dict;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary {
 
     @Override
     protected @NotNull Map<Pattern, Function<String, String>> getReplaces() {
-        return TTSVoiceRuntime.getInstance().getSaveDataManager().getAllGlobalDictData().stream()
+        return ITTSRuntime.getInstance().getSaveDataManager().getAllGlobalDictData().stream()
                 .map(n -> Pair.of(Pattern.compile(n.getRead()), n.getTarget()))
                 .collect(Collectors.toMap(Pair::getLeft, patternStringPair -> n -> patternStringPair.getRight()));
     }

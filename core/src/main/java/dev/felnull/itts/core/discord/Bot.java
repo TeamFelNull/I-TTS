@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.discord;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.discord.command.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -30,7 +30,7 @@ public class Bot {
         this.jda.getPresence().setStatus(OnlineStatus.ONLINE);
         updateActivity(this.jda.getPresence());
 
-        TTSVoiceRuntime.getInstance().getTimer().schedule(new TimerTask() {
+        ITTSRuntime.getInstance().getTimer().schedule(new TimerTask() {
             @Override
             public void run() {
                 updateActivityAsync();
@@ -38,8 +38,8 @@ public class Bot {
         }, 0, 1000 * 10);
     }
 
-    public TTSVoiceRuntime getRuntime() {
-        return TTSVoiceRuntime.getInstance();
+    public ITTSRuntime getRuntime() {
+        return ITTSRuntime.getInstance();
     }
 
     private void registeringCommands() {
@@ -64,12 +64,12 @@ public class Bot {
     }
 
     public void updateActivityAsync() {
-        CompletableFuture.runAsync(() -> updateActivity(jda.getPresence()), TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
+        CompletableFuture.runAsync(() -> updateActivity(jda.getPresence()), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
     }
 
     public void updateActivity(Presence presence) {
-        var vstr = TTSVoiceRuntime.getInstance().getVersionText();
-        int ct = TTSVoiceRuntime.getInstance().getTTSManager().getTTSCount();
+        var vstr = ITTSRuntime.getInstance().getVersionText();
+        int ct = ITTSRuntime.getInstance().getTTSManager().getTTSCount();
 
         if (ct > 0) {
             presence.setActivity(Activity.listening(vstr + " - " + ct + "個のサーバーで読み上げ"));

@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.cache;
 
 import com.google.common.hash.HashCode;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 
 import java.io.File;
 import java.util.TimerTask;
@@ -61,7 +61,7 @@ public class LocalCache {
         long eqTime = now - lastTime;
 
         if (eqTime >= getCacheTime()) {
-            TTSVoiceRuntime.getInstance().getCacheManager().disposeCache(hashCode);
+            ITTSRuntime.getInstance().getCacheManager().disposeCache(hashCode);
             return;
         }
 
@@ -69,18 +69,18 @@ public class LocalCache {
     }
 
     private long getCacheTime() {
-        return TTSVoiceRuntime.getInstance().getConfigManager().getConfig().getCacheTime();
+        return ITTSRuntime.getInstance().getConfigManager().getConfig().getCacheTime();
     }
 
     private void scheduleCheckTimer(Runnable runnable, long delay) {
         if (!runningTimer.compareAndSet(false, true))
             return;
 
-        TTSVoiceRuntime.getInstance().getTimer().schedule(new TimerTask() {
+        ITTSRuntime.getInstance().getTimer().schedule(new TimerTask() {
             @Override
             public void run() {
                 runningTimer.set(false);
-                CompletableFuture.runAsync(runnable, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
+                CompletableFuture.runAsync(runnable, ITTSRuntime.getInstance().getAsyncWorkerExecutor());
             }
         }, delay);
     }

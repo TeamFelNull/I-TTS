@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.fnjl.util.FNStringUtil;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -70,7 +70,7 @@ public class InfoCommand extends BaseCommand {
 
         workEmbedBuilder.setTitle("稼働情報");
 
-        workEmbedBuilder.addField("稼働時間", FNStringUtil.getTimeFormat(System.currentTimeMillis() - TTSVoiceRuntime.getInstance().getStartupTime()), false);
+        workEmbedBuilder.addField("稼働時間", FNStringUtil.getTimeFormat(System.currentTimeMillis() - ITTSRuntime.getInstance().getStartupTime()), false);
         workEmbedBuilder.addField("参加サーバー数", e.getJDA().getGuilds().size() + "個", false);
         workEmbedBuilder.addField("読み上げサーバー数", getRuntime().getTTSManager().getTTSCount() + "個", false);
 

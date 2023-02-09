@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.util;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
@@ -54,11 +54,11 @@ public abstract class ApoptosisObject {
         var tsk = new TimerTask() {
             @Override
             public void run() {
-                CompletableFuture.runAsync(runnable, TTSVoiceRuntime.getInstance().getAsyncWorkerExecutor());
+                CompletableFuture.runAsync(runnable, ITTSRuntime.getInstance().getAsyncWorkerExecutor());
             }
         };
         task.set(tsk);
-        TTSVoiceRuntime.getInstance().getTimer().schedule(tsk, delay);
+        ITTSRuntime.getInstance().getTimer().schedule(tsk, delay);
     }
 
 }

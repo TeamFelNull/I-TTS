@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.discord.command;
 
 import com.google.common.collect.ImmutableList;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.util.StringUtils;
 import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -46,7 +46,7 @@ public class VoiceCommand extends BaseCommand {
         Objects.requireNonNull(event.getGuild());
 
         var vm = getRuntime().getVoiceManager();
-        var sdm = TTSVoiceRuntime.getInstance().getSaveDataManager();
+        var sdm = ITTSRuntime.getInstance().getSaveDataManager();
         var serverUserData = sdm.getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
 
         if ("change".equals(event.getSubcommandName())) {
@@ -133,7 +133,7 @@ public class VoiceCommand extends BaseCommand {
         var fcs = interact.getFocusedOption();
         var val = fcs.getValue();
 
-        var vm = TTSVoiceRuntime.getInstance().getVoiceManager();
+        var vm = ITTSRuntime.getInstance().getVoiceManager();
         var catAndTypes = vm.getAvailableVoiceTypes();
 
         if ("voice_category".equals(fcs.getName())) {

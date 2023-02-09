@@ -24,9 +24,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
-public class TTSVoiceRuntime {
-    private static TTSVoiceRuntime INSTANCE;
-    private final Logger logger = LogManager.getLogger(TTSVoiceRuntime.class);
+public class ITTSRuntime {
+    private static ITTSRuntime INSTANCE;
+    private final Logger logger = LogManager.getLogger(ITTSRuntime.class);
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-%d").daemon(true).build());
     private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
     private final Timer timer = new Timer("ikisugi-timer", true);
@@ -42,12 +42,12 @@ public class TTSVoiceRuntime {
     private final Bot bot;
     private long startupTime;
 
-    private TTSVoiceRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
+    private ITTSRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
         if (INSTANCE != null)
-            throw new IllegalStateException("TTSVoiceRuntime must be a singleton instance/TTSVoiceRuntimeはシングルトンインスタンスである必要があります");
+            throw new IllegalStateException("ITTSRuntime must be a singleton instance/ITTSRuntimeはシングルトンインスタンスである必要があります");
         INSTANCE = this;
 
-        var v = TTSVoiceRuntime.class.getPackage().getImplementationVersion();
+        var v = ITTSRuntime.class.getPackage().getImplementationVersion();
         this.developmentEnvironment = v == null;
         this.version = Objects.requireNonNullElse(v, "None");
 
@@ -57,15 +57,15 @@ public class TTSVoiceRuntime {
         this.cacheManager = new CacheManager(globalCacheAccessFactory);
     }
 
-    public static TTSVoiceRuntime getInstance() {
+    public static ITTSRuntime getInstance() {
         if (INSTANCE == null)
             throw new IllegalStateException("Instance does not exist/インスタンスが存在しません");
 
         return INSTANCE;
     }
 
-    public static TTSVoiceRuntime newRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
-        return new TTSVoiceRuntime(configAccess, saveDataAccess, globalCacheAccessFactory);
+    public static ITTSRuntime newRuntime(@NotNull ConfigAccess configAccess, @NotNull SaveDataAccess saveDataAccess, @Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
+        return new ITTSRuntime(configAccess, saveDataAccess, globalCacheAccessFactory);
     }
 
     public void execute() {

@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.config;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 
 public class ConfigManager {
     private final ConfigAccess configAccess;
@@ -16,7 +16,7 @@ public class ConfigManager {
             return false;
 
         if (this.config.getBotToken().isEmpty()) {
-            TTSVoiceRuntime.getInstance().getLogger().error("Bot token is empty/Botトークンが空です");
+            ITTSRuntime.getInstance().getLogger().error("Bot token is empty/Botトークンが空です");
             return false;
         }
 

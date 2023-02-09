@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.voice;
 
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
@@ -25,7 +25,7 @@ public class VoiceManager {
     }
 
     private ConfigManager getConfigManager() {
-        return TTSVoiceRuntime.getInstance().getConfigManager();
+        return ITTSRuntime.getInstance().getConfigManager();
     }
 
     public void init() {
@@ -86,7 +86,7 @@ public class VoiceManager {
 
     @Nullable
     public VoiceType getDefaultVoiceType(long guildId) {
-        var defaultVt = TTSVoiceRuntime.getInstance().getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
+        var defaultVt = ITTSRuntime.getInstance().getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
 
         if (defaultVt == null)
             return getDefaultVoiceType();
@@ -96,7 +96,7 @@ public class VoiceManager {
 
     @Nullable
     public VoiceType getVoiceType(long guildId, long userId) {
-        var sdm = TTSVoiceRuntime.getInstance().getSaveDataManager();
+        var sdm = ITTSRuntime.getInstance().getSaveDataManager();
         var serverUserData = sdm.getServerUserData(guildId, userId);
         var vt = getVoiceType(serverUserData.getVoiceType());
 

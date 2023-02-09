@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNStringUtil;
-import dev.felnull.itts.core.TTSVoiceRuntime;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.voice.VoiceType;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +33,11 @@ public class VoiceTextManager {
     }
 
     private String getApiKey() {
-        return TTSVoiceRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
+        return ITTSRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
     }
 
     public boolean isAvailable() {
-        return TTSVoiceRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().isEnable();
+        return ITTSRuntime.getInstance().getConfigManager().getConfig().getVoiceTextConfig().isEnable();
     }
 
     public InputStream openVoiceStream(@NotNull VoiceTextSpeaker speaker, @NotNull String text) throws IOException, InterruptedException {
