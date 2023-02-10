@@ -223,6 +223,6 @@ public class ConfigCommand extends BaseCommand {
 
         if (!"default-voice".equals(interact.getSubcommandName())) return;
 
-        VoiceCommand.voiceSelectComplete(event, false);
+        VoiceCommand.voiceSelectComplete(event, null, false);
     }
 }

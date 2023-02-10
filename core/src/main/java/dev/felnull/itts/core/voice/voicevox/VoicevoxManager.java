@@ -88,7 +88,7 @@ public class VoicevoxManager {
             var req = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .version(HttpClient.Version.HTTP_1_1)
-                    .timeout(Duration.of(3000, ChronoUnit.MILLIS))
+                    .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .build();
             var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
@@ -108,7 +108,8 @@ public class VoicevoxManager {
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(qry)))
-                    .version(HttpClient.Version.HTTP_1_1).build();
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .build();
 
             var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
 

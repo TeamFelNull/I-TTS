@@ -46,8 +46,7 @@ public class DenyCommand extends BaseCommand {
     }
 
     private void remove(SlashCommandInteractionEvent event) {
-        User user = event.getOption("user", OptionMapping::getAsUser);
-        Objects.requireNonNull(user);
+        User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
 
         if (user.isBot()) {
             event.reply(DiscordUtils.getName(user) + "はBOTです。").setEphemeral(true).queue();

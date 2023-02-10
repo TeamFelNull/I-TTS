@@ -2,9 +2,12 @@ package dev.felnull.itts.core.discord.command;
 
 import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.util.DiscordUtils;
 import dev.felnull.itts.core.util.StringUtils;
 import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -46,47 +49,11 @@ public class VoiceCommand extends BaseCommand {
         Objects.requireNonNull(event.getGuild());
 
         var vm = getVoiceManager();
-        var sdm = getSaveDataManager();
-        var serverUserData = sdm.getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
 
         if ("change".equals(event.getSubcommandName())) {
-            var odVc = Objects.requireNonNull(event.getOption("voice_category"));
-            var odVt = Objects.requireNonNull(event.getOption("voice_type"));
-
-            var cat = vm.getVoiceCategory(odVc.getAsString());
-
-            if (cat.isEmpty()) {
-                event.reply("存在しない読み上げカテゴリーです。").setEphemeral(true).queue();
-                return;
-            }
-
-            var vt = vm.getVoiceType(odVt.getAsString());
-
-            if (vt.isEmpty()) {
-                event.reply("存在しない読み上げタイプです。").setEphemeral(true).queue();
-                return;
-            }
-
-            if (vt.get().getId().equals(serverUserData.getVoiceType())) {
-                event.reply("自分の読み上げ音声タイプは変更されませんでした。").setEphemeral(true).queue();
-                return;
-            }
-
-            serverUserData.setVoiceType(vt.get().getId());
-
-            event.reply("自分の読み上げ音声タイプを" + vt.get().getName() + "に変更しました。").setEphemeral(true).queue();
+            change(event, null);
         } else if ("check".equals(event.getSubcommandName())) {
-            var vt = getVoiceManager().getVoiceType(serverUserData.getVoiceType());
-
-            String type = vt.map(VoiceType::getName).orElseGet(() -> {
-                var dvt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
-                if (dvt != null)
-                    return dvt.getName() + " [デフォルト]";
-
-                return "無効";
-            });
-
-            event.reply("自分の現在の読み上げタイプは" + type + "です。").setEphemeral(true).queue();
+            check(event, null);
         } else if ("show".equals(event.getSubcommandName())) {
             EmbedBuilder showEmbedBuilder = new EmbedBuilder();
             showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
@@ -117,6 +84,64 @@ public class VoiceCommand extends BaseCommand {
         }
     }
 
+    protected static void change(SlashCommandInteractionEvent event, User user) {
+        boolean mine = user == null;
+        if (mine)
+            user = event.getUser();
+
+        var sdm = ITTSRuntime.getInstance().getSaveDataManager();
+
+        var serverUserData = sdm.getServerUserData(event.getGuild().getIdLong(), user.getIdLong());
+        var odVc = Objects.requireNonNull(event.getOption("voice_category"));
+        var odVt = Objects.requireNonNull(event.getOption("voice_type"));
+
+        var vm = ITTSRuntime.getInstance().getVoiceManager();
+        var cat = vm.getVoiceCategory(odVc.getAsString());
+
+        if (cat.isEmpty()) {
+            event.reply("存在しない読み上げカテゴリーです。").setEphemeral(true).queue();
+            return;
+        }
+
+        var vt = vm.getVoiceType(odVt.getAsString());
+
+        if (vt.isEmpty()) {
+            event.reply("存在しない読み上げタイプです。").setEphemeral(true).queue();
+            return;
+        }
+
+        if (vt.get().getId().equals(serverUserData.getVoiceType())) {
+            event.reply("自分の読み上げ音声タイプは変更されませんでした。").setEphemeral(true).queue();
+            return;
+        }
+
+        serverUserData.setVoiceType(vt.get().getId());
+
+        String userName = mine ? "自分" : DiscordUtils.getName(user);
+        event.reply(userName + "の読み上げ音声タイプを" + vt.get().getName() + "に変更しました。").setEphemeral(mine).queue();
+    }
+
+    protected static void check(SlashCommandInteractionEvent event, User user) {
+        boolean mine = user == null;
+        if (mine)
+            user = event.getUser();
+
+        ServerUserData serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), user.getIdLong());
+        var vm = ITTSRuntime.getInstance().getVoiceManager();
+        Optional<VoiceType> vt = vm.getVoiceType(serverUserData.getVoiceType());
+
+        String type = vt.map(VoiceType::getName).orElseGet(() -> {
+            var dvt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+            if (dvt != null)
+                return dvt.getName() + " [デフォルト]";
+
+            return "無効";
+        });
+
+        String userName = mine ? "自分" : DiscordUtils.getName(user);
+        event.reply(userName + "の現在の読み上げタイプは" + type + "です。").setEphemeral(mine).queue();
+    }
+
     @Override
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
         Objects.requireNonNull(event.getGuild());
@@ -124,10 +149,13 @@ public class VoiceCommand extends BaseCommand {
 
         if (!"change".equals(interact.getSubcommandName())) return;
 
-        voiceSelectComplete(event, true);
+        voiceSelectComplete(event, null, true);
     }
 
-    protected static void voiceSelectComplete(CommandAutoCompleteInteractionEvent event, boolean showUsed) {
+    protected static void voiceSelectComplete(CommandAutoCompleteInteractionEvent event, User user, boolean showUsed) {
+        if (user == null)
+            user = event.getUser();
+
         var interact = event.getInteraction();
 
         var fcs = interact.getFocusedOption();
@@ -145,7 +173,7 @@ public class VoiceCommand extends BaseCommand {
                     .toList()).queue();
 
         } else if ("voice_type".equals(fcs.getName())) {
-            var currentVt = showUsed ? vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong()) : null;
+            var currentVt = showUsed ? vm.getVoiceType(event.getGuild().getIdLong(), user.getIdLong()) : null;
 
             var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
 
