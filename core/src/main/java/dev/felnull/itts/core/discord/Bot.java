@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.discord;
 
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.discord.command.*;
 import net.dv8tion.jda.api.JDA;
@@ -25,7 +24,11 @@ public class Bot implements ITTSRuntimeUse {
     public void start() {
         registeringCommands();
 
-        this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken()).enableIntents(GatewayIntent.MESSAGE_CONTENT).addEventListeners(new EventListener(this)).build();
+        this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                .addEventListeners(new EventListener(this))
+                .build();
+
         updateCommands(this.jda);
 
         this.jda.getPresence().setStatus(OnlineStatus.ONLINE);
@@ -50,6 +53,7 @@ public class Bot implements ITTSRuntimeUse {
         registerCommand(new DenyCommand());
         registerCommand(new AdminCommand());
         registerCommand(new DictCommand());
+        registerCommand(new SkipCommand());
     }
 
     private void registerCommand(BaseCommand command) {

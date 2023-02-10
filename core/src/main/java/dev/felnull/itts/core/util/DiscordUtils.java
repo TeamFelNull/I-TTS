@@ -1,28 +1,41 @@
 package dev.felnull.itts.core.util;
 
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class DiscordUtils {
-    /**
-     * チャンネルのメンションを作成する
-     *
-     * @param channel チャンネル
-     * @return チャンネルメンションテキスト
-     */
+
     @NotNull
-    public static String createChannelMention(@NotNull Channel channel) {
-        return "<#" + channel.getId() + ">";
+    public static String getName(Member member) {
+        String nick = member.getNickname();
+        if (nick != null)
+            return escapeMention(nick);
+
+        return getName(member.getUser());
+    }
+
+    @NotNull
+    public static String getName(@Nullable Guild guild, User user) {
+
+        if (guild != null) {
+            Member member = guild.getMember(user);
+            if (member != null)
+                return getName(member);
+        }
+
+        return getName(user);
     }
 
     @NotNull
     public static String getName(User user) {
-        return mentionEscape(user.getName());
+        return escapeMention(user.getName());
     }
 
-    public static String mentionEscape(String txt) {
+    public static String escapeMention(String txt) {
         if (txt == null) return null;
         txt = Message.MentionType.EVERYONE.getPattern().matcher(txt).replaceAll(n -> "everyone");
         txt = Message.MentionType.HERE.getPattern().matcher(txt).replaceAll(n -> "here");

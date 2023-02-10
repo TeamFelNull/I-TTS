@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.tts;
 
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.voice.Voice;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class TTSManager implements ITTSRuntimeUse {
     private final Map<Long, TTSInstance> instances = new ConcurrentHashMap<>();
@@ -92,6 +92,13 @@ public class TTSManager implements ITTSRuntimeUse {
         if (ti == null || ti.getTextChannel() != textChannelId) return;
 
         var sm = getSaveDataManager();
+
+        String ignoreRegex = sm.getServerData(guildId).getIgnoreRegex();
+        if (ignoreRegex != null) {
+            Pattern ignorePattern = Pattern.compile(ignoreRegex);
+            if (ignorePattern.matcher(message).matches())
+                return;
+        }
 
         if (sm.getServerData(guildId).isNeedJoin()) {
             var vs = member.getVoiceState();

@@ -117,7 +117,7 @@ public class VoiceCommand extends BaseCommand {
 
         serverUserData.setVoiceType(vt.get().getId());
 
-        String userName = mine ? "自分" : DiscordUtils.getName(user);
+        String userName = mine ? "自分" : DiscordUtils.getName(event.getGuild(), user);
         event.reply(userName + "の読み上げ音声タイプを" + vt.get().getName() + "に変更しました。").setEphemeral(mine).queue();
     }
 
@@ -138,7 +138,7 @@ public class VoiceCommand extends BaseCommand {
             return "無効";
         });
 
-        String userName = mine ? "自分" : DiscordUtils.getName(user);
+        String userName = mine ? "自分" : DiscordUtils.getName(event.getGuild(), user);
         event.reply(userName + "の現在の読み上げタイプは" + type + "です。").setEphemeral(mine).queue();
     }
 

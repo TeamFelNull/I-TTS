@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
+import dev.felnull.itts.core.util.TTSUtils;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -39,6 +40,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
 
     public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
         String sayText = getDictionaryManager().applyDict(saidText.getText(), guildId);
+        sayText = TTSUtils.roundText(guildId, sayText, false);
 
         var vtl = saidText.getVoice().createVoiceTrackLoader(sayText);
         return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), getAsyncExecutor());
@@ -63,39 +65,43 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
         }
     }
 
-
     public void test() {
-        CompletableFuture.runAsync(() -> {
-            AtomicReference<AudioTrack> trk = new AtomicReference<>();
+        //CompletableFuture.runAsync(() -> {
+        // audioPlayer.stopTrack();
 
-            try {
-                voiceAudioManager.getAudioPlayerManager().loadItem("./1e62b6541e6f335a222f3cc37df47cd8", new AudioLoadResultHandler() {
-                    @Override
-                    public void trackLoaded(AudioTrack track) {
-                        trk.set(track);
-                    }
+        long st = System.currentTimeMillis();
 
-                    @Override
-                    public void playlistLoaded(AudioPlaylist playlist) {
+        AtomicReference<AudioTrack> trk = new AtomicReference<>();
 
-                    }
+        try {
+            voiceAudioManager.getAudioPlayerManager().loadItem("./TEST.wav", new AudioLoadResultHandler() {
+                @Override
+                public void trackLoaded(AudioTrack track) {
+                    trk.set(track);
+                }
 
-                    @Override
-                    public void noMatches() {
+                @Override
+                public void playlistLoaded(AudioPlaylist playlist) {
 
-                    }
+                }
 
-                    @Override
-                    public void loadFailed(FriendlyException exception) {
+                @Override
+                public void noMatches() {
 
-                    }
-                }).get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-            audioPlayer.playTrack(trk.get());
+                }
 
+                @Override
+                public void loadFailed(FriendlyException exception) {
 
-        }, getAsyncExecutor());
+                }
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        audioPlayer.startTrack(trk.get(), false);
+
+        System.out.println(System.currentTimeMillis() - st);
+
+        //   }, getAsyncExecutor());
     }
 }

@@ -63,10 +63,10 @@ public class AdminCommand extends BaseCommand {
 
         if ("reset".equals(name)) {
             sud.setNickName(null);
-            event.reply(DiscordUtils.getName(user) + "の読み上げユーザ名をリセットしました。").queue();
+            event.reply(DiscordUtils.getName(event.getGuild(), user) + "の読み上げユーザ名をリセットしました。").queue();
         } else {
             sud.setNickName(name);
-            event.reply(DiscordUtils.getName(user) + "の読み上げユーザ名を変更しました。").queue();
+            event.reply(DiscordUtils.getName(event.getGuild(), user) + "の読み上げユーザ名を変更しました。").queue();
         }
     }
 

@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
@@ -59,13 +58,14 @@ public class JoinCommand extends BaseCommand {
             audioManager.openAudioConnection(joinTargetChannel);
         } catch (InsufficientPermissionException ex) {
             if (ex.getPermission() == Permission.VOICE_CONNECT) {
-                event.reply(DiscordUtils.createChannelMention(joinTargetChannel) + "に接続する権限がありません。").setEphemeral(true).queue();
+
+                event.reply(joinTargetChannel.getAsMention() + "に接続する権限がありません。").setEphemeral(true).queue();
             } else {
-                event.reply(DiscordUtils.createChannelMention(joinTargetChannel) + "接続に失敗しました。").setEphemeral(true).queue();
+                event.reply(joinTargetChannel.getAsMention() + "接続に失敗しました。").setEphemeral(true).queue();
             }
             return;
         }
 
-        event.reply(DiscordUtils.createChannelMention(joinTargetChannel) + "に接続しました。").queue();
+        event.reply(joinTargetChannel.getAsMention() + "に接続しました。").queue();
     }
 }

@@ -36,7 +36,6 @@ public class EventListener extends ListenerAdapter implements ITTSRuntimeUse {
                 .forEach(r -> r.autoCompleteInteraction(event));
     }
 
-
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getAuthor(), event.getMember(), event.getMessage().getContentDisplay());
@@ -75,6 +74,7 @@ public class EventListener extends ListenerAdapter implements ITTSRuntimeUse {
             });
         }, getAsyncExecutor());
     }
+
 
     @Override
     public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {

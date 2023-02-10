@@ -7,6 +7,8 @@ import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.tts.saidtext.VCEventSaidText;
 import net.dv8tion.jda.api.entities.Guild;
 
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -17,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class TTSInstance implements ITTSRuntimeUse {
     private static final int MAX_COUNT = 150;
     private static final int LOAD_COUNT = 10;
-    private static final int NEXT_WAIT_TIME = 0;
+    private static final int NEXT_WAIT_TIME = 300;
     private final ConcurrentLinkedQueue<SaidText> saidTextQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<LoadedSaidTextEntry> loadSaidTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicReference<LoadedSaidTextEntry> currentSaidText = new AtomicReference<>();
@@ -26,6 +28,7 @@ public final class TTSInstance implements ITTSRuntimeUse {
     private final AtomicBoolean destroyed = new AtomicBoolean();
     private final Object updateLock = new Object();
     private final VoiceAudioScheduler voiceAudioScheduler;
+    private final AtomicReference<UUID> currentReadAloudUUID = new AtomicReference<>();
     private final long audioChannel;
     private final long textChannel;
     private final boolean overwriteAloud;
@@ -64,6 +67,7 @@ public final class TTSInstance implements ITTSRuntimeUse {
     }
 
     public void sayText(SaidText saidText) {
+
         if (saidTextQueue.size() >= MAX_COUNT)
             return;
 
@@ -76,6 +80,41 @@ public final class TTSInstance implements ITTSRuntimeUse {
             saidTextQueue.add(saidText);
             updateQueue();
         }
+    }
+
+    public int skipAll() {
+        voiceAudioScheduler.stop();
+
+        if (overwriteAloud) {
+            LoadedSaidTextEntry lste = currentSaidText.getAndSet(null);
+            if (lste != null) {
+                lste.dispose();
+                return 1;
+            }
+        } else {
+            int ct = 0;
+            ct += saidTextQueue.size();
+            saidTextQueue.clear();
+
+            ct += loadSaidTextQueue.size();
+            while (!loadSaidTextQueue.isEmpty())
+                loadSaidTextQueue.poll().dispose();
+
+            LoadedSaidTextEntry lste = currentSaidText.getAndSet(null);
+            if (lste != null) {
+                lste.dispose();
+                ct++;
+            }
+
+            next.compareAndSet(false, true);
+
+            updateQueue();
+
+
+            return ct;
+        }
+
+        return 0;
     }
 
     private void updateAloud(SaidText saidText) {
@@ -130,7 +169,12 @@ public final class TTSInstance implements ITTSRuntimeUse {
     }
 
     private void sayStart() {
+        final UUID uuid = UUID.randomUUID();
+        currentReadAloudUUID.set(uuid);
+
         currentSaidText.get().completableFuture.whenCompleteAsync((loadedSaidText, throwable) -> {
+            if (!uuid.equals(currentReadAloudUUID.get()))
+                return;
 
             if (throwable != null) {
                 if (!(throwable instanceof CancellationException))
@@ -148,21 +192,27 @@ public final class TTSInstance implements ITTSRuntimeUse {
             } else {
                 next.set(false);
                 voiceAudioScheduler.play(loadedSaidText, () -> {
+                    if (!uuid.equals(currentReadAloudUUID.get()))
+                        return;
+
                     if (overwriteAloud)
                         loadedSaidText.dispose();
 
                     if (!overwriteAloud) {
-
-                        CompletableFuture.runAsync(() -> {
-                            try {
-                                Thread.sleep(NEXT_WAIT_TIME);
-                            } catch (InterruptedException ignored) {
-                            }
-                            next.set(true);
-                            updateQueue();
-                        }, getAsyncExecutor());
-
                         updateQueue();
+
+                        getITTSTimer().schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                CompletableFuture.runAsync(() -> {
+                                    if (!uuid.equals(currentReadAloudUUID.get()))
+                                        return;
+
+                                    next.set(true);
+                                    updateQueue();
+                                }, getAsyncExecutor());
+                            }
+                        }, NEXT_WAIT_TIME);
                     }
                 });
             }

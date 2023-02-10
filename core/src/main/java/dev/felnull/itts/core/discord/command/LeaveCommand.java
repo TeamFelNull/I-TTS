@@ -25,7 +25,7 @@ public class LeaveCommand extends BaseCommand {
 
         if (audioManager.isConnected()) {
             var connectedChannel = audioManager.getConnectedChannel();
-            event.reply(DiscordUtils.createChannelMention(connectedChannel) + "から切断します。").queue();
+            event.reply(connectedChannel.getAsMention() + "から切断します。").queue();
 
             audioManager.closeAudioConnection();
         } else {

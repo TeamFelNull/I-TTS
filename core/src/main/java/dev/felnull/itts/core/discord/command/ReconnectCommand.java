@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -27,7 +26,7 @@ public class ReconnectCommand extends BaseCommand {
 
         if (audioManager.isConnected()) {
             var connectedChannel = audioManager.getConnectedChannel();
-            event.reply(DiscordUtils.createChannelMention(connectedChannel) + "に再接続します。").queue();
+            event.reply(connectedChannel.getAsMention() + "に再接続します。").queue();
 
             audioManager.closeAudioConnection();
 
