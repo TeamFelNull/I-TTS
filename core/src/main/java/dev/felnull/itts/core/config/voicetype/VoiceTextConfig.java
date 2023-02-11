@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * VoiceTextのコンフィグ
  */
-public interface VoiceTextVoiceTypeConfig extends VoiceTypeConfig {
+public interface VoiceTextConfig extends VoiceTypeConfig {
     String DEFAULT_API_KEY = "";
 
     @NotNull

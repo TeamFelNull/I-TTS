@@ -46,42 +46,41 @@ public class VoiceCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        Objects.requireNonNull(event.getGuild());
+        switch (Objects.requireNonNull(event.getSubcommandName())) {
+            case "change" -> change(event, null);
+            case "check" -> check(event, null);
+            case "show" -> show(event);
+        }
+    }
+
+    private void show(SlashCommandInteractionEvent event) {
+        EmbedBuilder showEmbedBuilder = new EmbedBuilder();
+        showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
+        showEmbedBuilder.setTitle("読み上げ音声タイプ一覧");
 
         var vm = getVoiceManager();
+        var currentVt = vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong());
+        var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+        var catAndTypes = vm.getAvailableVoiceTypes();
+        catAndTypes.forEach((cat, types) -> {
+            StringBuilder typeText = new StringBuilder();
 
-        if ("change".equals(event.getSubcommandName())) {
-            change(event, null);
-        } else if ("check".equals(event.getSubcommandName())) {
-            check(event, null);
-        } else if ("show".equals(event.getSubcommandName())) {
-            EmbedBuilder showEmbedBuilder = new EmbedBuilder();
-            showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
-            showEmbedBuilder.setTitle("読み上げ音声タイプ一覧");
+            for (VoiceType type : types) {
+                String name = type.getName();
 
-            var currentVt = vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong());
-            var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
-            var catAndTypes = vm.getAvailableVoiceTypes();
-            catAndTypes.forEach((cat, types) -> {
-                StringBuilder typeText = new StringBuilder();
+                if (defaultVt != null && type.getId().equals(defaultVt.getId()))
+                    name += " [デフォルト]";
 
-                for (VoiceType type : types) {
-                    String name = type.getName();
+                if (currentVt != null && type.getId().equals(currentVt.getId()))
+                    name += " [使用中]";
 
-                    if (defaultVt != null && type.getId().equals(defaultVt.getId()))
-                        name += " [デフォルト]";
+                typeText.append(name).append("\n");
+            }
 
-                    if (currentVt != null && type.getId().equals(currentVt.getId()))
-                        name += " [使用中]";
+            showEmbedBuilder.addField(cat.getName(), typeText.toString(), false);
+        });
 
-                    typeText.append(name).append("\n");
-                }
-
-                showEmbedBuilder.addField(cat.getName(), typeText.toString(), false);
-            });
-
-            event.replyEmbeds(showEmbedBuilder.build()).setEphemeral(true).queue();
-        }
+        event.replyEmbeds(showEmbedBuilder.build()).setEphemeral(true).queue();
     }
 
     protected static void change(SlashCommandInteractionEvent event, User user) {

@@ -2,14 +2,14 @@ package dev.felnull.itts.config;
 
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
-import dev.felnull.itts.core.config.voicetype.VoiceTextVoiceTypeConfig;
+import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
 import dev.felnull.itts.utils.Json5Utils;
 import org.jetbrains.annotations.NotNull;
 
-public class VoiceTextVoiceTypeConfigImpl extends VoiceTypeConfigImpl implements VoiceTextVoiceTypeConfig {
+public class VoiceTextConfigImpl extends VoiceTypeConfigImpl implements VoiceTextConfig {
     private final String apiKey;
 
-    protected VoiceTextVoiceTypeConfigImpl(JsonObject jo) {
+    protected VoiceTextConfigImpl(JsonObject jo) {
         super(jo);
         this.apiKey = Json5Utils.getStringOrElse(jo, "api_key", DEFAULT_API_KEY);
     }

@@ -1,7 +1,7 @@
 package dev.felnull.itts.core.config;
 
-import dev.felnull.itts.core.config.voicetype.VoiceTextVoiceTypeConfig;
-import dev.felnull.itts.core.config.voicetype.VoiceVoxEngineBaseVoiceTypeConfig;
+import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
+import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import org.jetbrains.annotations.NotNull;
 
 public interface Config {
@@ -17,11 +17,11 @@ public interface Config {
 
     long getCacheTime();
 
-    VoiceTextVoiceTypeConfig getVoiceTextConfig();
+    VoiceTextConfig getVoiceTextConfig();
 
-    VoiceVoxEngineBaseVoiceTypeConfig getVoicevoxConfig();
+    VoicevoxConfig getVoicevoxConfig();
 
-    VoiceVoxEngineBaseVoiceTypeConfig getCoeirolnkConfig();
+    VoicevoxConfig getCoeirolnkConfig();
 
-    VoiceVoxEngineBaseVoiceTypeConfig getSharevoxConfig();
+    VoicevoxConfig getSharevoxConfig();
 }

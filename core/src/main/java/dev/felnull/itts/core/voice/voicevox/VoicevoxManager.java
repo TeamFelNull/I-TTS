@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.itts.core.config.voicetype.VoiceVoxEngineBaseVoiceTypeConfig;
+import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.voice.VoiceType;
 
 import java.io.*;
@@ -25,15 +25,15 @@ public class VoicevoxManager {
     private final VoicevoxVoiceCategory category = new VoicevoxVoiceCategory(this);
     private final VoicevoxBalancer balancer;
     private final String name;
-    private final Supplier<VoiceVoxEngineBaseVoiceTypeConfig> configSupplier;
+    private final Supplier<VoicevoxConfig> configSupplier;
 
-    public VoicevoxManager(String name, Supplier<List<String>> enginUrls, Supplier<VoiceVoxEngineBaseVoiceTypeConfig> configSupplier) {
+    public VoicevoxManager(String name, Supplier<List<String>> enginUrls, Supplier<VoicevoxConfig> configSupplier) {
         this.name = name;
         this.configSupplier = configSupplier;
         this.balancer = new VoicevoxBalancer(this, enginUrls);
     }
 
-    protected VoiceVoxEngineBaseVoiceTypeConfig getConfig() {
+    protected VoicevoxConfig getConfig() {
         return configSupplier.get();
     }
 
@@ -57,6 +57,10 @@ public class VoicevoxManager {
         return balancer.getAvailableSpeakers().stream()
                 .map(r -> (VoiceType) new VoicevoxVoiceType(r, this))
                 .toList();
+    }
+
+    protected VoicevoxBalancer getBalancer() {
+        return balancer;
     }
 
     protected List<VoicevoxSpeaker> requestSpeakers(VVURL vvurl) throws IOException, InterruptedException {

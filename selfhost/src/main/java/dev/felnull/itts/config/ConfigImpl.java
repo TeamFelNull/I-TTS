@@ -3,8 +3,8 @@ package dev.felnull.itts.config;
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
 import dev.felnull.itts.core.config.Config;
-import dev.felnull.itts.core.config.voicetype.VoiceTextVoiceTypeConfig;
-import dev.felnull.itts.core.config.voicetype.VoiceVoxEngineBaseVoiceTypeConfig;
+import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
+import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.utils.Json5Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,19 +14,19 @@ public class ConfigImpl implements Config {
     private final String botToken;
     private final int themeColor;
     private final long cacheTime;
-    private final VoiceTextVoiceTypeConfigImpl voiceTextConfig;
-    private final VoiceVoxEngineBaseVoiceTypeConfigImpl voicevoxConfig;
-    private final VoiceVoxEngineBaseVoiceTypeConfigImpl coeirolnkConfig;
-    private final VoiceVoxEngineBaseVoiceTypeConfigImpl sharevoxConfig;
+    private final VoiceTextConfigImpl voiceTextConfig;
+    private final VoicevoxConfigImpl voicevoxConfig;
+    private final VoicevoxConfigImpl coeirolnkConfig;
+    private final VoicevoxConfigImpl sharevoxConfig;
 
     public ConfigImpl(JsonObject jo) {
         this.botToken = Json5Utils.getStringOrElse(jo, "bot_token", DEFAULT_BOT_TOKEN);
         this.themeColor = jo.getInt("theme_color", DEFAULT_THEME_COLOR);
         this.cacheTime = jo.getLong("cache_time", DEFAULT_CACHE_TIME);
-        this.voiceTextConfig = new VoiceTextVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("voice_text")).orElseGet(JsonObject::new));
-        this.voicevoxConfig = new VoiceVoxEngineBaseVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("voicevox")).orElseGet(JsonObject::new));
-        this.coeirolnkConfig = new VoiceVoxEngineBaseVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("coeirolnk")).orElseGet(JsonObject::new));
-        this.sharevoxConfig = new VoiceVoxEngineBaseVoiceTypeConfigImpl(Optional.ofNullable(jo.getObject("sharevox")).orElseGet(JsonObject::new));
+        this.voiceTextConfig = new VoiceTextConfigImpl(Optional.ofNullable(jo.getObject("voice_text")).orElseGet(JsonObject::new));
+        this.voicevoxConfig = new VoicevoxConfigImpl(Optional.ofNullable(jo.getObject("voicevox")).orElseGet(JsonObject::new));
+        this.coeirolnkConfig = new VoicevoxConfigImpl(Optional.ofNullable(jo.getObject("coeirolnk")).orElseGet(JsonObject::new));
+        this.sharevoxConfig = new VoicevoxConfigImpl(Optional.ofNullable(jo.getObject("sharevox")).orElseGet(JsonObject::new));
     }
 
     public JsonObject toJson() {
@@ -58,22 +58,22 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public VoiceTextVoiceTypeConfig getVoiceTextConfig() {
+    public VoiceTextConfig getVoiceTextConfig() {
         return voiceTextConfig;
     }
 
     @Override
-    public VoiceVoxEngineBaseVoiceTypeConfig getVoicevoxConfig() {
+    public VoicevoxConfig getVoicevoxConfig() {
         return voicevoxConfig;
     }
 
     @Override
-    public VoiceVoxEngineBaseVoiceTypeConfig getCoeirolnkConfig() {
+    public VoicevoxConfig getCoeirolnkConfig() {
         return coeirolnkConfig;
     }
 
     @Override
-    public VoiceVoxEngineBaseVoiceTypeConfig getSharevoxConfig() {
+    public VoicevoxConfig getSharevoxConfig() {
         return sharevoxConfig;
     }
 

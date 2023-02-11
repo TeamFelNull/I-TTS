@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.util.TTSUtils;
+import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
@@ -8,10 +9,10 @@ import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import java.util.Objects;
 
 public enum VCEventType {
-    JOIN((member, join, left) -> getMemberName(member) + "が接続しました", true),
-    LEAVE((member, join, left) -> getMemberName(member) + "が切断しました", false),
-    MOVE_FROM((member, join, left) -> getMemberName(member) + "が" + getChannelName(left) + "から移動してきました", true),
-    MOVE_TO((member, join, left) -> getMemberName(member) + "が" + getChannelName(join) + "へ移動しました", false);
+    JOIN((voice, member, join, left) -> getMemberName(voice, member) + "が接続しました", true),
+    LEAVE((voice, member, join, left) -> getMemberName(voice, member) + "が切断しました", false),
+    MOVE_FROM((voice, member, join, left) -> getMemberName(voice, member) + "が" + getChannelName(left) + "から移動してきました", true),
+    MOVE_TO((voice, member, join, left) -> getMemberName(voice, member) + "が" + getChannelName(join) + "へ移動しました", false);
     private final VCEventMessage vcEventMessage;
     private final boolean join;
 
@@ -24,8 +25,8 @@ public enum VCEventType {
         return join;
     }
 
-    public String getMessage(Member member, AudioChannelUnion join, AudioChannelUnion left) {
-        return this.vcEventMessage.getMessage(member, join, left);
+    public String getMessage(Voice voice, Member member, AudioChannelUnion join, AudioChannelUnion left) {
+        return this.vcEventMessage.getMessage(voice, member, join, left);
     }
 
     private static String getChannelName(StandardGuildChannel channel) {
@@ -33,11 +34,11 @@ public enum VCEventType {
         return TTSUtils.getTTSChannelName(channel);
     }
 
-    private static String getMemberName(Member member) {
-        return TTSUtils.getTTSName(member);
+    private static String getMemberName(Voice voice, Member member) {
+        return TTSUtils.getTTSName(voice, member);
     }
 
     private static interface VCEventMessage {
-        String getMessage(Member member, AudioChannelUnion join, AudioChannelUnion left);
+        String getMessage(Voice voice, Member member, AudioChannelUnion join, AudioChannelUnion left);
     }
 }

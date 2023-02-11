@@ -25,7 +25,7 @@ public class VoicevoxVoiceType implements VoiceType {
 
     @Override
     public boolean isAvailable() {
-        return manager.isAvailable();
+        return manager.isAvailable() && manager.getBalancer().getAvailableSpeakers().contains(voicevoxSpeaker);
     }
 
     @Override

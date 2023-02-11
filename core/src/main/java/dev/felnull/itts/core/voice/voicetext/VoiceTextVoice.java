@@ -28,4 +28,9 @@ public class VoiceTextVoice extends CachedVoice {
     private VoiceTextManager getVoiceTextManager() {
         return ITTSRuntime.getInstance().getVoiceManager().getVoiceTextManager();
     }
+
+    @Override
+    public int getReadLimit() {
+        return 180;
+    }
 }

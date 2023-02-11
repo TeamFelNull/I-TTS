@@ -40,7 +40,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
 
     public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
         String sayText = getDictionaryManager().applyDict(saidText.getText(), guildId);
-        sayText = TTSUtils.roundText(guildId, sayText, false);
+        sayText = TTSUtils.roundText(saidText.getVoice(), guildId, sayText, false);
 
         var vtl = saidText.getVoice().createVoiceTrackLoader(sayText);
         return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), getAsyncExecutor());

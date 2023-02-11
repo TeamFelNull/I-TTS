@@ -10,7 +10,7 @@ public interface ServerData {
     boolean INIT_OVERWRITE_ALOUD = false;
     boolean INIT_NOTIFY_MOVE = true;
     int INIT_READ_LIMIT = 200;
-    int INIT_NAME_READ_LIMIT = 10;
+    int INIT_NAME_READ_LIMIT = 20;
 
     @Nullable
     String getDefaultVoiceType();

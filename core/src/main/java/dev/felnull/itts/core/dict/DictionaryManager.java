@@ -3,6 +3,7 @@ package dev.felnull.itts.core.dict;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.DictUseData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,12 @@ public class DictionaryManager implements ITTSRuntimeUse {
                 .filter(r -> id.equals(r.getId()))
                 .findAny()
                 .orElse(null);
+    }
+
+    public boolean isEnable(@NotNull Dictionary dictionary, long guildId) {
+        SaveDataManager sdm = getSaveDataManager();
+        DictUseData dud = sdm.getDictUseData(guildId, dictionary.getId());
+        return dud != null;
     }
 
     @Unmodifiable

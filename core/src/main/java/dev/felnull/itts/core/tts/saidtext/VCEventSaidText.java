@@ -22,7 +22,7 @@ public class VCEventSaidText implements SaidText {
 
     @Override
     public String getText() {
-        return eventType.getMessage(member, join, left);
+        return eventType.getMessage(voice, member, join, left);
     }
 
     @Override

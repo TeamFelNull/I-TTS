@@ -8,4 +8,8 @@ public interface Voice {
     VoiceTrackLoader createVoiceTrackLoader(String text);
 
     VoiceType getVoiceType();
+
+    default int getReadLimit() {
+        return Integer.MAX_VALUE;
+    }
 }

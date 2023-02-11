@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class TTSInstance implements ITTSRuntimeUse {
     private static final int MAX_COUNT = 150;
     private static final int LOAD_COUNT = 10;
-    private static final int NEXT_WAIT_TIME = 300;
+    private static final int NEXT_WAIT_TIME = 500;
     private final ConcurrentLinkedQueue<SaidText> saidTextQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<LoadedSaidTextEntry> loadSaidTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicReference<LoadedSaidTextEntry> currentSaidText = new AtomicReference<>();
@@ -83,6 +83,7 @@ public final class TTSInstance implements ITTSRuntimeUse {
     }
 
     public int skipAll() {
+        currentReadAloudUUID.set(UUID.randomUUID());
         voiceAudioScheduler.stop();
 
         if (overwriteAloud) {
