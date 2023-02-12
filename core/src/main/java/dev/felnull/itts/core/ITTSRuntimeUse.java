@@ -4,6 +4,7 @@ import dev.felnull.itts.core.audio.VoiceAudioManager;
 import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
+import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
@@ -60,5 +61,9 @@ public interface ITTSRuntimeUse {
 
     default TTSManager getTTSManager() {
         return getITTSRuntime().getTTSManager();
+    }
+
+    default Bot getBot() {
+        return getITTSRuntime().getBot();
     }
 }

@@ -1,5 +1,7 @@
 package dev.felnull.itts.core.savedata;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface BotStateData {
     int VERSION = 0;
     long INIT_CONNECTED_AUDIO_CHANNEL = -1;

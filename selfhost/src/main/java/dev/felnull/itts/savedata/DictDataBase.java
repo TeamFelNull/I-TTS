@@ -52,10 +52,12 @@ public abstract class DictDataBase extends SaveDataBase {
 
     public void addDictData(@NotNull String target, @NotNull String read) {
         dictEntries.put(target, new DictDataImpl(target, read));
+        dirty();
     }
 
     public void removeDictData(@NotNull String target) {
         dictEntries.remove(target);
+        dirty();
     }
 
     private record DictDataImpl(String target, String read) implements DictData {

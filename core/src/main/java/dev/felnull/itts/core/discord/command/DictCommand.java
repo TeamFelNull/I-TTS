@@ -1,10 +1,14 @@
 package dev.felnull.itts.core.discord.command;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.savedata.DictData;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -14,13 +18,19 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class DictCommand extends BaseCommand {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     public DictCommand() {
         super("dict");
     }
@@ -54,7 +64,73 @@ public class DictCommand extends BaseCommand {
             case "toggle-show" -> toggleShow(event);
             case "add" -> add(event);
             case "remove" -> remove(event);
+            case "download" -> download(event);
+            case "upload" -> upload(event);
         }
+    }
+
+    private void upload(SlashCommandInteractionEvent event) {
+        long guildId = event.getGuild().getIdLong();
+
+        Message.Attachment word = Objects.requireNonNull(event.getOption("file", OptionMapping::getAsAttachment));
+        boolean overwrite = Objects.requireNonNull(event.getOption("overwrite", OptionMapping::getAsBoolean));
+
+        event.deferReply().queue();
+
+        word.getProxy().download().thenApplyAsync(stream -> {
+            try (InputStream st = new BufferedInputStream(stream); Reader reader = new InputStreamReader(st)) {
+                return GSON.fromJson(reader, JsonObject.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, getHeavyExecutor()).thenApplyAsync(jo -> {
+            return getDictionaryManager().serverDictLoadFromJson(jo, guildId, overwrite);
+        }, getHeavyExecutor()).whenCompleteAsync((ret, error) -> {
+            if (error == null) {
+                if (ret.isEmpty()) {
+                    event.getHook().sendMessage("新しく単語は登録されませんでした").queue();
+                    return;
+                }
+
+                EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
+                replayEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
+
+                replayEmbedBuilder.setTitle("登録された単語と読み");
+
+                for (DictData dictData : ret) {
+                    addDictWordAndReadingField(replayEmbedBuilder, dictData.getTarget(), dictData.getRead());
+                }
+
+                event.getHook().sendMessageEmbeds(replayEmbedBuilder.build()).addContent(overwrite ? "以下の単語の読みを上書き登録しました" : "以下の単語の読みを登録しました").queue();
+            } else {
+                getITTSLogger().error("Dictionary registration failure", error);
+                event.getHook().sendMessage("辞書ファイルの読み込み中にエラーが発生しました").queue();
+            }
+        }, getAsyncExecutor());
+
+    }
+
+    private void download(SlashCommandInteractionEvent event) {
+        long guildId = event.getGuild().getIdLong();
+
+        if (getSaveDataManager().getAllServerDictData(guildId).isEmpty()) {
+            event.reply("辞書は空です").setEphemeral(true).queue();
+            return;
+        }
+
+        event.deferReply(true).queue();
+
+        CompletableFuture.supplyAsync(() -> {
+
+            JsonObject jo = new JsonObject();
+            getDictionaryManager().serverDictSaveToJson(jo, guildId);
+            return GSON.toJson(jo).getBytes(StandardCharsets.UTF_8);
+
+        }, getHeavyExecutor()).thenAcceptAsync(data -> {
+
+            event.getHook().sendFiles(FileUpload.fromData(data, guildId + "_dict.json")).setEphemeral(true).queue();
+
+        }, getAsyncExecutor());
     }
 
     private void remove(SlashCommandInteractionEvent event) {
@@ -175,7 +251,6 @@ public class DictCommand extends BaseCommand {
                     .limit(OptionData.MAX_CHOICES)
                     .map(it -> new Command.Choice(it.getTarget() + " -> " + it.getRead(), it.getTarget()))
                     .toList()).queue();
-
         }
     }
 }

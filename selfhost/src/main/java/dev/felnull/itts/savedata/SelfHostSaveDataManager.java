@@ -2,7 +2,6 @@ package dev.felnull.itts.savedata;
 
 import dev.felnull.itts.Main;
 import dev.felnull.itts.core.savedata.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -17,13 +16,12 @@ import java.util.stream.Collectors;
 
 public class SelfHostSaveDataManager implements SaveDataAccess {
     private static final SelfHostSaveDataManager INSTANCE = new SelfHostSaveDataManager();
-    private static final File BOT_STATE_DATA_FOLDER = new File("./save_data/bot_state");
     private static final File GLOBAL_DICT_DIR = new File("./global_dict.json");
-    private final KeySaveDataManage<LongSaveDataKey, ServerDataImpl> serverData = new KeySaveDataManage<>(new File("./save_data/server"), ServerDataImpl::new);
-    private final KeySaveDataManage<LongSaveDataKey, ServerUsersData> serverUsersData = new KeySaveDataManage<>(new File("./save_data/server_users"), ServerUsersData::new);
-    private final KeySaveDataManage<LongSaveDataKey, ServerDictUseData> serverDictUseData = new KeySaveDataManage<>(new File("./save_data/dict_use"), ServerDictUseData::new);
-    private final KeySaveDataManage<LongSaveDataKey, BotStateDataImpl> botStateData = new KeySaveDataManage<>(new File("./save_data/bot_state"), BotStateDataImpl::new);
-    private final KeySaveDataManage<LongSaveDataKey, ServerDictData> serverDict = new KeySaveDataManage<>(new File("./save_data/server_dict"), ServerDictData::new);
+    private final KeySaveDataManage<LongSaveDataKey, ServerDataImpl> serverData = new KeySaveDataManage<>(new File("./save_data/server"), ServerDataImpl::new, LongSaveDataKey.getFinder());
+    private final KeySaveDataManage<LongSaveDataKey, ServerUsersData> serverUsersData = new KeySaveDataManage<>(new File("./save_data/server_users"), ServerUsersData::new, LongSaveDataKey.getFinder());
+    private final KeySaveDataManage<LongSaveDataKey, ServerDictUseData> serverDictUseData = new KeySaveDataManage<>(new File("./save_data/dict_use"), ServerDictUseData::new, LongSaveDataKey.getFinder());
+    private final KeySaveDataManage<LongSaveDataKey, BotStateDataImpl> botStateData = new KeySaveDataManage<>(new File("./save_data/bot_state"), BotStateDataImpl::new, LongSaveDataKey.getFinder());
+    private final KeySaveDataManage<LongSaveDataKey, ServerDictData> serverDict = new KeySaveDataManage<>(new File("./save_data/server_dict"), ServerDictData::new, LongSaveDataKey.getFinder());
     private CompletableFuture<GlobalDictData> globalDict;
 
     public static SelfHostSaveDataManager getInstance() {
@@ -34,20 +32,7 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     public boolean init() {
         globalDict = globalDictComputeInitAsync(GlobalDictData::new);
 
-        if (BOT_STATE_DATA_FOLDER.exists()) {
-            var files = BOT_STATE_DATA_FOLDER.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    var name = file.getName();
-                    if (name.length() <= ".json".length()) continue;
-                    try {
-                        long id = Long.parseLong(name.substring(0, name.length() - ".json".length()));
-                        botStateData.load(new LongSaveDataKey(id));
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-            }
-        }
+        botStateData.loadAll();
         return true;
     }
 
@@ -88,9 +73,8 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
 
     @Override
     public @NotNull @Unmodifiable Map<Long, BotStateData> getAllBotStateData() {
-        return botStateData.getAllLoaded().entrySet().stream()
-                .map(r -> Pair.of(r.getKey().id(), r.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return botStateData.getAll().entrySet().stream()
+                .collect(Collectors.toMap(it -> it.getKey().id(), Map.Entry::getValue));
     }
 
     @Override

@@ -31,7 +31,7 @@ public class ITTSRuntime {
     private static ITTSRuntime INSTANCE;
     private final Logger logger = LogManager.getLogger(ITTSRuntime.class);
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-%d").daemon(true).build());
-    private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
+    private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 1), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
     private final Timer timer = new Timer("ikisugi-timer", true);
     private final String version;
     private final boolean developmentEnvironment;
@@ -168,5 +168,9 @@ public class ITTSRuntime {
 
     public DictionaryManager getDictionaryManager() {
         return dictionaryManager;
+    }
+
+    public Bot getBot() {
+        return bot;
     }
 }

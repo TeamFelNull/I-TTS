@@ -22,6 +22,7 @@ public class SaveDataManager implements ITTSBaseManager {
             if (!saveDataAccess.init())
                 throw new RuntimeException("Failed to initialize");
 
+
             getITTSLogger().info("Save data setup complete");
         }, getAsyncExecutor());
     }

@@ -1,7 +1,6 @@
 package dev.felnull.itts.core.voice;
 
 import dev.felnull.itts.core.ITTSBaseManager;
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +82,8 @@ public class VoiceManager implements ITTSBaseManager {
     public VoiceType getDefaultVoiceType() {
         return getAvailableVoiceTypes().values().stream()
                 .flatMap(Collection::stream)
-                .findFirst().orElse(null);
+                .min(Comparator.comparingInt(vt -> voiceTextManager.getCategory() == vt.getCategory() ? 1 : 0))
+                .orElse(null);
     }
 
     @Nullable

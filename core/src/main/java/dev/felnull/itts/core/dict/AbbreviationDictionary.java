@@ -36,7 +36,7 @@ public class AbbreviationDictionary extends RegexReplaceBaseDictionary {
     }
 
     @Override
-    protected @NotNull Map<Pattern, Function<String, String>> getReplaces() {
+    protected @NotNull Map<Pattern, Function<String, String>> getReplaces(long guildId) {
         return replaces;
     }
 

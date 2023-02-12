@@ -26,9 +26,9 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTS
     }
 
     @Override
-    protected @NotNull Map<Pattern, Function<String, String>> getReplaces() {
+    protected @NotNull Map<Pattern, Function<String, String>> getReplaces(long guildId) {
         return getSaveDataManager().getAllGlobalDictData().stream()
-                .map(n -> Pair.of(Pattern.compile(n.getRead()), n.getTarget()))
+                .map(n -> Pair.of(Pattern.compile(n.getTarget()), n.getRead()))
                 .collect(Collectors.toMap(Pair::getLeft, patternStringPair -> n -> patternStringPair.getRight()));
     }
 }

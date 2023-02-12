@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class UnitDictionary implements Dictionary {
 
     @Override
-    public @NotNull String apply(@NotNull String text) {
+    public @NotNull String apply(@NotNull String text, long guildId) {
         return UNIT_PREFIX.matcher(text).replaceAll(matchResult -> {
             String lst = null;
             if (matchResult.end() < text.length())

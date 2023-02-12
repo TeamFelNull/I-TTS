@@ -1,15 +1,19 @@
 package dev.felnull.itts.savedata;
 
+import com.google.common.collect.ImmutableMap;
 import dev.felnull.itts.Main;
 import dev.felnull.itts.core.util.ApoptosisObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -19,10 +23,12 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
     private final Map<K, Object> locks = new ConcurrentHashMap<>();
     private final File saveFolder;
     private final Supplier<S> newSaveDataFactory;
+    private final SaveDataKey.SavedFileFinder<K> savedFileFinder;
 
-    public KeySaveDataManage(File saveFolder, Supplier<S> newSaveDataFactory) {
+    public KeySaveDataManage(File saveFolder, Supplier<S> newSaveDataFactory, SaveDataKey.SavedFileFinder<K> savedFileFinder) {
         this.saveFolder = saveFolder;
         this.newSaveDataFactory = newSaveDataFactory;
+        this.savedFileFinder = savedFileFinder;
     }
 
     public S get(K key) {
@@ -35,7 +41,7 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
 
     public CompletableFuture<S> load(K key) {
         synchronized (locks.computeIfAbsent(key, k -> new Object())) {
-            return saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key))).getSaveData();
+            return saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.RUNTIME.getAsyncWorkerExecutor()))).getSaveData();
         }
     }
 
@@ -68,17 +74,33 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
 
     @NotNull
     @Unmodifiable
-    public Map<K, S> getAllLoaded() {
-        return saveDataEntries.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            try {
-                return entry.getValue().getSaveData().get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }));
+    public Map<K, S> getAll() {
+        return loadAll().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, it -> {
+                    try {
+                        return it.getValue().get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
     }
 
-    private CompletableFuture<S> computeInitAsync(K key) {
+    @NotNull
+    @Unmodifiable
+    public Map<K, CompletableFuture<S>> loadAll() {
+        List<K> keys = savedFileFinder.find(saveFolder);
+        Map<K, CompletableFuture<S>> ret = new HashMap<>();
+
+        for (K key : keys) {
+            synchronized (locks.computeIfAbsent(key, k -> new Object())) {
+                ret.put(key, saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.RUNTIME.getHeavyProcessExecutor()))).getSaveData());
+            }
+        }
+
+        return ImmutableMap.copyOf(ret);
+    }
+
+    private CompletableFuture<S> computeInitAsync(K key, Executor executor) {
         return CompletableFuture.supplyAsync(() -> {
             var ni = newSaveDataFactory.get();
             String name = ni.getName() + ": " + key;
@@ -89,7 +111,7 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
                 Main.RUNTIME.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", name, ex);
             }
             return ni;
-        }, Main.RUNTIME.getAsyncWorkerExecutor());
+        }, executor);
     }
 
     private class SaveDataEntry extends ApoptosisObject {
