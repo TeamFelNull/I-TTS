@@ -62,7 +62,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
     @NotNull
     @Unmodifiable
     public List<Pair<String, Integer>> getDefault() {
-        return ImmutableList.of(Pair.of(globalDictionary.getId(), 0), Pair.of(serverDictionary.getId(), 0), Pair.of(abbreviationDictionary.getId(), 0), Pair.of(romajiDictionary.getId(), 0));
+        return ImmutableList.of(Pair.of(globalDictionary.getId(), globalDictionary.getPriority()), Pair.of(serverDictionary.getId(), serverDictionary.getPriority()), Pair.of(abbreviationDictionary.getId(), abbreviationDictionary.getPriority()), Pair.of(romajiDictionary.getId(), romajiDictionary.getPriority()));
     }
 
     public void serverDictSaveToJson(@NotNull JsonObject jo, long guildId) {

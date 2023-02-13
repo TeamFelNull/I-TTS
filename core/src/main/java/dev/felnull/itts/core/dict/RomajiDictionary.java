@@ -1,7 +1,11 @@
 package dev.felnull.itts.core.dict;
 
+import com.google.common.collect.ImmutableMap;
 import com.ibm.icu.text.Transliterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Map;
 
 public class RomajiDictionary implements Dictionary {
     @Override
@@ -11,7 +15,7 @@ public class RomajiDictionary implements Dictionary {
     }
 
     @Override
-    public boolean isBuildIn() {
+    public boolean isBuiltIn() {
         return true;
     }
 
@@ -23,5 +27,15 @@ public class RomajiDictionary implements Dictionary {
     @Override
     public @NotNull String getId() {
         return "romaji";
+    }
+
+    @Override
+    public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
+        return ImmutableMap.of("ローマ字を平仮名へ変換", "Ikisugi -> いきすぎ");
+    }
+
+    @Override
+    public int getPriority() {
+        return 0;
     }
 }

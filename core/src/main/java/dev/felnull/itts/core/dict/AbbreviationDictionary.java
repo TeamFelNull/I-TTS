@@ -2,6 +2,7 @@ package dev.felnull.itts.core.dict;
 
 import com.google.common.collect.ImmutableMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -21,7 +22,7 @@ public class AbbreviationDictionary extends RegexReplaceBaseDictionary {
     }
 
     @Override
-    public boolean isBuildIn() {
+    public boolean isBuiltIn() {
         return true;
     }
 
@@ -40,6 +41,13 @@ public class AbbreviationDictionary extends RegexReplaceBaseDictionary {
         return replaces;
     }
 
-   /* private record AbbreviationEntry(Pattern pattern, Function<String, String> replace) {
-    }*/
+    @Override
+    public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
+        return ImmutableMap.of("https://...", "URL省略", "``` コードブロック ```", "コードブロック省略");
+    }
+
+    @Override
+    public int getPriority() {
+        return 4;
+    }
 }

@@ -25,6 +25,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -45,7 +46,8 @@ public class DictCommand extends BaseCommand {
                         .addOption(OptionType.STRING, "name", "辞書", true, true)
                         .addOption(OptionType.BOOLEAN, "enable", "True: 有効、False: 無効", true))
                 .addSubcommands(new SubcommandData("toggle-show", "辞書ごとの有効無効の表示"))
-                .addSubcommands(new SubcommandData("show", "サーバー読み上げ辞書の内容を表示"))
+                .addSubcommands(new SubcommandData("show", "サーバー読み上げ辞書の内容を表示")
+                        .addOption(OptionType.STRING, "name", "表示する辞書", true, true))
                 .addSubcommands(new SubcommandData("add", "サーバー読み上げ辞書に単語を登録")
                         .addOption(OptionType.STRING, "word", "対象の単語", true)
                         .addOption(OptionType.STRING, "reading", "対象の読み", true))
@@ -66,18 +68,57 @@ public class DictCommand extends BaseCommand {
             case "remove" -> remove(event);
             case "download" -> download(event);
             case "upload" -> upload(event);
+            case "show" -> show(event);
         }
+    }
+
+    private void show(SlashCommandInteractionEvent event) {
+        String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
+
+        long guildId = event.getGuild().getIdLong();
+        DictionaryManager dm = getDictionaryManager();
+        Dictionary dic = dm.getDictionary(dictId, guildId);
+
+        if (dic == null) {
+            event.reply("存在しない辞書です。").setEphemeral(true).queue();
+            return;
+        }
+
+        EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
+        replayEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
+
+        String title = dic.getName();
+
+        if (dic.isBuiltIn())
+            title += " [組み込み]";
+
+        title += " (優先度: " + dic.getPriority() + ")";
+
+        replayEmbedBuilder.setTitle(title);
+
+        Map<String, String> show = dic.getShowInfo(guildId);
+
+        if (show.isEmpty()) {
+            replayEmbedBuilder.addField("登録なし", "", false);
+        } else {
+            show.forEach((k, v) -> addDictWordAndReadingField(replayEmbedBuilder, k, v));
+        }
+
+        if (show.size() >= 2)
+            replayEmbedBuilder.setFooter("計" + show.size() + "個");
+
+        event.replyEmbeds(replayEmbedBuilder.build()).setEphemeral(true).queue();
     }
 
     private void upload(SlashCommandInteractionEvent event) {
         long guildId = event.getGuild().getIdLong();
 
-        Message.Attachment word = Objects.requireNonNull(event.getOption("file", OptionMapping::getAsAttachment));
+        Message.Attachment file = Objects.requireNonNull(event.getOption("file", OptionMapping::getAsAttachment));
         boolean overwrite = Objects.requireNonNull(event.getOption("overwrite", OptionMapping::getAsBoolean));
 
         event.deferReply().queue();
 
-        word.getProxy().download().thenApplyAsync(stream -> {
+        file.getProxy().download().thenApplyAsync(stream -> {
             try (InputStream st = new BufferedInputStream(stream); Reader reader = new InputStreamReader(st)) {
                 return GSON.fromJson(reader, JsonObject.class);
             } catch (IOException e) {
@@ -199,8 +240,8 @@ public class DictCommand extends BaseCommand {
     }
 
     private void toggle(SlashCommandInteractionEvent event) {
-        String dictId = event.getOption("name", OptionMapping::getAsString);
-        if (dictId == null) dictId = "";
+        String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
+
         boolean enabled = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
         var enStr = enabled ? "有効" : "無効";
         long guildId = event.getGuild().getIdLong();
@@ -220,7 +261,7 @@ public class DictCommand extends BaseCommand {
         }
 
         if (enabled) {
-            sm.addDictUseData(guildId, dictId, 0);
+            sm.addDictUseData(guildId, dictId, dic.getPriority());
         } else {
             sm.removeDictUseData(guildId, dictId);
         }
@@ -235,7 +276,7 @@ public class DictCommand extends BaseCommand {
         var fcs = interact.getFocusedOption();
         long guildId = event.getGuild().getIdLong();
 
-        if ("toggle".equals(interact.getSubcommandName()) && "name".equals(fcs.getName())) {
+        if (("toggle".equals(interact.getSubcommandName()) || "show".equals(interact.getSubcommandName())) && "name".equals(fcs.getName())) {
             var dm = getDictionaryManager();
 
             event.replyChoices(dm.getAllDictionaries(guildId).stream()
@@ -251,6 +292,7 @@ public class DictCommand extends BaseCommand {
                     .limit(OptionData.MAX_CHOICES)
                     .map(it -> new Command.Choice(it.getTarget() + " -> " + it.getRead(), it.getTarget()))
                     .toList()).queue();
+
         }
     }
 }

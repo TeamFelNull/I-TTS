@@ -1,11 +1,14 @@
 package dev.felnull.itts.core.dict;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class UnitDictionary implements Dictionary {
@@ -21,7 +24,7 @@ public class UnitDictionary implements Dictionary {
     }
 
     @Override
-    public boolean isBuildIn() {
+    public boolean isBuiltIn() {
         return true;
     }
 
@@ -88,8 +91,8 @@ public class UnitDictionary implements Dictionary {
         return number + prefix.read + unit.read;
     }
 
-  /*  @Override
-    public Map<String, String> getEntryShowTexts() {
+    @Override
+    public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
         ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<>();
 
         StringBuilder upsbw = new StringBuilder();
@@ -131,7 +134,12 @@ public class UnitDictionary implements Dictionary {
         builder.put(unitsbw.toString(), unitsbr.toString());
 
         return builder.build();
-    }*/
+    }
+
+    @Override
+    public int getPriority() {
+        return 1;
+    }
 
     //https://www.mikipulley.co.jp/JP/Services/Tech_data/tech01.html
     private static enum Unit {

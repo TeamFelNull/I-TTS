@@ -1,8 +1,10 @@
 package dev.felnull.itts.core.dict;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.savedata.DictData;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -11,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTSRuntimeUse {
     @Override
-    public boolean isBuildIn() {
+    public boolean isBuiltIn() {
         return false;
     }
 
@@ -23,6 +25,17 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTS
     @Override
     public @NotNull String getId() {
         return "global";
+    }
+
+    @Override
+    public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
+        return getSaveDataManager().getAllGlobalDictData().stream()
+                .collect(Collectors.toMap(DictData::getTarget, DictData::getTarget));
+    }
+
+    @Override
+    public int getPriority() {
+        return 2;
     }
 
     @Override
