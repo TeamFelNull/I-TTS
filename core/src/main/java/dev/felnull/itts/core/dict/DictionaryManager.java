@@ -47,7 +47,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
 
     public String applyDict(String text, long guildId) {
         var allDict = getSaveDataManager().getAllDictUseData(guildId).stream()
-                .sorted(Comparator.comparingInt(DictUseData::getPriority));
+                .sorted(Comparator.comparingInt(DictUseData::getPriority).reversed());
         AtomicReference<String> retText = new AtomicReference<>(text);
 
         allDict.forEach(ud -> {
