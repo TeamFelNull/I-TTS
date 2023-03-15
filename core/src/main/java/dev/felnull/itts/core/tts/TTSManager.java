@@ -5,15 +5,17 @@ import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class TTSManager implements ITTSRuntimeUse {
@@ -80,26 +82,39 @@ public class TTSManager implements ITTSRuntimeUse {
         return instances.get(guildId);
     }
 
-    public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @NotNull User user, @Nullable Member member, @NotNull String message) {
-        long guildId = guild.getIdLong();
-        long textChannelId = messageChannel.getIdLong();
-        long userId = user.getIdLong();
-
-        if (member == null) return;
-        if (user.isBot() || user.isSystem()) return;
-
-        var ti = getTTSInstance(guildId);
-        if (ti == null || ti.getTextChannel() != textChannelId) return;
-
+    public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull String message) {
         var sm = getSaveDataManager();
-
-        String ignoreRegex = sm.getServerData(guildId).getIgnoreRegex();
+        String ignoreRegex = sm.getServerData(guild.getIdLong()).getIgnoreRegex();
         if (ignoreRegex != null) {
             Pattern ignorePattern = Pattern.compile(ignoreRegex);
             if (ignorePattern.matcher(message).matches())
                 return;
         }
 
+        sayGuildMemberText(guild, messageChannel, member, voice -> SaidText.literal(voice, message));
+    }
+
+    public void sayUploadFile(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull List<Message.Attachment> attachments) {
+        if (attachments.isEmpty()) return;
+
+        sayGuildMemberText(guild, messageChannel, member, voice -> SaidText.fileUpload(voice, attachments));
+    }
+
+    public void sayGuildMemberText(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull Function<Voice, SaidText> saidTextFactory) {
+        long guildId = guild.getIdLong();
+        long textChannelId = messageChannel.getIdLong();
+
+        if (member == null) return;
+
+        var user = member.getUser();
+        if (user.isBot() || user.isSystem()) return;
+
+        long userId = user.getIdLong();
+
+        var ti = getTTSInstance(guildId);
+        if (ti == null || ti.getTextChannel() != textChannelId) return;
+
+        var sm = getSaveDataManager();
         if (sm.getServerData(guildId).isNeedJoin()) {
             var vs = member.getVoiceState();
             if (vs == null) return;
@@ -111,7 +126,16 @@ public class TTSManager implements ITTSRuntimeUse {
         var vt = getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) return;
 
-        ti.sayText(SaidText.literal(vt.createVoice(guildId, userId), message));
+        ti.sayText(saidTextFactory.apply(vt.createVoice(guildId, userId)));
+    }
+
+    public void sayText(@NotNull Guild guild, @NotNull SaidText saidText) {
+        long guildId = guild.getIdLong();
+
+        var ti = getTTSInstance(guildId);
+        if (ti == null) return;
+
+        ti.sayText(saidText);
     }
 
     public void onVCEvent(@NotNull Guild guild, @NotNull Member member, @Nullable AudioChannelUnion join, @Nullable AudioChannelUnion left) {
