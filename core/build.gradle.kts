@@ -1,7 +1,12 @@
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+plugins {
+    `maven-publish`
+}
 
+base {
+    archivesName.set("itts-core")
+}
+
+dependencies {
     //https://github.com/DV8FromTheWorld/JDA/pull/2240 <-音声の遅れが生じる可能あり
     implementation("net.dv8tion:JDA:5.0.0-beta.1")
     implementation("org.apache.commons:commons-lang3:3.12.0")
@@ -18,4 +23,39 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            artifactId = base.archivesName.get()
+            from(components["java"])
+
+            pom {
+                name.set("ITTSCore")
+                description.set("The ikisugi discord tts bot")
+                developers {
+                    developer {
+                        id.set("MORIMORI0317")
+                        name.set("MORIMORI0317")
+                    }
+                    developer {
+                        id.set("FelNull")
+                        name.set("TeamFelNull")
+                        email.set("teamfelnull@felnull.dev")
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri(project.extra["maven_put_url"].toString())
+            credentials {
+                username = "felnull"
+                password = project.extra["maven_put_pass"]?.toString() ?: System.getenv("mavenpassword")
+            }
+        }
+    }
 }

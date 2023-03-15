@@ -22,9 +22,6 @@ configurations {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-
     shadowIn(project(":core", "default"))
 
     shadowIn("blue.endless:jankson:1.2.1")
