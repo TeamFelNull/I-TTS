@@ -5,20 +5,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public class AbbreviationDictionary extends RegexReplaceBaseDictionary {
-    private static final Pattern URL_REGEX = Pattern.compile("http(s)?://([\\w-]+\\.)+[\\w-]+(/[\\w\\- ./?%&=~#:,]*)?");
+public class AbbreviationDictionary implements Dictionary {
     private static final Pattern CODE_BLOCK_REGEX = Pattern.compile("```(.|\n)*```");
-    private final Map<Pattern, Function<String, String>> replaces;
+    private final RegexUtil regexUtil = new RegexUtil();
 
-    public AbbreviationDictionary() {
-        ImmutableMap.Builder<Pattern, Function<String, String>> repls = new ImmutableMap.Builder<>();
-        repls.put(URL_REGEX, str -> "ユーアールエル省略");
-        repls.put(CODE_BLOCK_REGEX, str -> "コードブロック省略");
-
-        this.replaces = repls.build();
+    @Override
+    public @NotNull String apply(@NotNull String text, long guildId) {
+        text = CODE_BLOCK_REGEX.matcher(text).replaceAll("コードブロックショウリャク");
+        return regexUtil.replaceText(text);
     }
 
     @Override
@@ -34,11 +30,6 @@ public class AbbreviationDictionary extends RegexReplaceBaseDictionary {
     @Override
     public @NotNull String getId() {
         return "abbreviation";
-    }
-
-    @Override
-    protected @NotNull Map<Pattern, Function<String, String>> getReplaces(long guildId) {
-        return replaces;
     }
 
     @Override

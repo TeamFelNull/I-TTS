@@ -29,7 +29,7 @@ public class RegexUtil {
         DictMap.put(IPv6_Regex,IPv6_REPLACE_TEXT);
     }
 
-    public String ReplaceText(String text) {
+    public String replaceText(String text) {
 
         //空の文字列用配列
         List<String> returnText = new ArrayList<>();
@@ -72,5 +72,5 @@ public class RegexUtil {
 /*
   使い方
   RegexUtil rgUtil = new RegexUtil();
-  String out = rgUtil.ReplaceText(ここにURLとかが含まれたテキスト);
+  String out = rgUtil.replaceText(ここにURLとかが含まれたテキスト);
 */
