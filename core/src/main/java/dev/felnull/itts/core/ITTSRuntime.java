@@ -33,6 +33,7 @@ public class ITTSRuntime {
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-%d").daemon(true).build());
     private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 1), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
     private final Timer timer = new Timer("ikisugi-timer", true);
+    private final DirectoryLock directoryLock = new DirectoryLock();
     private final String version;
     private final boolean developmentEnvironment;
     private final ConfigManager configManager;
@@ -50,6 +51,8 @@ public class ITTSRuntime {
         if (INSTANCE != null)
             throw new IllegalStateException("ITTSRuntime must be a singleton instance");
         INSTANCE = this;
+
+        directoryLock.lock();
 
         var v = ITTSRuntime.class.getPackage().getImplementationVersion();
         this.developmentEnvironment = v == null;
