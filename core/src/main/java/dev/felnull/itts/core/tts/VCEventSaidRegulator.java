@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class VCEventSaidRegulator {
-    private static final long REGULATOR_TIME = 1000 * 10;
+    private static final long REGULATOR_TIME = 3000;
     private final Map<Long, RegulatorEntry> regulators = new ConcurrentHashMap<>();
     private final TTSInstance ttsInstance;
 
