@@ -30,7 +30,7 @@ public class ServerDictionary extends RegexReplaceBaseDictionary implements ITTS
     @Override
     public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
         return getSaveDataManager().getAllServerDictData(guildId).stream()
-                .collect(Collectors.toMap(DictData::getTarget, DictData::getTarget));
+                .collect(Collectors.toMap(DictData::getTarget, DictData::getRead));
     }
 
     @Override
