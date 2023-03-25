@@ -24,6 +24,9 @@ public interface SaidText {
         return new FileUploadSaidText(voice, attachments);
     }
 
+    /**
+     * 非同期で実行されます
+     */
     String getText();
 
     Voice getVoice();

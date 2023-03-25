@@ -20,12 +20,8 @@ public interface SaveDataAccess {
     @Unmodifiable
     List<DictUseData> getAllDictUseData(long guildId);
 
-    @Nullable
+    @NotNull
     DictUseData getDictUseData(long guildId, @NotNull String dictId);
-
-    void addDictUseData(long guildId, @NotNull String dictId, int priority);
-
-    void removeDictUseData(long guildId, @NotNull String dictId);
 
     @NotNull
     BotStateData getBotStateData(long guildId);

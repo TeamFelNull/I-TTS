@@ -3,9 +3,7 @@ package dev.felnull.itts.savedata;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.itts.Main;
 import dev.felnull.itts.core.savedata.DictUseData;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerDictUseData extends SaveDataBase {
     private final Map<String, DictUseData> serverDictUseData = new ConcurrentHashMap<>();
-
 
     @Override
     public String getName() {
@@ -44,36 +41,21 @@ public class ServerDictUseData extends SaveDataBase {
         return DictUseData.VERSION;
     }
 
-
     public List<DictUseData> getAllDictUseData() {
         return ImmutableList.copyOf(serverDictUseData.values());
     }
 
     public DictUseData getDictUseData(String dictId) {
-        return serverDictUseData.get(dictId);
-    }
-
-    public void addDictUserData(String dictId, int priority) {
-        serverDictUseData.put(dictId, new DictUseDataImpl(dictId, priority));
-        dirty();
-    }
-
-    public void removeDictUseData(String dictId) {
-        serverDictUseData.remove(dictId);
-        dirty();
-    }
-
-    @Override
-    public void setDefault() {
-        var df = Main.RUNTIME.getDictionaryManager().getDefault();
-        for (Pair<String, Integer> dict : df) {
-            serverDictUseData.put(dict.getLeft(), new DictUseDataImpl(dict.getLeft(), dict.getRight()));
-        }
+        return serverDictUseData.computeIfAbsent(dictId, DictUseDataImpl::new);
     }
 
     private class DictUseDataImpl implements DictUseData {
         private final String dictId;
-        private final AtomicInteger priority = new AtomicInteger(INIT_PRIORITY);
+        private final AtomicInteger priority = new AtomicInteger();
+
+        public DictUseDataImpl(String dictId) {
+            this(dictId, DictUseData.initPriority(dictId));
+        }
 
         public DictUseDataImpl(String dictId, int priority) {
             this.dictId = dictId;

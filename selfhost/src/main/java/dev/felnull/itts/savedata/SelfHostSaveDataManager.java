@@ -52,18 +52,8 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     }
 
     @Override
-    public @Nullable DictUseData getDictUseData(long guildId, @NotNull String dictId) {
+    public @NotNull DictUseData getDictUseData(long guildId, @NotNull String dictId) {
         return serverDictUseData.get(new LongSaveDataKey(guildId)).getDictUseData(dictId);
-    }
-
-    @Override
-    public void addDictUseData(long guildId, @NotNull String dictId, int priority) {
-        serverDictUseData.get(new LongSaveDataKey(guildId)).addDictUserData(dictId, priority);
-    }
-
-    @Override
-    public void removeDictUseData(long guildId, @NotNull String dictId) {
-        serverDictUseData.get(new LongSaveDataKey(guildId)).removeDictUseData(dictId);
     }
 
     @Override

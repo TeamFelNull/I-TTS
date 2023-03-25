@@ -43,17 +43,9 @@ public class SaveDataManager implements ITTSBaseManager {
         return saveDataAccess.getAllDictUseData(guildId);
     }
 
-    @Nullable
+    @NotNull
     public DictUseData getDictUseData(long guildId, @NotNull String dictId) {
         return saveDataAccess.getDictUseData(guildId, dictId);
-    }
-
-    public void addDictUseData(long guildId, @NotNull String dictId, int priority) {
-        saveDataAccess.addDictUseData(guildId, dictId, priority);
-    }
-
-    public void removeDictUseData(long guildId, @NotNull String dictId) {
-        saveDataAccess.removeDictUseData(guildId, dictId);
     }
 
     @NotNull

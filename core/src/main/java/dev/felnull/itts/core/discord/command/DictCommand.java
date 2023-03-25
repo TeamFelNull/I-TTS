@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.savedata.DictData;
+import dev.felnull.itts.core.savedata.DictUseData;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
@@ -254,16 +255,18 @@ public class DictCommand extends BaseCommand {
             return;
         }
 
-        var dud = sm.getDictUseData(guildId, dictId);
-        if ((dud == null && !enabled) || (dud != null && enabled)) {
+        DictUseData useData = sm.getDictUseData(guildId, dictId);
+        boolean preEnable = useData.getPriority() >= 0;
+
+        if (preEnable == enabled) {
             event.reply(dic.getName() + "は既に" + enStr + "です。").setEphemeral(true).queue();
             return;
         }
 
         if (enabled) {
-            sm.addDictUseData(guildId, dictId, dic.getPriority());
+            useData.setPriority(dic.getPriority());
         } else {
-            sm.removeDictUseData(guildId, dictId);
+            useData.setPriority(-1);
         }
 
         event.reply(dic.getName() + "を" + enStr + "にしました。").queue();

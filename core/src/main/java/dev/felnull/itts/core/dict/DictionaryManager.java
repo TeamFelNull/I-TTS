@@ -36,7 +36,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
     public boolean isEnable(@NotNull Dictionary dictionary, long guildId) {
         SaveDataManager sdm = getSaveDataManager();
         DictUseData dud = sdm.getDictUseData(guildId, dictionary.getId());
-        return dud != null;
+        return dud.getPriority() >= 0;
     }
 
     @Unmodifiable
