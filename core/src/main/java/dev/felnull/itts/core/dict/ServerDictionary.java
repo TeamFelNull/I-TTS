@@ -34,8 +34,8 @@ public class ServerDictionary extends RegexReplaceBaseDictionary implements ITTS
     }
 
     @Override
-    public int getPriority() {
-        return 2;
+    public int getDefaultPriority() {
+        return 1;
     }
 
     @Override

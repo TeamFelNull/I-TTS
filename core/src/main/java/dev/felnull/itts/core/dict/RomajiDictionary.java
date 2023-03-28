@@ -35,7 +35,7 @@ public class RomajiDictionary implements Dictionary {
     }
 
     @Override
-    public int getPriority() {
-        return 0;
+    public int getDefaultPriority() {
+        return 4;
     }
 }

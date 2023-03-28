@@ -21,5 +21,5 @@ public interface Dictionary {
     @Unmodifiable
     Map<String, String> getShowInfo(long guildId);
 
-    int getPriority();
+    int getDefaultPriority();
 }

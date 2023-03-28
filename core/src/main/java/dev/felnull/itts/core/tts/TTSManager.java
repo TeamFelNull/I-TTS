@@ -2,6 +2,7 @@ package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
+import dev.felnull.itts.core.util.TTSUtils;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -101,6 +102,8 @@ public class TTSManager implements ITTSRuntimeUse {
     }
 
     public void sayGuildMemberText(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull Function<Voice, SaidText> saidTextFactory) {
+        if (!canSpeak(guild)) return;
+
         long guildId = guild.getIdLong();
         long textChannelId = messageChannel.getIdLong();
 
@@ -130,12 +133,28 @@ public class TTSManager implements ITTSRuntimeUse {
     }
 
     public void sayText(@NotNull Guild guild, @NotNull SaidText saidText) {
+        if (!canSpeak(guild)) return;
+
         long guildId = guild.getIdLong();
 
         var ti = getTTSInstance(guildId);
         if (ti == null) return;
 
         ti.sayText(saidText);
+    }
+
+    public boolean canSpeak(@NotNull Guild guild) {
+        long guildId = guild.getIdLong();
+
+        var ti = getTTSInstance(guildId);
+        if (ti == null) return false;
+
+        AudioChannel audioChannel = guild.getChannelById(AudioChannel.class, ti.getAudioChannel());
+        if (audioChannel == null) return false;
+
+        return guild.getVoiceStates().stream().
+                filter(it -> it.getChannel() != null && it.getChannel().getIdLong() == audioChannel.getIdLong())
+                .anyMatch(TTSUtils::canListen);
     }
 
     public void onVCEvent(@NotNull Guild guild, @NotNull Member member, @Nullable AudioChannelUnion join, @Nullable AudioChannelUnion left) {
@@ -171,7 +190,8 @@ public class TTSManager implements ITTSRuntimeUse {
             vce = VCEventType.MOVE_TO;
         }
 
-        sayVCEvent(vce, ti, vt.createVoice(guildId, userId), member, join, left);
+        if (canSpeak(guild))
+            sayVCEvent(vce, ti, vt.createVoice(guildId, userId), member, join, left);
     }
 
     private void sayVCEvent(VCEventType vcEventType, TTSInstance ttsInstance, Voice voice, Member member, AudioChannelUnion join, AudioChannelUnion left) {

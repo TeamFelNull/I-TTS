@@ -34,7 +34,7 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTS
     }
 
     @Override
-    public int getPriority() {
+    public int getDefaultPriority() {
         return 2;
     }
 

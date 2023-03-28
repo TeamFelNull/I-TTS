@@ -93,7 +93,7 @@ public class DictCommand extends BaseCommand {
         if (dic.isBuiltIn())
             title += " [組み込み]";
 
-        title += " (優先度: " + dic.getPriority() + ")";
+        title += " (優先度: " + dic.getDefaultPriority() + ")";
 
         replayEmbedBuilder.setTitle(title);
 
@@ -234,7 +234,8 @@ public class DictCommand extends BaseCommand {
         List<Dictionary> dicts = dictManager.getAllDictionaries(guildId);
 
         for (Dictionary dict : dicts) {
-            replayEmbedBuilder.addField(dict.getName(), dictManager.isEnable(dict, guildId) ? "有効" : "無効", false);
+            DictUseData useData = getSaveDataManager().getDictUseData(guildId, dict.getId());
+            replayEmbedBuilder.addField(dict.getName(), dictManager.isEnable(dict, guildId) ? ("有効 (" + useData.getPriority() + ")") : "無効", false);
         }
 
         event.replyEmbeds(replayEmbedBuilder.build()).setEphemeral(true).queue();
@@ -264,7 +265,7 @@ public class DictCommand extends BaseCommand {
         }
 
         if (enabled) {
-            useData.setPriority(dic.getPriority());
+            useData.setPriority(dic.getDefaultPriority());
         } else {
             useData.setPriority(-1);
         }

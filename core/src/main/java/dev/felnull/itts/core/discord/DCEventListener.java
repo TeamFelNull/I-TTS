@@ -34,8 +34,10 @@ public class DCEventListener extends ListenerAdapter implements ITTSRuntimeUse {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getMember(), event.getMessage().getContentDisplay());
-        getTTSManager().sayUploadFile(event.getGuild(), event.getChannel(), event.getMember(), event.getMessage().getAttachments());
+        if (getTTSManager().canSpeak(event.getGuild())) {
+            getTTSManager().sayChat(event.getGuild(), event.getChannel(), event.getMember(), event.getMessage().getContentDisplay());
+            getTTSManager().sayUploadFile(event.getGuild(), event.getChannel(), event.getMember(), event.getMessage().getAttachments());
+        }
     }
 
     @Override

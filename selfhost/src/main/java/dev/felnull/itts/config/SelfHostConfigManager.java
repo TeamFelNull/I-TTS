@@ -44,10 +44,12 @@ public class SelfHostConfigManager implements ConfigAccess {
 
         var config = new ConfigImpl(Optional.ofNullable(jo).orElseGet(JsonObject::new));
 
-        if (jo == null) try (Writer writer = new BufferedWriter(new FileWriter(CONFIG_FILE, StandardCharsets.UTF_8))) {
-            config.toJson().toJson(writer, JsonGrammar.JSON5, 0);
-        } catch (IOException e) {
-            Main.RUNTIME.getLogger().error("Failed to overwrite config", e);
+        if (jo == null) {
+            try (Writer writer = new BufferedWriter(new FileWriter(CONFIG_FILE, StandardCharsets.UTF_8))) {
+                config.toJson().toJson(writer, JsonGrammar.JSON5, 0);
+            } catch (IOException e) {
+                Main.RUNTIME.getLogger().error("Failed to overwrite config", e);
+            }
         }
 
         return config;

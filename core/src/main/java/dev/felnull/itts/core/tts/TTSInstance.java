@@ -67,7 +67,6 @@ public final class TTSInstance implements ITTSRuntimeUse {
     }
 
     public void sayText(SaidText saidText) {
-
         if (saidTextQueue.size() >= MAX_COUNT)
             return;
 

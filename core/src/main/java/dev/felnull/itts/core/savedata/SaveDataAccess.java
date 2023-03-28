@@ -17,10 +17,6 @@ public interface SaveDataAccess {
     ServerUserData getServerUserData(long guildId, long userId);
 
     @NotNull
-    @Unmodifiable
-    List<DictUseData> getAllDictUseData(long guildId);
-
-    @NotNull
     DictUseData getDictUseData(long guildId, @NotNull String dictId);
 
     @NotNull

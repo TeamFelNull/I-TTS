@@ -4,6 +4,7 @@ import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.savedata.ServerData;
 import dev.felnull.itts.core.savedata.ServerUserData;
 import dev.felnull.itts.core.voice.Voice;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel;
@@ -46,5 +47,13 @@ public final class TTSUtils {
             return channel.getName();
 
         return "別のチャンネル";
+    }
+
+    public static boolean canListen(GuildVoiceState voiceState) {
+        var user = voiceState.getMember().getUser();
+        if (user.isSystem() || user.isBot())
+            return false;
+
+        return !voiceState.isDeafened();
     }
 }

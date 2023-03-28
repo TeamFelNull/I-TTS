@@ -4,7 +4,6 @@ import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.discord.command.*;
 import dev.felnull.itts.core.tts.TTSInstance;
 import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
-import dev.felnull.itts.core.voice.Voice;
 import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -76,8 +75,8 @@ public class Bot implements ITTSRuntimeUse {
                         VoiceType vt = getVoiceManager().getVoiceType(guildId, selfId);
 
                         if (ti != null && vt != null) {
-                            Voice voice = vt.createVoice(guildId, selfId);
-                            ti.sayText(new StartupSaidText(voice));
+                            if (getTTSManager().canSpeak(guild))
+                                ti.sayText(new StartupSaidText(vt.createVoice(guildId, selfId)));
                         }
 
                         getITTSLogger().info("Reconnected: {}", guild.getName());

@@ -45,9 +45,18 @@ public class DictionaryManager implements ITTSRuntimeUse {
         return dictionaries;
     }
 
+    @Unmodifiable
+    @NotNull
+    public List<DictUseData> getAllDictUseData(long guildId) {
+        return dictionaries.stream()
+                .map(it -> getSaveDataManager().getDictUseData(guildId, it.getId()))
+                .toList();
+    }
+
     public String applyDict(String text, long guildId) {
-        var allDict = getSaveDataManager().getAllDictUseData(guildId).stream()
-                .sorted(Comparator.comparingInt(DictUseData::getPriority).reversed());
+        var allDict = getAllDictUseData(guildId).stream()
+                .filter(it -> it.getPriority() >= 0)
+                .sorted(Comparator.comparingInt(DictUseData::getPriority));
         AtomicReference<String> retText = new AtomicReference<>(text);
 
         allDict.forEach(ud -> {
@@ -62,7 +71,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
     @NotNull
     @Unmodifiable
     public List<Pair<String, Integer>> getDefault() {
-        return ImmutableList.of(Pair.of(globalDictionary.getId(), globalDictionary.getPriority()), Pair.of(serverDictionary.getId(), serverDictionary.getPriority()), Pair.of(abbreviationDictionary.getId(), abbreviationDictionary.getPriority()), Pair.of(romajiDictionary.getId(), romajiDictionary.getPriority()));
+        return ImmutableList.of(Pair.of(globalDictionary.getId(), globalDictionary.getDefaultPriority()), Pair.of(serverDictionary.getId(), serverDictionary.getDefaultPriority()), Pair.of(abbreviationDictionary.getId(), abbreviationDictionary.getDefaultPriority()), Pair.of(romajiDictionary.getId(), romajiDictionary.getDefaultPriority()));
     }
 
     public void serverDictSaveToJson(@NotNull JsonObject jo, long guildId) {
