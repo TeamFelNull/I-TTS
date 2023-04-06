@@ -1,11 +1,14 @@
 package dev.felnull.itts.core.tts.saidtext;
 
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.tts.VCEventType;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 
-public class VCEventSaidText implements SaidText {
+import java.util.concurrent.CompletableFuture;
+
+public class VCEventSaidText implements SaidText, ITTSRuntimeUse {
     private final Voice voice;
     private final VCEventType eventType;
     private final Member member;
@@ -21,13 +24,14 @@ public class VCEventSaidText implements SaidText {
     }
 
     @Override
-    public String getText() {
-        return eventType.getMessage(voice, member, join, left);
+    public CompletableFuture<String> getText() {
+        return CompletableFuture.supplyAsync(() -> eventType.getMessage(voice, member, join, left)
+                , getAsyncExecutor());
     }
 
     @Override
-    public Voice getVoice() {
-        return voice;
+    public CompletableFuture<Voice> getVoice() {
+        return CompletableFuture.completedFuture(voice);
     }
 
     public VCEventType getEventType() {

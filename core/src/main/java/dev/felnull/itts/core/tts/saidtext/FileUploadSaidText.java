@@ -1,51 +1,55 @@
 package dev.felnull.itts.core.tts.saidtext;
 
+import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.Message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public record FileUploadSaidText(Voice voice, List<Message.Attachment> attachments) implements SaidText {
+public record FileUploadSaidText(Voice voice, List<Message.Attachment> attachments) implements SaidText, ITTSRuntimeUse {
 
     @Override
-    public String getText() {
-        StringBuilder sb = new StringBuilder();
+    public CompletableFuture<String> getText() {
+        return CompletableFuture.supplyAsync(() -> {
+            StringBuilder sb = new StringBuilder();
 
-        int count = 0;
+            int count = 0;
 
-        var fileTypes = attachments.stream()
-                .map(FileUploadSaidText::getFileType)
-                .collect(Collectors.groupingBy(it -> it));
+            var fileTypes = attachments.stream()
+                    .map(FileUploadSaidText::getFileType)
+                    .collect(Collectors.groupingBy(it -> it));
 
-        for (Map.Entry<FileType, List<FileType>> entry : fileTypes.entrySet()) {
+            for (Map.Entry<FileType, List<FileType>> entry : fileTypes.entrySet()) {
 
-            int ct = entry.getValue().size();
-            if (ct >= 2)
-                sb.append(entry.getValue().size()).append("個の");
+                int ct = entry.getValue().size();
+                if (ct >= 2)
+                    sb.append(entry.getValue().size()).append("個の");
 
-            sb.append(entry.getKey().getName());
+                sb.append(entry.getKey().getName());
 
-            if (count < fileTypes.size() - 1) {
-                if (count == 0) {
-                    sb.append("と");
-                } else {
-                    sb.append(",");
+                if (count < fileTypes.size() - 1) {
+                    if (count == 0) {
+                        sb.append("と");
+                    } else {
+                        sb.append(",");
+                    }
                 }
+
+                count++;
             }
 
-            count++;
-        }
+            sb.append("をアップロードしました");
 
-        sb.append("をアップロードしました");
-
-        return sb.toString();
+            return sb.toString();
+        }, getAsyncExecutor());
     }
 
     @Override
-    public Voice getVoice() {
-        return voice;
+    public CompletableFuture<Voice> getVoice() {
+        return CompletableFuture.completedFuture(voice);
     }
 
     private static FileType getFileType(Message.Attachment attachment) {

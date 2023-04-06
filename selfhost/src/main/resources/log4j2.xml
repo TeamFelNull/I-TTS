@@ -5,7 +5,7 @@
     <Properties>
         <Property name="format1">%d{yyyy-MM-dd HH:mm:ss,SSS} %-3p-[%t] %m%n</Property>
         <Property name="logfile">./log/log.log</Property>
-        <Property name="logfile-archive">./log/log_%d{yyyy-MM-dd}-%i.log</Property>
+        <Property name="logfile-archive">./log/log_%d{yyyy-MM-dd}-%i.gz</Property>
     </Properties>
 
     <Appenders>

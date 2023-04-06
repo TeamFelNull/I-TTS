@@ -6,14 +6,14 @@ import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.api.SyntaxError;
 import dev.felnull.itts.Main;
 import dev.felnull.itts.core.config.Config;
-import dev.felnull.itts.core.config.ConfigAccess;
+import dev.felnull.itts.core.config.ConfigContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-public class SelfHostConfigManager implements ConfigAccess {
+public class SelfHostConfigManager implements ConfigContext {
     private static final SelfHostConfigManager INSTANCE = new SelfHostConfigManager();
     private static final Jankson JANKSON = Jankson.builder().build();
     private static final File CONFIG_FILE = new File("config.json5");

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface SaidText {
     static SaidText literal(@NotNull Voice voice, @NotNull String text) {
@@ -24,10 +25,7 @@ public interface SaidText {
         return new FileUploadSaidText(voice, attachments);
     }
 
-    /**
-     * 非同期で実行されます
-     */
-    String getText();
+    CompletableFuture<String> getText();
 
-    Voice getVoice();
+    CompletableFuture<Voice> getVoice();
 }

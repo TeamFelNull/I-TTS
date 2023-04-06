@@ -10,9 +10,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.util.TTSUtils;
+import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,12 +41,25 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
     }
 
     public CompletableFuture<LoadedSaidText> load(SaidText saidText) {
-        return CompletableFuture.supplyAsync(() -> {
-                    String sayText = getDictionaryManager().applyDict(saidText.getText(), guildId);
-                    return TTSUtils.roundText(saidText.getVoice(), guildId, sayText, false);
+        var textCf = saidText.getText();
+        var voiceCf = saidText.getVoice();
+
+        return textCf.thenApplyAsync(text -> {
+                    String sayText = getDictionaryManager().applyDict(text, guildId);
+
+                    Voice voice;
+                    try {
+                        voice = voiceCf.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    Objects.requireNonNull(voice, "Voice is null");
+
+                    return Pair.of(TTSUtils.roundText(voice, guildId, sayText, false), voice);
                 }, getAsyncExecutor())
-                .thenComposeAsync((sayText) -> {
-                    var vtl = saidText.getVoice().createVoiceTrackLoader(sayText);
+                .thenComposeAsync((sayTextVoice) -> {
+                    var vtl = sayTextVoice.getRight().createVoiceTrackLoader(sayTextVoice.getLeft());
                     return vtl.load().thenApplyAsync(r -> new LoadedSaidText(saidText, r, vtl::dispose), getAsyncExecutor());
                 }, getAsyncExecutor());
     }

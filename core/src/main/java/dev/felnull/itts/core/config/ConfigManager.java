@@ -6,10 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CompletableFuture;
 
 public class ConfigManager implements ITTSBaseManager {
-    private final ConfigAccess configAccess;
+    private final ConfigContext configAccess;
     private Config config;
 
-    public ConfigManager(ConfigAccess configAccess) {
+    public ConfigManager(ConfigContext configAccess) {
         this.configAccess = configAccess;
     }
 
