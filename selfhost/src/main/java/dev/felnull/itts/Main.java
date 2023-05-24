@@ -8,7 +8,7 @@ public class Main {
     public static final Logger LOGGER = LogManager.getLogger(Main.class);
     public static ITTSRuntime RUNTIME;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         RUNTIME = ITTSRuntime.newRuntime(new SelfHostITTSRuntimeContext());
         RUNTIME.execute();
     }

@@ -7,6 +7,7 @@ import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.core.log.LogContext;
 import dev.felnull.itts.core.savedata.SaveDataAccess;
 import dev.felnull.itts.savedata.SelfHostSaveDataManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,5 +34,12 @@ public class SelfHostITTSRuntimeContext implements ITTSRuntimeContext {
     @Override
     public @NotNull LogContext getLogContext() {
         return logContext;
+    }
+
+    private static class LogContextImpl implements LogContext {
+        @Override
+        public @NotNull Logger getLogger() {
+            return Main.LOGGER;
+        }
     }
 }

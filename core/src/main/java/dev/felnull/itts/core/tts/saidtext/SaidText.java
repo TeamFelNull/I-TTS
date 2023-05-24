@@ -25,6 +25,10 @@ public interface SaidText {
         return new FileUploadSaidText(voice, attachments);
     }
 
+    static SaidText message(@NotNull Voice voice, @NotNull Message message) {
+        return new MessageSaidText(message, voice);
+    }
+
     CompletableFuture<String> getText();
 
     CompletableFuture<Voice> getVoice();

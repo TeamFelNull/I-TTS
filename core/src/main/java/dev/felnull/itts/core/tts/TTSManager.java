@@ -83,16 +83,16 @@ public class TTSManager implements ITTSRuntimeUse {
         return instances.get(guildId);
     }
 
-    public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull String message) {
+    public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull Message message) {
         var sm = getSaveDataManager();
         String ignoreRegex = sm.getServerData(guild.getIdLong()).getIgnoreRegex();
         if (ignoreRegex != null) {
             Pattern ignorePattern = Pattern.compile(ignoreRegex);
-            if (ignorePattern.matcher(message).matches())
+            if (ignorePattern.matcher(message.getContentDisplay()).matches())
                 return;
         }
 
-        sayGuildMemberText(guild, messageChannel, member, voice -> SaidText.literal(voice, message));
+        sayGuildMemberText(guild, messageChannel, member, voice -> SaidText.message(voice, message));
     }
 
     public void sayUploadFile(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull List<Message.Attachment> attachments) {
