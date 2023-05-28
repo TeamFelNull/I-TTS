@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class InfoCommand extends BaseCommand {
+    private static final String SOURCE_URL = "https://github.com/TeamFelnull/I-TTS";
+
     public InfoCommand() {
         super("info");
     }
@@ -45,7 +47,7 @@ public class InfoCommand extends BaseCommand {
         aboutEmbedBuilder.addField("License", "GNU LGPLv3", false);
         aboutEmbedBuilder.setFooter("Developed by FelNull", "https://avatars.githubusercontent.com/u/59995376?s=200&v=4");
 
-        e.replyEmbeds(aboutEmbedBuilder.build()).addActionRow(Button.of(ButtonStyle.LINK, "https://github.com/TeamFelnull/IDiscordTTSVoice", "Source")).setEphemeral(true).queue();
+        e.replyEmbeds(aboutEmbedBuilder.build()).addActionRow(Button.of(ButtonStyle.LINK, SOURCE_URL, "Source")).setEphemeral(true).queue();
     }
 
     private void oss(SlashCommandInteractionEvent e) {
