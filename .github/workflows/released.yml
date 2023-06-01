@@ -31,13 +31,13 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew check
+          ./gradle check
 
       - name: Generate Changelog #更新ログ生成
         shell: bash
         run: |
-          ./gradlew patchChangelog
-          ./gradlew getChangelog --console=plain -q --no-header --no-summary --no-links > LATEST_CHANGELOG.md
+          ./gradle patchChangelog
+          ./gradle getChangelog --console=plain -q --no-header --no-summary --no-links > LATEST_CHANGELOG.md
           
           CHANGELOG_NUM=`grep -n "^###" LATEST_CHANGELOG.md | sed -e 's/:.*//g' | head -n 1`
           if [ -n "$CHANGELOG_NUM" ]; then
@@ -52,7 +52,7 @@ jobs:
       - name: Build #ビルド
         shell: bash
         run: |
-          ./gradlew build publish --stacktrace --no-daemon
+          ./gradle build publish --stacktrace --no-daemon
         env:
           mavenpassword: ${{ secrets.maven_password }}
 
@@ -100,12 +100,12 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew check
+          ./gradle check
 
       - name: Gradle Check #チェンジログ生成してコミット
         shell: bash
         run: |
-          ./gradlew patchChangelog
+          ./gradle patchChangelog
           
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
