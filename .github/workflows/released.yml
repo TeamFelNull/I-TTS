@@ -31,6 +31,7 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
+          ls
           ./gradlew check
 
       - name: Generate Changelog #更新ログ生成
@@ -100,7 +101,6 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
-          ls
           ./gradlew check
 
       - name: Gradle Check #チェンジログ生成してコミット
