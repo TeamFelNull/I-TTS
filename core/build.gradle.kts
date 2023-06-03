@@ -54,7 +54,7 @@ publishing {
             url = uri(project.extra["maven_put_url"].toString())
             credentials {
                 username = "felnull"
-                password = project.extra["maven_put_pass"]?.toString() ?: System.getenv("mavenpassword")
+                password = System.getenv("mavenpassword")
             }
         }
     }
