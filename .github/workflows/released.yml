@@ -62,7 +62,7 @@ jobs:
         run: |
           mkdir release
           cd release
-          cp -r ./selfhost/build/libs/. ./
+          cp -r ../selfhost/build/libs/. ./
 
       - name: Upload Artifact #アーティファクトをアップロード
         uses: actions/upload-artifact@v3
