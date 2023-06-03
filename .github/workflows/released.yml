@@ -55,7 +55,7 @@ jobs:
         run: |
           ./gradlew build publish --stacktrace --no-daemon
         env:
-          mavenpassword: ${{ secrets.maven_password }}
+          mavenpassword: ${{ secrets.MAVEN_PASSWORD }}
 
       - name: Collect Releases #リリースしたものを収集
         shell: bash
