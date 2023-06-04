@@ -113,5 +113,5 @@ jobs:
           git config user.name "GitHub Action"
           git add ./CHANGELOG.md
           git commit -m "Patched Changelog ${{ github.ref_name }}"
-          git push origin
+          git push -u origin
           echo "Commit done!"
