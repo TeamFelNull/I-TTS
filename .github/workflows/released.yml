@@ -104,7 +104,7 @@ jobs:
           chmod -R +X gradle
           ./gradlew check
 
-      - name: Gradle Check #チェンジログ生成してコミット
+      - name: Generate Changelog #チェンジログ生成してコミット
         shell: bash
         run: |
           ./gradlew patchChangelog
@@ -112,6 +112,6 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add ./CHANGELOG.md
-          git commit -m "Patched Changelog ${{ github.ref_name }}"
+          git commit -m "変更ログを更新(${{ github.ref_name }})"
           git push -u origin
           echo "Commit done!"
