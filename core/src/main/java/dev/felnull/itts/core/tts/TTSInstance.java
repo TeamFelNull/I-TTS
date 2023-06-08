@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.audio.LoadedSaidText;
 import dev.felnull.itts.core.audio.VoiceAudioScheduler;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
@@ -201,7 +202,7 @@ public final class TTSInstance implements ITTSRuntimeUse {
                     if (!overwriteAloud) {
                         updateQueue();
 
-                        getITTSTimer().schedule(new TimerTask() {
+                        getImmortalityTimer().schedule(new ImmortalityTimer.ImmortalityTimerTask() {
                             @Override
                             public void run() {
                                 CompletableFuture.runAsync(() -> {

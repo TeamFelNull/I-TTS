@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.util;
 
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.ImmortalityTimer;
 
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ApoptosisObject {
     private final AtomicLong lastExtensionTime = new AtomicLong(System.currentTimeMillis());
-    private final AtomicReference<TimerTask> task = new AtomicReference<>();
+    private final AtomicReference<ImmortalityTimer.ImmortalityTimerTask> task = new AtomicReference<>();
     private final AtomicBoolean broken = new AtomicBoolean();
     private final long lifeTime;
 
@@ -51,14 +52,14 @@ public abstract class ApoptosisObject {
     }
 
     private void scheduleCheckTimer(Runnable runnable, long delay) {
-        var tsk = new TimerTask() {
+        var tsk = new ImmortalityTimer.ImmortalityTimerTask() {
             @Override
             public void run() {
                 CompletableFuture.runAsync(runnable, ITTSRuntime.getInstance().getAsyncWorkerExecutor());
             }
         };
         task.set(tsk);
-        ITTSRuntime.getInstance().getTimer().schedule(tsk, delay);
+        ITTSRuntime.getInstance().getImmortalityTimer().schedule(tsk, delay);
     }
 
 }

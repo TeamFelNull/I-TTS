@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.discord;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
 import dev.felnull.itts.core.tts.TTSInstance;
 import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
@@ -36,7 +37,7 @@ public class Bot implements ITTSRuntimeUse {
         this.jda.getPresence().setStatus(OnlineStatus.ONLINE);
         updateActivity(this.jda.getPresence());
 
-        getITTSTimer().schedule(new TimerTask() {
+        getImmortalityTimer().schedule(new ImmortalityTimer.ImmortalityTimerTask() {
             @Override
             public void run() {
                 updateActivityAsync();

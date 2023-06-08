@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -26,7 +27,7 @@ public class ITTSRuntime {
     private final Logger logger;
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-%d").daemon(true).build());
     private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 1), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
-    private final Timer timer = new Timer("ikisugi-timer", true);
+    private final ImmortalityTimer immortalityTimer = new ImmortalityTimer(new Timer("immortality-timer", true));
     private final DirectoryLock directoryLock = new DirectoryLock();
     private final String version;
     private final boolean developmentEnvironment;
@@ -121,8 +122,8 @@ public class ITTSRuntime {
         return heavyProcessExecutor;
     }
 
-    public Timer getTimer() {
-        return timer;
+    public ImmortalityTimer getImmortalityTimer() {
+        return immortalityTimer;
     }
 
     public boolean isDevelopmentEnvironment() {

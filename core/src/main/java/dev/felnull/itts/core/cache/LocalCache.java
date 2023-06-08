@@ -3,6 +3,7 @@ package dev.felnull.itts.core.cache;
 import com.google.common.hash.HashCode;
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.ImmortalityTimer;
 
 import java.io.File;
 import java.util.TimerTask;
@@ -77,7 +78,7 @@ public class LocalCache implements ITTSRuntimeUse {
         if (!runningTimer.compareAndSet(false, true))
             return;
 
-       getITTSTimer().schedule(new TimerTask() {
+        getImmortalityTimer().schedule(new ImmortalityTimer.ImmortalityTimerTask() {
             @Override
             public void run() {
                 runningTimer.set(false);

@@ -31,8 +31,8 @@ public interface ITTSRuntimeUse {
         return getITTSRuntime().getHeavyProcessExecutor();
     }
 
-    default Timer getITTSTimer() {
-        return getITTSRuntime().getTimer();
+    default ImmortalityTimer getImmortalityTimer() {
+        return getITTSRuntime().getImmortalityTimer();
     }
 
     default ConfigManager getConfigManager() {

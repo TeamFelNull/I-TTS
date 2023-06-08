@@ -2,6 +2,7 @@ package dev.felnull.itts.core.voice.voicevox;
 
 import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.ImmortalityTimer;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class VoicevoxBalancer implements ITTSRuntimeUse {
             availableSpeakers = cr.getRight();
         }
 
-        getITTSTimer().schedule(new TimerTask() {
+        getImmortalityTimer().schedule(new ImmortalityTimer.ImmortalityTimerTask() {
             @Override
             public void run() {
                 CompletableFuture.runAsync(() -> check(), getAsyncExecutor());
