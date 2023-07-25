@@ -17,7 +17,7 @@ Please write according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 ### Security
 
-## [NONE] - 2023-07-26
+## [2.0.0-alpha.4] - 2023-07-26
 
 ### Fixed
 - VCに参加していないユーザのメンションを読み上げる際にニックネームではなくIDを読み上げる問題を修正
@@ -45,7 +45,7 @@ Please write according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 [2.0.0-alpha.3]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/vNONE...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...HEAD
 
 [2.0.0-alpha.1]: https://github.com/TeamFelnull/I-TTS/commits/v2.0.0-alpha.1
 
@@ -53,4 +53,4 @@ Please write according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 [2.0.0-alpha.3]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
 
-[NONE]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...vNONE
+[2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
