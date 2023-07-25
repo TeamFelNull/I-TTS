@@ -4,11 +4,17 @@ import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.util.DiscordUtils;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
-import net.dv8tion.jda.internal.entities.SystemMessage;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public record MessageSaidText(Message message, Voice voice) implements SaidText, ITTSRuntimeUse {
     private static final String REPLAY_MESSAGE = "%sに返信しました、%s";
@@ -27,7 +33,50 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
         if (messageType == MessageType.CHANNEL_PINNED_ADD)
             return pined();
 
-        return CompletableFuture.completedFuture(message.getContentDisplay());
+        Map<User, Member> members = new ConcurrentHashMap<>();
+
+        Stream<CompletableFuture<Void>> memberLoad = message.getMentions().getUsers().stream()
+                .map(user -> {
+
+                    Guild guild = message.getGuild();
+
+                    if (!guild.isMember(user)) {
+                        return CompletableFuture.runAsync(() -> members.put(user, guild.retrieveMember(user).complete()), getAsyncExecutor());
+                    }
+
+                    members.put(user, guild.getMember(user));
+                    return CompletableFuture.completedFuture(null);
+                });
+
+
+        return CompletableFuture.allOf(memberLoad.toArray(CompletableFuture[]::new))
+                .thenApplyAsync(v -> getIkisugiContentDisplay(members, message), getAsyncExecutor());
+    }
+
+    /**
+     * {@link Message#getContentDisplay()}のメンバー取得がキャッシュを利用しないためユーザIDを読み上げてしまうことの回避策
+     *
+     * @param members メンバーとユーザ名
+     * @param message メッセージ
+     * @return 文字列
+     */
+    private static String getIkisugiContentDisplay(Map<User, Member> members, Message message) {
+        String ret = message.getContentRaw();
+        for (User user : message.getMentions().getUsers()) {
+            String name;
+            name = members.get(user).getEffectiveName();
+            ret = ret.replaceAll("<@!?" + Pattern.quote(user.getId()) + '>', '@' + Matcher.quoteReplacement(name));
+        }
+        for (CustomEmoji emoji : message.getMentions().getCustomEmojis()) {
+            ret = ret.replace(emoji.getAsMention(), ":" + emoji.getName() + ":");
+        }
+        for (GuildChannel mentionedChannel : message.getMentions().getChannels()) {
+            ret = ret.replace(mentionedChannel.getAsMention(), '#' + mentionedChannel.getName());
+        }
+        for (Role mentionedRole : message.getMentions().getRoles()) {
+            ret = ret.replace(mentionedRole.getAsMention(), '@' + mentionedRole.getName());
+        }
+        return ret;
     }
 
     /**

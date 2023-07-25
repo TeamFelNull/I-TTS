@@ -49,7 +49,7 @@ public class DenyCommand extends BaseCommand {
         User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
 
         if (user.isBot()) {
-            event.reply(DiscordUtils.getName(event.getGuild(), user) + "はBOTです。").setEphemeral(true).queue();
+            event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "はBOTです。").setEphemeral(true).queue();
             return;
         }
 
@@ -60,7 +60,7 @@ public class DenyCommand extends BaseCommand {
         }
 
         sud.setDeny(false);
-        event.reply(DiscordUtils.getName(event.getGuild(), user) + "の読み上げ拒否を解除します。").setEphemeral(true).queue();
+        event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げ拒否を解除します。").setEphemeral(true).queue();
     }
 
     private void show(SlashCommandInteractionEvent event) {
@@ -74,7 +74,7 @@ public class DenyCommand extends BaseCommand {
         var msg = new MessageCreateBuilder().addContent("読み上げ拒否されたユーザ一覧\n");
         StringBuilder sb = new StringBuilder();
         for (Long deny : denyUsers) {
-            sb.append(DiscordUtils.getName(event.getGuild(), Objects.requireNonNull(event.getJDA().getUserById(deny)))).append("\n");
+            sb.append(DiscordUtils.getEscapedName(event.getGuild(), Objects.requireNonNull(event.getJDA().getUserById(deny)))).append("\n");
         }
         msg.addContent("``" + sb + "``");
         event.reply(msg.build()).setEphemeral(true).queue();
@@ -85,7 +85,7 @@ public class DenyCommand extends BaseCommand {
         Objects.requireNonNull(user);
 
         if (user.isBot()) {
-            event.reply(DiscordUtils.getName(event.getGuild(), user) + "はBOTです。").setEphemeral(true).queue();
+            event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "はBOTです。").setEphemeral(true).queue();
             return;
         }
 
@@ -96,6 +96,6 @@ public class DenyCommand extends BaseCommand {
         }
 
         sud.setDeny(true);
-        event.reply(DiscordUtils.getName(event.getGuild(), user) + "の読み上げ拒否します。").setEphemeral(true).queue();
+        event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げ拒否します。").setEphemeral(true).queue();
     }
 }

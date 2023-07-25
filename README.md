@@ -26,7 +26,7 @@ VOICEVOXとCOEIROINK、SHAREVOXは自分でエンジンを起動しておく必�
 - Java17
 - [LavaPlayer](https://github.com/walkyst/lavaplayer-fork)と[JDA](https://github.com/DV8FromTheWorld/JDA)が対応しているプラットフォーム
 
-Windows(amd64)とLinux((amd64,arm64)で動作確認済み。  
+Windows(amd64)とLinux(amd64,arm64)で動作確認済み。  
 VOICEVOXとCOEIROINK、SHAREVOXを利用する場合はそれぞれが対応してる環境が必要です。
 
 ## 起動方法
@@ -114,4 +114,4 @@ java17のディレクトリ\bin\java.exe -jar itts-selfhost-2.0.0.jar
 
 ## 旧バージョン
 
-v2.xはプレビュー版です、安定しているバージョンを必要とする場合は[v1.x](https://github.com/TeamFelnull/I-TTS/tree/1.x)を利用してください。
+v2.xはアルファ版です、安定しているバージョンを必要とする場合は[v1.x](https://github.com/TeamFelnull/I-TTS/tree/1.x)を利用してください。

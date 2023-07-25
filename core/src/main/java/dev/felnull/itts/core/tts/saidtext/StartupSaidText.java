@@ -10,7 +10,7 @@ public record StartupSaidText(Voice voice) implements SaidText, ITTSRuntimeUse {
     @Override
     public CompletableFuture<String> getText() {
         return CompletableFuture.supplyAsync(() -> {
-            String name = DiscordUtils.getName(getBot().getJDA().getSelfUser());
+            String name = getBot().getJDA().getSelfUser().getName();
             return name + "が起動しました";
         }, getAsyncExecutor());
     }

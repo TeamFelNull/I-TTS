@@ -8,7 +8,7 @@ base {
 
 dependencies {
     //https://github.com/DV8FromTheWorld/JDA/pull/2240 <-音声の遅れが生じる可能あり
-    api("net.dv8tion:JDA:5.0.0-beta.9")
+    api("net.dv8tion:JDA:5.0.0-beta.12")
     api("org.apache.commons:commons-lang3:3.12.0")
     api("com.google.code.gson:gson:2.10")
     api("com.google.guava:guava:31.1-jre")
