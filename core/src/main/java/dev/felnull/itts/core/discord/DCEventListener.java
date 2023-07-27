@@ -1,15 +1,12 @@
 package dev.felnull.itts.core.discord;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.ExecutionException;
 
 public class DCEventListener extends ListenerAdapter implements ITTSRuntimeUse {
     private final Bot bot;

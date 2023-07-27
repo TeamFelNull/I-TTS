@@ -1,14 +1,12 @@
 package dev.felnull.itts.core.tts.saidtext;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.util.DiscordUtils;
+import dev.felnull.itts.core.util.TTSUtils;
 import dev.felnull.itts.core.voice.Voice;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,7 +104,7 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
                     if (pinAuthor.getIdLong() == message.getAuthor().getIdLong()) {
                         pinedTarget = MY_MESSAGE;
                     } else {
-                        pinedTarget = DiscordUtils.getName(pinMessage.getGuild(), pinAuthor);
+                        pinedTarget = TTSUtils.getTTSName(voice, pinMessage.getGuild(), pinAuthor);
                     }
                 }
             }
@@ -133,7 +131,7 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
                 if (refUser.getIdLong() == message.getAuthor().getIdLong()) {
                     replayTarget = MY_MESSAGE;
                 } else {
-                    replayTarget = DiscordUtils.getName(refMessage.getGuild(), refUser);
+                    replayTarget = TTSUtils.getTTSName(voice, refMessage.getGuild(), refUser);
                 }
 
             } else {

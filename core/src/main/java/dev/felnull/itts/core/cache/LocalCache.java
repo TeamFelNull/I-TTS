@@ -1,12 +1,10 @@
 package dev.felnull.itts.core.cache;
 
 import com.google.common.hash.HashCode;
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 
 import java.io.File;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,7 +1,6 @@
 package dev.felnull.itts.core.tts.saidtext;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.util.DiscordUtils;
 import dev.felnull.itts.core.voice.Voice;
 
 import java.util.concurrent.CompletableFuture;

@@ -10,7 +10,6 @@ import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Timer;
 import java.util.concurrent.Executor;
 
 public interface ITTSRuntimeUse {

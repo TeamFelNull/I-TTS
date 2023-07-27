@@ -8,7 +8,6 @@ import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.tts.saidtext.VCEventSaidText;
 import net.dv8tion.jda.api.entities.Guild;
 
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;

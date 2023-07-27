@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.savedata;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ServerUserData {

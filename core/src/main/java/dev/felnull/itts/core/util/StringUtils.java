@@ -1,10 +1,5 @@
 package dev.felnull.itts.core.util;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 public final class StringUtils {
 
     public static int getComplementPoint(String target, String text) {

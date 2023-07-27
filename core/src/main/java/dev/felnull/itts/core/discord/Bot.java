@@ -17,7 +17,6 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
 public class Bot implements ITTSRuntimeUse {

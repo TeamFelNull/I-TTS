@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
