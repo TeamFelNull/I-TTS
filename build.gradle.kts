@@ -13,9 +13,9 @@ changelog {
 
     introduction.set(
         """
-    Changelog to track updates for this mod.  
-    Add your changes to Unreleased if you want to commit.  
-    Please write according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+    このBOTの更新を追跡するための更新ログ。 
+    変更をコミットする場合は`Unreleased`に更新内容を追記してください。
+    [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)に従って記述をお願い致します。
     """.trimIndent()
     )
 
