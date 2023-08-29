@@ -27,7 +27,16 @@ public interface ITTSRuntimeUse {
     }
 
     default Executor getHeavyExecutor() {
-        return getITTSRuntime().getHeavyProcessExecutor();
+        return getITTSRuntime().getHeavyWorkerExecutor();
+    }
+
+    /**
+     * HTTP接続用エクスキューターを取得
+     *
+     * @return エクスキューター
+     */
+    default Executor getHttpExecutor() {
+        return getITTSRuntime().getHttpWorkerExecutor();
     }
 
     default ImmortalityTimer getImmortalityTimer() {
@@ -64,5 +73,14 @@ public interface ITTSRuntimeUse {
 
     default Bot getBot() {
         return getITTSRuntime().getBot();
+    }
+
+    /**
+     * ネットワーク接続用マネージャーを取得
+     *
+     * @return ネットワークマネージャー
+     */
+    default ITTSNetworkManager getNetworkManager() {
+        return getITTSRuntime().getNetworkManager();
     }
 }

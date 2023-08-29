@@ -93,7 +93,7 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
 
         for (K key : keys) {
             synchronized (locks.computeIfAbsent(key, k -> new Object())) {
-                ret.put(key, saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.RUNTIME.getHeavyProcessExecutor()))).getSaveData());
+                ret.put(key, saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.RUNTIME.getHeavyWorkerExecutor()))).getSaveData());
             }
         }
 

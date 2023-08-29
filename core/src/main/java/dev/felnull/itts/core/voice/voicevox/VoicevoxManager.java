@@ -5,6 +5,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.felnull.itts.core.ITTSNetworkManager;
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.voice.VoiceType;
 
@@ -64,8 +66,8 @@ public class VoicevoxManager {
     }
 
     protected List<VoicevoxSpeaker> requestSpeakers(VVURL vvurl) throws IOException, InterruptedException {
-        var hc = HttpClient.newHttpClient();
-        var req = HttpRequest.newBuilder(vvurl.createURI("speakers")).version(HttpClient.Version.HTTP_1_1)
+        HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
+        var req = HttpRequest.newBuilder(vvurl.createURI("speakers"))
                 .timeout(Duration.of(3000, ChronoUnit.MILLIS))
                 .build();
         var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
@@ -88,10 +90,9 @@ public class VoicevoxManager {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
 
         try (var urlUse = balancer.getUseURL()) {
-            var hc = HttpClient.newHttpClient();
+            HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
             var req = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
                     .POST(HttpRequest.BodyPublishers.noBody())
-                    .version(HttpClient.Version.HTTP_1_1)
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .build();
             var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
@@ -107,12 +108,11 @@ public class VoicevoxManager {
     protected InputStream openVoiceStream(String text, int speakerId) throws IOException, InterruptedException {
         var qry = getQuery(text, speakerId);
         try (var urlUse = balancer.getUseURL()) {
-            var hc = HttpClient.newHttpClient();
+            var hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
             var request = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("synthesis?speaker=%d", speakerId)))
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(qry)))
-                    .version(HttpClient.Version.HTTP_1_1)
                     .build();
 
             var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());

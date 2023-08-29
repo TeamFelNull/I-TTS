@@ -43,13 +43,13 @@ public class VoiceTextManager implements ITTSRuntimeUse {
     public InputStream openVoiceStream(@NotNull VoiceTextSpeaker speaker, @NotNull String text) throws IOException, InterruptedException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
 
-        var hc = HttpClient.newHttpClient();
+        HttpClient hc = getNetworkManager().getHttpClient();
         var basic = "Basic " + FNStringUtil.encodeBase64(getApiKey() + ":");
         var request = HttpRequest.newBuilder(URI.create(API_URL))
                 .header("Authorization", basic)
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("text=%s&speaker=%s", text, speaker.getId())))
-                .version(HttpClient.Version.HTTP_1_1).build();
+                .build();
         var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
         var content = res.headers().firstValue("content-type");

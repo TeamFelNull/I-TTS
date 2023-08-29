@@ -25,7 +25,11 @@ public class ITTSRuntime {
     private static ITTSRuntime INSTANCE;
     private final Logger logger;
     private final ExecutorService asyncWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("async-worker-%d").daemon(true).build());
-    private final ExecutorService heavyProcessExecutor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 1), new BasicThreadFactory.Builder().namingPattern("heavy-process-thread-%d").daemon(true).build());
+    /**
+     * HTTP接続の制御を行うためのエクスキューター
+     */
+    private final ExecutorService httpWorkerExecutor = Executors.newCachedThreadPool(new BasicThreadFactory.Builder().namingPattern("http-worker-%d").daemon(true).build());
+    private final ExecutorService heavyWorkerExecutor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 1), new BasicThreadFactory.Builder().namingPattern("heavy-worker-thread-%d").daemon(true).build());
     private final ImmortalityTimer immortalityTimer = new ImmortalityTimer(new Timer("immortality-timer", true));
     private final DirectoryLock directoryLock = new DirectoryLock();
     private final String version;
@@ -35,6 +39,7 @@ public class ITTSRuntime {
     private final VoiceManager voiceManager = new VoiceManager();
     private final VoiceAudioManager voiceAudioManager = new VoiceAudioManager();
     private final DictionaryManager dictionaryManager = new DictionaryManager();
+    private final ITTSNetworkManager networkManager = new ITTSNetworkManager();
     private final CacheManager cacheManager;
     private final SaveDataManager saveDataManager;
     private final Bot bot;
@@ -117,8 +122,12 @@ public class ITTSRuntime {
      *
      * @return エクスキューター
      */
-    public ExecutorService getHeavyProcessExecutor() {
-        return heavyProcessExecutor;
+    public ExecutorService getHeavyWorkerExecutor() {
+        return heavyWorkerExecutor;
+    }
+
+    public ExecutorService getHttpWorkerExecutor() {
+        return httpWorkerExecutor;
     }
 
     public ImmortalityTimer getImmortalityTimer() {
@@ -167,6 +176,11 @@ public class ITTSRuntime {
 
     public DictionaryManager getDictionaryManager() {
         return dictionaryManager;
+    }
+
+
+    public ITTSNetworkManager getNetworkManager() {
+        return networkManager;
     }
 
     public Bot getBot() {
