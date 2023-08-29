@@ -20,7 +20,7 @@
 
 ### Security
 
-## [v2.0.0-alpha.5] - 2023-07-27
+## [2.0.0-alpha.5] - 2023-07-27
 
 ### Fixed
 
@@ -78,4 +78,4 @@
 
 [2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
 
-[v2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
+[2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
