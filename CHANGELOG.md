@@ -68,7 +68,7 @@
 
 [2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/vv2.0.0-alpha.5...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.5...HEAD
 
 [2.0.0-alpha.1]: https://github.com/TeamFelnull/I-TTS/commits/v2.0.0-alpha.1
 
@@ -78,4 +78,4 @@
 
 [2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
 
-[v2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...vv2.0.0-alpha.5
+[v2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
