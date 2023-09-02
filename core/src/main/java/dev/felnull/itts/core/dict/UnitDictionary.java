@@ -138,7 +138,7 @@ public class UnitDictionary implements Dictionary {
 
     @Override
     public int getDefaultPriority() {
-        return 4;
+        return 3;
     }
 
     //https://www.mikipulley.co.jp/JP/Services/Tech_data/tech01.html

@@ -39,6 +39,6 @@ public class AbbreviationDictionary implements Dictionary {
 
     @Override
     public int getDefaultPriority() {
-        return 3;
+        return 1;
     }
 }
