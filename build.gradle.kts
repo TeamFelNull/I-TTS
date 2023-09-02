@@ -3,7 +3,7 @@ plugins {
 }
 
 version = if (System.getenv("GITHUB_REF") != null && System.getenv("GITHUB_REF").startsWith("refs/tags/v")) {
-    System.getenv("GITHUB_REF").substring("refs/tags/v".length);
+    System.getenv("GITHUB_REF").substring("refs/tags/v".length)
 } else {
     "NONE"
 }
