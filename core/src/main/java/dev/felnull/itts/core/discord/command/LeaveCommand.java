@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.discord.command;
 
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -33,7 +34,8 @@ public class LeaveCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        AudioManager audioManager = event.getGuild().getAudioManager();
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.isConnected()) {
             AudioChannelUnion connectedChannel = Objects.requireNonNull(audioManager.getConnectedChannel());

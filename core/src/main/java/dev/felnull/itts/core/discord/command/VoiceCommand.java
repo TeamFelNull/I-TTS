@@ -156,17 +156,19 @@ public class VoiceCommand extends BaseCommand {
      * @param user  ユーザ
      */
     protected static void check(SlashCommandInteractionEvent event, User user) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         boolean mine = user == null;
         if (mine) {
             user = event.getUser();
         }
 
-        ServerUserData serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), user.getIdLong());
+        ServerUserData serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
         VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
         Optional<VoiceType> vt = vm.getVoiceType(serverUserData.getVoiceType());
 
         String type = vt.map(VoiceType::getName).orElseGet(() -> {
-            VoiceType dvt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+            VoiceType dvt = vm.getDefaultVoiceType(guild.getIdLong());
 
             if (dvt != null) {
                 return dvt.getName() + " [デフォルト]";
@@ -175,7 +177,7 @@ public class VoiceCommand extends BaseCommand {
             return "無効";
         });
 
-        String userName = mine ? "自分" : DiscordUtils.getEscapedName(event.getGuild(), user);
+        String userName = mine ? "自分" : DiscordUtils.getEscapedName(guild, user);
         event.reply(userName + "の現在の読み上げタイプは" + type + "です。").setEphemeral(mine).queue();
     }
 

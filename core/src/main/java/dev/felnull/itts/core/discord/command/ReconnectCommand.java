@@ -39,7 +39,7 @@ public class ReconnectCommand extends BaseCommand {
         AudioManager audioManager = Objects.requireNonNull(guild.getAudioManager());
 
         if (audioManager.isConnected()) {
-            AudioChannelUnion connectedChannel = audioManager.getConnectedChannel();
+            AudioChannelUnion connectedChannel = Objects.requireNonNull(audioManager.getConnectedChannel());
             event.reply(connectedChannel.getAsMention() + "に再接続します。").queue();
 
             audioManager.closeAudioConnection();
