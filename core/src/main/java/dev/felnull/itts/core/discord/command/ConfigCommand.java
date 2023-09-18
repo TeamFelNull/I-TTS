@@ -89,13 +89,15 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void show(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         EmbedBuilder showEmbedBuilder = new EmbedBuilder();
         showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         showEmbedBuilder.setTitle("現在のコンフィグ");
 
-        ServerData sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
         VoiceManager vm = getVoiceManager();
-        VoiceType dv = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+        VoiceType dv = vm.getDefaultVoiceType(guild.getIdLong());
 
         final boolean inline = true;
         showEmbedBuilder.addField("VCの入退室時にユーザー名を読み上げ", sd.isNotifyMove() ? "有効" : "無効", inline);
@@ -159,15 +161,17 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void readOverwrite(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        ServerData sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         boolean pre = sd.isOverwriteAloud();
         String enStr = op ? "有効" : "無効";
 
         if (op != pre) {
             sd.setOverwriteAloud(op);
-            getTTSManager().reload(event.getGuild());
+            getTTSManager().reload(guild);
 
             event.reply("読み上げの上書きを" + enStr + "にしました。").queue();
         } else {
@@ -194,7 +198,7 @@ public class ConfigCommand extends BaseCommand {
 
     private void nameReadLimit(SlashCommandInteractionEvent event) {
         Guild guild = Objects.requireNonNull(event.getGuild());
-        Integer op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
+        int op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
         ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         int pre = sd.getNameReadLimit();
@@ -208,8 +212,10 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void readLimit(SlashCommandInteractionEvent event) {
-        Integer op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
-        ServerData sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        int op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         int pre = sd.getReadLimit();
         if (op != pre) {

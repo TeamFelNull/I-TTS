@@ -20,7 +20,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-val shadowIn by configurations.creating
+val shadowIn: Configuration by configurations.creating
 configurations {
     shadowIn
     implementation.get().extendsFrom(shadowIn)
