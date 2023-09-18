@@ -9,18 +9,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
 
 /**
- * ネットワーク接続関係の処理を行う
+ * ネットワーク接続関係の処理を行うクラス
  *
  * @author MORIMORI0317
  */
 public class ITTSNetworkManager {
+
     /**
      * メモ化されたHttpClient
      */
     private final Supplier<HttpClient> httpClient = Suppliers.memoize(ITTSNetworkManager::createHttpClient);
 
     /**
-     * HTTPSクライアントを生成<br>
+     * HTTPSクライアントを生成<br/>
      * 大量のスレッドによるOutOfMemoryを防止するため、接続のたびにクライアントを生成しないでください。
      *
      * @return JavaのHttpClient

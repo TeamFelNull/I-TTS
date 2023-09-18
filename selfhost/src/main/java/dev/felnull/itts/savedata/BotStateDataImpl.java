@@ -7,8 +7,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * BOTステートデータの実装
+ *
+ * @author MORIMORI0317
+ */
 public class BotStateDataImpl extends SaveDataBase implements BotStateData {
+
+    /**
+     * 接続中のオーディオチャンネル
+     */
     private final AtomicLong connectedAudioChannel = new AtomicLong(INIT_CONNECTED_AUDIO_CHANNEL);
+
+    /**
+     * 読み上げるテキストチャンネル
+     */
     private final AtomicLong readAroundTextChannel = new AtomicLong(INIT_READ_AROUND_TEXT_CHANNEL);
 
 
@@ -42,8 +55,9 @@ public class BotStateDataImpl extends SaveDataBase implements BotStateData {
     @Override
     public void setConnectedAudioChannel(long connectedChannel) {
         long preVal = this.connectedAudioChannel.getAndSet(connectedChannel);
-        if (preVal != connectedChannel)
+        if (preVal != connectedChannel) {
             dirty();
+        }
     }
 
     @Override
@@ -54,7 +68,8 @@ public class BotStateDataImpl extends SaveDataBase implements BotStateData {
     @Override
     public void setReadAroundTextChannel(long readAroundTextChannel) {
         long preVal = this.readAroundTextChannel.getAndSet(readAroundTextChannel);
-        if (preVal != readAroundTextChannel)
+        if (preVal != readAroundTextChannel) {
             dirty();
+        }
     }
 }

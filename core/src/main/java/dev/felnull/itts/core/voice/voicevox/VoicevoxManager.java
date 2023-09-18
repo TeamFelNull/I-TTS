@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.itts.core.ITTSNetworkManager;
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -19,16 +18,49 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+/**
+ * VOICEVOX系エンジンの管理
+ *
+ * @author MORIMORI0317
+ */
 public class VoicevoxManager {
+
+    /**
+     * GSON
+     */
     private static final Gson GSON = new Gson();
+
+    /**
+     * VOICEVOX系の声カテゴリ
+     */
     private final VoicevoxVoiceCategory category = new VoicevoxVoiceCategory(this);
+
+    /**
+     * バランサー
+     */
     private final VoicevoxBalancer balancer;
+
+    /**
+     * エンジンのの前
+     */
     private final String name;
+
+    /**
+     * VOICEVOX系エンジンのコンフィグ
+     */
     private final Supplier<VoicevoxConfig> configSupplier;
 
+    /**
+     * コンストラクタ
+     *
+     * @param name           名前
+     * @param enginUrls      エンジンURL
+     * @param configSupplier コンフィグ
+     */
     public VoicevoxManager(String name, Supplier<List<String>> enginUrls, Supplier<VoicevoxConfig> configSupplier) {
         this.name = name;
         this.configSupplier = configSupplier;
@@ -39,6 +71,11 @@ public class VoicevoxManager {
         return configSupplier.get();
     }
 
+    /**
+     * 初期化
+     *
+     * @return 初期化の非同期CompletableFuture
+     */
     public CompletableFuture<?> init() {
         return balancer.init();
     }
@@ -65,12 +102,20 @@ public class VoicevoxManager {
         return balancer;
     }
 
+    /**
+     * エンジンのURLから話者一覧を取得
+     *
+     * @param vvurl VOICEVOXのURL
+     * @return 話者のリスト
+     * @throws IOException          IO例外
+     * @throws InterruptedException 割り込み例外
+     */
     protected List<VoicevoxSpeaker> requestSpeakers(VVURL vvurl) throws IOException, InterruptedException {
         HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-        var req = HttpRequest.newBuilder(vvurl.createURI("speakers"))
+        HttpRequest req = HttpRequest.newBuilder(vvurl.createURI("speakers"))
                 .timeout(Duration.of(3000, ChronoUnit.MILLIS))
                 .build();
-        var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
         JsonArray ja;
 
         try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
@@ -91,11 +136,11 @@ public class VoicevoxManager {
 
         try (var urlUse = balancer.getUseURL()) {
             HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-            var req = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
+            HttpRequest req = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .build();
-            var rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
+            HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
             try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 return GSON.fromJson(reader, JsonObject.class);
@@ -105,26 +150,38 @@ public class VoicevoxManager {
         }
     }
 
+    /**
+     * 読み上げ音声データのストリームを開く
+     *
+     * @param text      読み上げるテキスト
+     * @param speakerId 話者ID
+     * @return 音声データのストリーム
+     * @throws IOException          IO例外
+     * @throws InterruptedException 割り込み例外
+     */
     protected InputStream openVoiceStream(String text, int speakerId) throws IOException, InterruptedException {
-        var qry = getQuery(text, speakerId);
+        JsonObject qry = getQuery(text, speakerId);
         try (var urlUse = balancer.getUseURL()) {
-            var hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-            var request = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("synthesis?speaker=%d", speakerId)))
+            HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
+            HttpRequest request = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("synthesis?speaker=%d", speakerId)))
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(qry)))
                     .build();
 
-            var res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            HttpResponse<InputStream> res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
-            var content = res.headers().firstValue("content-type");
+            Optional<String> content = res.headers().firstValue("content-type");
             int code = res.statusCode();
 
-            if (content.isEmpty())
+            if (content.isEmpty()) {
                 throw new IOException("Content Type does not exist: " + code);
+            }
 
-            if (content.get().startsWith("audio/"))
+
+            if (content.get().startsWith("audio/")) {
                 return res.body();
+            }
 
             throw new IOException("Not audio data: " + code);
         } catch (Exception e) {

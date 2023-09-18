@@ -17,11 +17,33 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+/**
+ * キャッシュの管理
+ *
+ * @author MORIMORI0317
+ */
 public class CacheManager implements ITTSRuntimeUse {
+
+    /**
+     * キャッシュ保存用フォルダー
+     */
     private static final File LOCAL_CACHE_FOLDER = new File("./tmp");
+
+    /**
+     * 保存済みローカルキャッシュ
+     */
     private final Map<HashCode, CompletableFuture<LocalCache>> localCaches = new ConcurrentHashMap<>();
+
+    /**
+     * グローバルキャッシュアクセスの取得
+     */
     private final Supplier<GlobalCacheAccess> globalCacheAccessFactory;
 
+    /**
+     * コンストラクタ
+     *
+     * @param globalCacheAccessFactory グローバルキャッシュアクセスの取得用Supplier
+     */
     public CacheManager(@Nullable Supplier<GlobalCacheAccess> globalCacheAccessFactory) {
         try {
             FileUtils.deleteDirectory(LOCAL_CACHE_FOLDER);
@@ -33,13 +55,21 @@ public class CacheManager implements ITTSRuntimeUse {
         this.globalCacheAccessFactory = globalCacheAccessFactory;
     }
 
+    /**
+     * キャッシュを読み込む、もしくは生成する
+     *
+     * @param key        キー
+     * @param loadOpener ストリーム生成
+     * @return キャッシュエントリのCompletableFuture
+     */
     public CompletableFuture<CacheUseEntry> loadOrRestore(@NotNull HashCode key, @NotNull StreamOpener loadOpener) {
-        return localCaches.computeIfAbsent(key, ky -> createLocalCache(ky, loadOpener)).thenApplyAsync(LocalCache::restore, getAsyncExecutor());
+        return localCaches.computeIfAbsent(key, ky -> createLocalCache(ky, loadOpener))
+                .thenApplyAsync(LocalCache::restore, getAsyncExecutor());
     }
 
     private CompletableFuture<LocalCache> createLocalCache(HashCode key, StreamOpener loadOpener) {
         CompletableFuture<File> cf;
-        var lcFile = getLocalCacheFile(key);
+        File lcFile = getLocalCacheFile(key);
 
         if (globalCacheAccessFactory != null) {
             cf = CompletableFuture.supplyAsync(() -> {
@@ -87,9 +117,15 @@ public class CacheManager implements ITTSRuntimeUse {
         return new File(LOCAL_CACHE_FOLDER, hashCode.toString());
     }
 
+    /**
+     * キャッシュを破棄
+     *
+     * @param hashCode キャッシュのキー用ハッシュコード
+     */
     protected void disposeCache(HashCode hashCode) {
-        var lc = localCaches.remove(hashCode);
-        if (lc != null)
+        CompletableFuture<LocalCache> lc = localCaches.remove(hashCode);
+        if (lc != null) {
             lc.thenAcceptAsync(LocalCache::dispose, getAsyncExecutor());
+        }
     }
 }

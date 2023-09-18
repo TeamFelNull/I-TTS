@@ -10,13 +10,46 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * サーバーデータの実装
+ *
+ * @author MORIMORI0317
+ */
 public class ServerDataImpl extends SaveDataBase implements ServerData {
+
+    /**
+     * デフォルトの音声タイプ
+     */
     private final AtomicReference<String> defaultVoiceType = new AtomicReference<>(INIT_DEFAULT_VOICE_TYPE);
+
+    /**
+     * 無視する正規表現
+     */
     private final AtomicReference<String> ignoreRegex = new AtomicReference<>(INIT_IGNORE_REGEX);
+
+    /**
+     * 参加しているときのみ読み上げ
+     */
     private final AtomicBoolean needJoin = new AtomicBoolean(INIT_NEED_JOIN);
+
+    /**
+     * 読み上げを上書き
+     */
     private final AtomicBoolean overwriteAloud = new AtomicBoolean(INIT_OVERWRITE_ALOUD);
+
+    /**
+     * 移動時に読み上げるか
+     */
     private final AtomicBoolean notifyMove = new AtomicBoolean(INIT_NOTIFY_MOVE);
+
+    /**
+     * 最大読み上げ数
+     */
     private final AtomicInteger readLimit = new AtomicInteger(INIT_READ_LIMIT);
+
+    /**
+     * 最大名前読み上げ数
+     */
     private final AtomicInteger nameReadLimit = new AtomicInteger(INIT_NAME_READ_LIMIT);
 
     @Override

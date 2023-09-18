@@ -2,6 +2,7 @@ package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.itts.core.savedata.ServerUserData;
 import dev.felnull.itts.core.util.DiscordUtils;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -16,7 +17,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 読み上げ拒否コンフィグ
+ *
+ * @author MORIMORI0317
+ */
 public class DenyCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public DenyCommand() {
         super("deny");
     }
@@ -42,60 +52,65 @@ public class DenyCommand extends BaseCommand {
             case "add" -> add(event);
             case "remove" -> remove(event);
             case "show" -> show(event);
+            default -> {
+            }
         }
     }
 
     private void remove(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
         User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
 
         if (user.isBot()) {
-            event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "はBOTです。").setEphemeral(true).queue();
+            event.reply(DiscordUtils.getEscapedName(guild, user) + "はBOTです。").setEphemeral(true).queue();
             return;
         }
 
-        ServerUserData sud = getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
+        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
         if (!sud.isDeny()) {
             event.reply("読み上げ拒否をされていないユーザです。").setEphemeral(true).queue();
             return;
         }
 
         sud.setDeny(false);
-        event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げ拒否を解除します。").setEphemeral(true).queue();
+        event.reply(DiscordUtils.getEscapedName(guild, user) + "の読み上げ拒否を解除します。").setEphemeral(true).queue();
     }
 
     private void show(SlashCommandInteractionEvent event) {
-        List<Long> denyUsers = getSaveDataManager().getAllDenyUser(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        List<Long> denyUsers = getSaveDataManager().getAllDenyUser(guild.getIdLong());
 
         if (denyUsers.isEmpty()) {
             event.reply("読み上げ拒否されたユーザは存在しません。").setEphemeral(true).queue();
             return;
         }
 
-        var msg = new MessageCreateBuilder().addContent("読み上げ拒否されたユーザ一覧\n");
+        MessageCreateBuilder msg = new MessageCreateBuilder().addContent("読み上げ拒否されたユーザ一覧\n");
         StringBuilder sb = new StringBuilder();
         for (Long deny : denyUsers) {
-            sb.append(DiscordUtils.getEscapedName(event.getGuild(), Objects.requireNonNull(event.getJDA().getUserById(deny)))).append("\n");
+            sb.append(DiscordUtils.getEscapedName(guild, Objects.requireNonNull(event.getJDA().getUserById(deny)))).append("\n");
         }
         msg.addContent("``" + sb + "``");
         event.reply(msg.build()).setEphemeral(true).queue();
     }
 
     private void add(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
         User user = event.getOption("user", OptionMapping::getAsUser);
         Objects.requireNonNull(user);
 
         if (user.isBot()) {
-            event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "はBOTです。").setEphemeral(true).queue();
+            event.reply(DiscordUtils.getEscapedName(guild, user) + "はBOTです。").setEphemeral(true).queue();
             return;
         }
 
-        ServerUserData sud = getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
+        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
         if (sud.isDeny()) {
             event.reply("すでに読み上げ拒否をされているユーザです。").setEphemeral(true).queue();
             return;
         }
 
         sud.setDeny(true);
-        event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げ拒否します。").setEphemeral(true).queue();
+        event.reply(DiscordUtils.getEscapedName(guild, user) + "の読み上げ拒否します。").setEphemeral(true).queue();
     }
 }

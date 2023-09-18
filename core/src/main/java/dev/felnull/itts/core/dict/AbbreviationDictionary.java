@@ -7,8 +7,21 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * 省略辞書
+ *
+ * @author MORIMORI0317
+ */
 public class AbbreviationDictionary implements Dictionary {
+
+    /**
+     * コードブロックの正規表現
+     */
     private static final Pattern CODE_BLOCK_REGEX = Pattern.compile("```(.|\n)*```");
+
+    /**
+     * 正規表現関係
+     */
     private final RegexUtil regexUtil = new RegexUtil();
 
     @Override

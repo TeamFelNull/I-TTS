@@ -1,11 +1,24 @@
 package dev.felnull.itts.core.discord.command;
 
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
+/**
+ * 退出コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class LeaveCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public LeaveCommand() {
         super("leave");
     }
@@ -20,10 +33,10 @@ public class LeaveCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        var audioManager = event.getGuild().getAudioManager();
+        AudioManager audioManager = event.getGuild().getAudioManager();
 
         if (audioManager.isConnected()) {
-            var connectedChannel = audioManager.getConnectedChannel();
+            AudioChannelUnion connectedChannel = Objects.requireNonNull(audioManager.getConnectedChannel());
             event.reply(connectedChannel.getAsMention() + "から切断します。").queue();
 
             audioManager.closeAudioConnection();

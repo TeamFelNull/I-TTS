@@ -1,17 +1,33 @@
 package dev.felnull.itts.core.discord.command;
 
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
+/**
+ * 参加コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class JoinCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public JoinCommand() {
         super("join");
     }
@@ -28,17 +44,20 @@ public class JoinCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        var interactionChannel = event.getInteraction().getOption("channel");
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        Member member = Objects.requireNonNull(event.getMember());
+
+        OptionMapping interactionChannel = event.getInteraction().getOption("channel");
         AudioChannel joinTargetChannel = null;
 
         if (interactionChannel != null) {
             joinTargetChannel = interactionChannel.getAsChannel().asAudioChannel();
         } else {
-            var member = event.getMember();
-            var vs = member.getVoiceState();
-            if (vs != null)
-                joinTargetChannel = vs.getChannel();
+            GuildVoiceState vs = member.getVoiceState();
 
+            if (vs != null) {
+                joinTargetChannel = vs.getChannel();
+            }
         }
 
         if (joinTargetChannel == null) {
@@ -46,13 +65,13 @@ public class JoinCommand extends BaseCommand {
             return;
         }
 
-        var audioManager = event.getGuild().getAudioManager();
+        AudioManager audioManager = guild.getAudioManager();
         if (audioManager.isConnected() && audioManager.getConnectedChannel() != null && audioManager.getConnectedChannel().getIdLong() == joinTargetChannel.getIdLong()) {
             event.reply("すでに接続しています").setEphemeral(true).queue();
             return;
         }
 
-        getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
+        getTTSManager().setReadAroundChannel(guild, event.getChannel());
 
         try {
             audioManager.openAudioConnection(joinTargetChannel);

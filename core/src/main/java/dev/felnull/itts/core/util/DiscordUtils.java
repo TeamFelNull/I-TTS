@@ -12,7 +12,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Discordに関するユーティリティ
+ *
+ * @author MORIMORI0317
+ */
 public final class DiscordUtils {
+
+    private DiscordUtils() {
+    }
 
     /**
      * 非同期で名前を取得する。<br>

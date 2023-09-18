@@ -14,22 +14,51 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * メッセージの読み上げテキスト
+ *
+ * @param message メッセージ
+ * @param voice   音声タイプ
+ * @author MORIMORI0317
+ */
 public record MessageSaidText(Message message, Voice voice) implements SaidText, ITTSRuntimeUse {
+
+    /**
+     * 返信のメッセージ
+     */
     private static final String REPLAY_MESSAGE = "%sに返信しました、%s";
+
+    /**
+     * 自分に対する返信のメッセージ
+     */
     private static final String MY_MESSAGE = "自分";
+
+    /**
+     * 不明なメッセージ
+     */
     private static final String UNKNOWN_MESSAGE = "不明なメッセージ";
+
+    /**
+     * ピン留めを行ったときのメッセージ
+     */
     private static final String PINNED_MESSAGE = "%sのメッセージをチャンネルにピン留めしました";
+
+    /**
+     * 不明なチャンネルでピン留めを行ったときのメッセージ
+     */
     private static final String UNKNOWN_PINNED_MESSAGE = "メッセージをチャンネルにピン留めしました";
 
     @Override
     public CompletableFuture<String> getText() {
         MessageType messageType = message.getType();
 
-        if (messageType == MessageType.INLINE_REPLY)
+        if (messageType == MessageType.INLINE_REPLY) {
             return inlineReply();
+        }
 
-        if (messageType == MessageType.CHANNEL_PINNED_ADD)
+        if (messageType == MessageType.CHANNEL_PINNED_ADD) {
             return pined();
+        }
 
         Map<User, Member> members = new ConcurrentHashMap<>();
 
@@ -95,6 +124,7 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
                     try {
                         pinMessage = message.getChannel().retrieveMessageById(reference.getMessageIdLong()).complete();
                     } catch (RuntimeException ignored) {
+                        // ピン留めしたメッセージの取得に失敗
                     }
                 }
 

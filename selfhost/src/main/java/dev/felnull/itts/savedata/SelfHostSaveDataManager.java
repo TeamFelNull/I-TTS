@@ -14,14 +14,56 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * セルフホスト用セーブデータ管理
+ *
+ * @author MORIMORI0317
+ */
 public class SelfHostSaveDataManager implements SaveDataAccess {
+
+    /**
+     * インスタンス
+     */
     private static final SelfHostSaveDataManager INSTANCE = new SelfHostSaveDataManager();
+
+    /**
+     * グローバル辞書のファイル
+     */
     private static final File GLOBAL_DICT_DIR = new File("./global_dict.json");
-    private final KeySaveDataManage<LongSaveDataKey, ServerDataImpl> serverData = new KeySaveDataManage<>(new File("./save_data/server"), ServerDataImpl::new, LongSaveDataKey.getFinder());
-    private final KeySaveDataManage<LongSaveDataKey, ServerUsersData> serverUsersData = new KeySaveDataManage<>(new File("./save_data/server_users"), ServerUsersData::new, LongSaveDataKey.getFinder());
-    private final KeySaveDataManage<LongSaveDataKey, ServerDictUseData> serverDictUseData = new KeySaveDataManage<>(new File("./save_data/dict_use"), ServerDictUseData::new, LongSaveDataKey.getFinder());
-    private final KeySaveDataManage<LongSaveDataKey, BotStateDataImpl> botStateData = new KeySaveDataManage<>(new File("./save_data/bot_state"), BotStateDataImpl::new, LongSaveDataKey.getFinder());
-    private final KeySaveDataManage<LongSaveDataKey, ServerDictData> serverDict = new KeySaveDataManage<>(new File("./save_data/server_dict"), ServerDictData::new, LongSaveDataKey.getFinder());
+
+    /**
+     * サーバーデータ
+     */
+    private final KeySaveDataManage<LongSaveDataKey, ServerDataImpl> serverData =
+            new KeySaveDataManage<>(new File("./save_data/server"), ServerDataImpl::new, LongSaveDataKey.getFinder());
+
+    /**
+     * サーバーのユーザ別データ
+     */
+    private final KeySaveDataManage<LongSaveDataKey, ServerUsersData> serverUsersData =
+            new KeySaveDataManage<>(new File("./save_data/server_users"), ServerUsersData::new, LongSaveDataKey.getFinder());
+
+    /**
+     * サーバー辞書使用データ
+     */
+    private final KeySaveDataManage<LongSaveDataKey, ServerDictUseData> serverDictUseData =
+            new KeySaveDataManage<>(new File("./save_data/dict_use"), ServerDictUseData::new, LongSaveDataKey.getFinder());
+
+    /**
+     * BOT状態データ
+     */
+    private final KeySaveDataManage<LongSaveDataKey, BotStateDataImpl> botStateData =
+            new KeySaveDataManage<>(new File("./save_data/bot_state"), BotStateDataImpl::new, LongSaveDataKey.getFinder());
+
+    /**
+     * サーバー辞書データ
+     */
+    private final KeySaveDataManage<LongSaveDataKey, ServerDictData> serverDict =
+            new KeySaveDataManage<>(new File("./save_data/server_dict"), ServerDictData::new, LongSaveDataKey.getFinder());
+
+    /**
+     * グローバル辞書データ
+     */
     private CompletableFuture<GlobalDictData> globalDict;
 
     public static SelfHostSaveDataManager getInstance() {
@@ -120,14 +162,14 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
 
     private <T extends SaveDataBase> CompletableFuture<T> globalDictComputeInitAsync(Supplier<T> newInstance) {
         return CompletableFuture.supplyAsync(() -> {
-            var ni = newInstance.get();
+            T ni = newInstance.get();
             try {
                 ni.init(GLOBAL_DICT_DIR, null);
             } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", ni.getName(), ex);
+                Main.runtime.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", ni.getName(), ex);
             }
             return ni;
-        }, Main.RUNTIME.getAsyncWorkerExecutor());
+        }, Main.runtime.getAsyncWorkerExecutor());
     }
 
     @Override

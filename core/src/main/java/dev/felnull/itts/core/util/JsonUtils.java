@@ -1,9 +1,19 @@
 package dev.felnull.itts.core.util;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Jsonに関するユーティリティ
+ *
+ * @author MORIMORI0317
+ */
 public final class JsonUtils {
+
+    private JsonUtils() {
+    }
+
     /**
      * Jsonから文字列を取得する、存在しない場合は空の文字列を返す
      *
@@ -13,11 +23,16 @@ public final class JsonUtils {
      */
     @NotNull
     public static String getStringOrEmpty(@NotNull JsonObject jo, @NotNull String key) {
-        var jp = jo.getAsJsonPrimitive(key);
-        if (jp == null)
+        JsonPrimitive jp = jo.getAsJsonPrimitive(key);
+
+        if (jp == null) {
             return "";
-        if (!jp.isString())
+        }
+
+        if (!jp.isString()) {
             return "";
+        }
+
         return jp.getAsString();
     }
 
@@ -30,8 +45,9 @@ public final class JsonUtils {
      * @return 文字列
      */
     public static String getString(@NotNull JsonObject jo, @NotNull String key, String defaultValue) {
-        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isString())
+        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isString()) {
             return defaultValue;
+        }
 
         return jo.get(key).getAsString();
     }
@@ -45,8 +61,9 @@ public final class JsonUtils {
      * @return int値
      */
     public static int getInt(@NotNull JsonObject jo, @NotNull String key, int defaultValue) {
-        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isNumber())
+        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isNumber()) {
             return defaultValue;
+        }
 
         return jo.get(key).getAsInt();
     }
@@ -60,8 +77,9 @@ public final class JsonUtils {
      * @return 真偽値
      */
     public static boolean getBoolean(@NotNull JsonObject jo, @NotNull String key, boolean defaultValue) {
-        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isBoolean())
+        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isBoolean()) {
             return defaultValue;
+        }
 
         return jo.get(key).getAsBoolean();
     }
@@ -75,8 +93,9 @@ public final class JsonUtils {
      * @return long値
      */
     public static long getLong(@NotNull JsonObject jo, @NotNull String key, long defaultValue) {
-        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isNumber())
+        if (!jo.has(key) || !jo.get(key).isJsonPrimitive() || !jo.get(key).getAsJsonPrimitive().isNumber()) {
             return defaultValue;
+        }
 
         return jo.get(key).getAsLong();
     }

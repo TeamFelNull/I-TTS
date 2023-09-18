@@ -2,6 +2,7 @@ package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.itts.core.savedata.ServerUserData;
 import dev.felnull.itts.core.util.DiscordUtils;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -12,7 +13,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * Adminコマンド
+ *
+ * @author MORIMORI0317
+ */
 public class AdminCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public AdminCommand() {
         super("admin");
     }
@@ -59,7 +69,8 @@ public class AdminCommand extends BaseCommand {
     private void vnick(SlashCommandInteractionEvent event) {
         User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
         String name = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
-        ServerUserData sud = getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), user.getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
 
         if ("reset".equals(name)) {
             sud.setNickName(null);
@@ -82,8 +93,9 @@ public class AdminCommand extends BaseCommand {
 
     @Override
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
-        if (!"voice".equals(event.getSubcommandGroup()) || !"change".equals(event.getSubcommandName()))
+        if (!"voice".equals(event.getSubcommandGroup()) || !"change".equals(event.getSubcommandName())) {
             return;
+        }
 
         VoiceCommand.voiceSelectComplete(event, null, false);
     }

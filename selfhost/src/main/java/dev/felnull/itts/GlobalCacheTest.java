@@ -1,14 +1,14 @@
 package dev.felnull.itts;
 
-import com.google.common.hash.HashCode;
-import dev.felnull.itts.core.cache.GlobalCacheAccess;
-import org.jetbrains.annotations.NotNull;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Response;
+/**
+ * グローバルキャッシュのテスト
+ *
+ * @author MORIMORI0317
+ * @see <a href="https://qiita.com/shiozaki/items/b746dc4bb5e1e87c0528">参考サイト</a>
+ */
+public class GlobalCacheTest /*implements GlobalCacheAccess*/ {
 
-// https://qiita.com/shiozaki/items/b746dc4bb5e1e87c0528
-public class GlobalCacheTest implements GlobalCacheAccess {
+  /*
     private final JedisPool pool;
     private final Jedis resource;
 
@@ -55,8 +55,8 @@ public class GlobalCacheTest implements GlobalCacheAccess {
 
     @Override
     public void close() throws Exception {
-        //TODO All unlock
+        // All unlock
         this.resource.close();
         this.pool.close();
-    }
+    }*/
 }

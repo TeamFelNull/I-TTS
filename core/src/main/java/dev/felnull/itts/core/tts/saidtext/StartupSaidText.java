@@ -5,6 +5,12 @@ import dev.felnull.itts.core.voice.Voice;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 起動時の読み上げテキスト
+ *
+ * @param voice 音声タイプ
+ * @author MORIMORI0317
+ */
 public record StartupSaidText(Voice voice) implements SaidText, ITTSRuntimeUse {
     @Override
     public CompletableFuture<String> getText() {

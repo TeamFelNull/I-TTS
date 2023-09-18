@@ -1,13 +1,26 @@
 package dev.felnull.itts.core.discord.command;
 
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 再接続コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class ReconnectCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public ReconnectCommand() {
         super("reconnect");
     }
@@ -22,10 +35,11 @@ public class ReconnectCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        var audioManager = event.getGuild().getAudioManager();
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        AudioManager audioManager = Objects.requireNonNull(guild.getAudioManager());
 
         if (audioManager.isConnected()) {
-            var connectedChannel = audioManager.getConnectedChannel();
+            AudioChannelUnion connectedChannel = audioManager.getConnectedChannel();
             event.reply(connectedChannel.getAsMention() + "に再接続します。").queue();
 
             audioManager.closeAudioConnection();
@@ -34,6 +48,7 @@ public class ReconnectCommand extends BaseCommand {
                 try {
                     Thread.sleep(300);
                 } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
                 }
 
                 getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());

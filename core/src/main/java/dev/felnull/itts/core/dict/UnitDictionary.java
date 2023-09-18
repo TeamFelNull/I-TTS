@@ -9,16 +9,71 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 単位辞書
+ *
+ * @author MORIMORI0317
+ */
 public class UnitDictionary implements Dictionary {
+    /**
+     * 単位に置き換える文字のひとつ前の文字を表す正規表現
+     */
+    private static final Pattern UNIT_PREFIX_REGEX = createPrefixAndUnitPattern();
+
+    /**
+     * 数字の正規表現
+     */
+    private static final Pattern NUMBERS_REGEX = Pattern.compile("\\d+");
+
+    /**
+     * 通常の大きい接頭辞
+     */
+    private static final Prefix[] NORMAL_UP_PREFIX = {
+            Prefix.KILO,
+            Prefix.MEGA,
+            Prefix.GIGA,
+            Prefix.TERA,
+            Prefix.PETA,
+            Prefix.EXA,
+            Prefix.ZETTA,
+            Prefix.YOTTA,
+            Prefix.RONNA,
+            Prefix.QUETTA
+    };
+
+    /**
+     * 通常の小さい接頭辞
+     */
+    private static final Prefix[] NORMAL_DOWN_PREFIX = {
+            Prefix.CENTI,
+            Prefix.MILLI,
+            Prefix.MICRO,
+            Prefix.NANO,
+            Prefix.PICO,
+            Prefix.FEMTO,
+            Prefix.ATTO,
+            Prefix.ZEPTO,
+            Prefix.YOCTO,
+            Prefix.RONTO,
+            Prefix.QUECTO
+    };
+
+    /**
+     * 通常の全ての接頭辞
+     */
+    private static final Prefix[] NORMAL_ALL_PREFIX = ArrayUtils.addAll(NORMAL_UP_PREFIX, NORMAL_DOWN_PREFIX);
 
     @Override
     public @NotNull String apply(@NotNull String text, long guildId) {
-        return UNIT_PREFIX.matcher(text).replaceAll(matchResult -> {
+        return UNIT_PREFIX_REGEX.matcher(text).replaceAll(matchResult -> {
             String lst = null;
-            if (matchResult.end() < text.length())
+            if (matchResult.end() < text.length()) {
                 lst = String.valueOf(text.charAt(matchResult.end()));
+            }
+
             return replaceUnitAndPrefix(matchResult.group(), lst);
         });
     }
@@ -38,9 +93,6 @@ public class UnitDictionary implements Dictionary {
         return "unit";
     }
 
-    private static final Pattern UNIT_PREFIX = createPrefixAndUnitPattern();
-    private static final Pattern NUMBERS = Pattern.compile("\\d+");
-
     private static Pattern createPrefixAndUnitPattern() {
         Pattern alphabet = Pattern.compile("[a-zA-Z]+");
         StringBuilder lastUnits = new StringBuilder();
@@ -54,8 +106,11 @@ public class UnitDictionary implements Dictionary {
         }
 
         for (Prefix prefix : Prefix.values()) {
-            if (prefix.word == null || prefix.read == null) continue;
-            var mc = alphabet.matcher(prefix.word);
+            if (prefix.word == null || prefix.read == null) {
+                continue;
+            }
+
+            Matcher mc = alphabet.matcher(prefix.word);
             if (mc.matches()) {
                 preOrUnitMiddle.append(prefix.word.toLowerCase(Locale.ROOT)).append(prefix.word.toUpperCase(Locale.ROOT));
             } else {
@@ -68,25 +123,37 @@ public class UnitDictionary implements Dictionary {
 
     private String replaceUnitAndPrefix(String text, String after) {
         Pattern alphabets = Pattern.compile("[a-zA-Z-]+");
-        if (after != null && alphabets.matcher(after).matches())
+        if (after != null && alphabets.matcher(after).matches()) {
             return text;
+        }
 
-        var nmc = NUMBERS.matcher(text);
-        if (!nmc.find()) return text;
+        Matcher nmc = NUMBERS_REGEX.matcher(text);
+
+        if (!nmc.find()) {
+            return text;
+        }
+
         String number = nmc.group();
         String only = text.substring(number.length());
-        var unit = Unit.getEndUnit(only);
-        if (unit == null) return text;
+        Unit unit = Unit.getEndUnit(only);
+
+        if (unit == null) {
+            return text;
+        }
+
         String unitStr = only.substring(only.length() - unit.word.length());
         boolean big = Character.isUpperCase(unitStr.charAt(0));
-        var prefixStr = only.substring(0, only.length() - unitStr.length());
+        String prefixStr = only.substring(0, only.length() - unitStr.length());
 
-        if (prefixStr.isEmpty())
+        if (prefixStr.isEmpty()) {
             return number + unit.read;
+        }
 
-        var prefix = Prefix.getPrefix(prefixStr, unit, big);
+        Prefix prefix = Prefix.getPrefix(prefixStr, unit, big);
 
-        if (prefix == null) return text;
+        if (prefix == null) {
+            return text;
+        }
 
         return number + prefix.read + unit.read;
     }
@@ -101,7 +168,9 @@ public class UnitDictionary implements Dictionary {
         StringBuilder dosbr = new StringBuilder();
 
         for (Prefix pre : Prefix.values()) {
-            if (pre.getWord() == null || pre.getRead() == null) continue;
+            if (pre.getWord() == null || pre.getRead() == null) {
+                continue;
+            }
 
             if (pre.isUp()) {
                 upsbw.append(pre.getWord()).append(",");
@@ -141,44 +210,191 @@ public class UnitDictionary implements Dictionary {
         return 3;
     }
 
-    //https://www.mikipulley.co.jp/JP/Services/Tech_data/tech01.html
-    private static enum Unit {
-        GRAM("g", "ぐらむ", Prefix.NORMAL_ALL),
-        BYTE("b", "ばいと", Prefix.NORMAL_UP),
-        METER("m", "めーとる", Prefix.NORMAL_ALL),
-        SECOND("s", "秒", Prefix.NORMAL_DOWN),
-        AMPERE("a", "あんぺあ", Prefix.NORMAL_ALL),
-        MOLE("mol", "もる", Prefix.NORMAL_ALL),
-        CANDELA("cd", "かんでら", Prefix.NORMAL_ALL),
-        RADIAN("rad", "らじあん", Prefix.NORMAL_ALL),
-        STERADIAN("sr", "すてらじあん", Prefix.NORMAL_ALL),
-        HERTZ("Hz", "すてらじあん", ArrayUtils.addAll(Prefix.NORMAL_ALL, Prefix.DECA, Prefix.HECTO)),
-        NEWTON("n", "にゅーとん", Prefix.NORMAL_ALL),
-        PASCAL("Pa", "ぱすかる", Prefix.NORMAL_ALL),
-        JOULE("J", "じゅーる", Prefix.NORMAL_ALL),
-        WATT("W", "わっと", Prefix.NORMAL_ALL),
-        COULOMB("C", "くーろん", Prefix.NORMAL_ALL),
-        VOLT("V", "ぼると", Prefix.NORMAL_ALL),
-        FARAD("F", "ふぁらど", Prefix.NORMAL_ALL),
-        OHM("Ω", "おーむ", Prefix.NORMAL_ALL),
-        SIEMENS("S", "じーめんす", Prefix.NORMAL_ALL),
-        WEBER("Wb", "うぇーば", Prefix.NORMAL_ALL),
-        TESLA("T", "てすら", Prefix.NORMAL_ALL),
-        HENRY("H", "へんりー", Prefix.NORMAL_ALL),
-        CELSIUS("°C", "ど"),
-        LUMEN("lm", "るーめん", Prefix.NORMAL_ALL),
-        LUX("lx", "るくす", Prefix.NORMAL_ALL),
-        BECQUEREL("Bq", "べくれる", Prefix.NORMAL_ALL),
-        GRAY("Gy", "ぐれい", Prefix.NORMAL_ALL),
-        SIEVERT("Sv", "しーべると", Prefix.NORMAL_ALL),
-        KATAL("kat", "かたーる", Prefix.NORMAL_ALL),
-        KELVIN("k", "けるびん"),
-        TONS("t", "とん"),
-        LITER("l", "りっとる", ArrayUtils.addAll(Prefix.NORMAL_ALL, Prefix.DECA, Prefix.DECI));
+    /**
+     * 単位の列挙型
+     *
+     * @author MORIMORI0317
+     * @see <a href="https://www.mikipulley.co.jp/JP/Services/Tech_data/tech01.html">参考サイト</a>
+     */
+    private enum Unit {
+        /**
+         * グラム
+         */
+        GRAM("g", "ぐらむ", NORMAL_ALL_PREFIX),
 
+        /**
+         * バイト
+         */
+        BYTE("b", "ばいと", NORMAL_UP_PREFIX),
+
+        /**
+         * メートル
+         */
+        METER("m", "めーとる", NORMAL_ALL_PREFIX),
+
+        /**
+         * 秒
+         */
+        SECOND("s", "秒", NORMAL_DOWN_PREFIX),
+
+        /**
+         * アンペア
+         */
+        AMPERE("a", "あんぺあ", NORMAL_ALL_PREFIX),
+
+        /**
+         * モル
+         */
+        MOLE("mol", "もる", NORMAL_ALL_PREFIX),
+
+        /**
+         * カンデラ
+         */
+        CANDELA("cd", "かんでら", NORMAL_ALL_PREFIX),
+
+        /**
+         * ラジアン
+         */
+        RADIAN("rad", "らじあん", NORMAL_ALL_PREFIX),
+
+        /**
+         * ステラジアン
+         */
+        STERADIAN("sr", "すてらじあん", NORMAL_ALL_PREFIX),
+
+        /**
+         * へるつ
+         */
+        HERTZ("Hz", "へるつ", ArrayUtils.addAll(NORMAL_ALL_PREFIX, Prefix.DECA, Prefix.HECTO)),
+
+        /**
+         * ニュートン
+         */
+        NEWTON("n", "にゅーとん", NORMAL_ALL_PREFIX),
+
+        /**
+         * パスカル
+         */
+        PASCAL("Pa", "ぱすかる", NORMAL_ALL_PREFIX),
+
+        /**
+         * ジュール
+         */
+        JOULE("J", "じゅーる", NORMAL_ALL_PREFIX),
+
+        /**
+         * ワット
+         */
+        WATT("W", "わっと", NORMAL_ALL_PREFIX),
+
+        /**
+         * クーロン
+         */
+        COULOMB("C", "くーろん", NORMAL_ALL_PREFIX),
+
+        /**
+         * ボルト
+         */
+        VOLT("V", "ぼると", NORMAL_ALL_PREFIX),
+
+        /**
+         * ファラド
+         */
+        FARAD("F", "ふぁらど", NORMAL_ALL_PREFIX),
+
+        /**
+         * オーム
+         */
+        OHM("Ω", "おーむ", NORMAL_ALL_PREFIX),
+
+        /**
+         * ジーメンス
+         */
+        SIEMENS("S", "じーめんす", NORMAL_ALL_PREFIX),
+
+        /**
+         * ウェーバ
+         */
+        WEBER("Wb", "うぇーば", NORMAL_ALL_PREFIX),
+
+        /**
+         * テスラ
+         */
+        TESLA("T", "てすら", NORMAL_ALL_PREFIX),
+
+        /**
+         * ヘンリー
+         */
+        HENRY("H", "へんりー", NORMAL_ALL_PREFIX),
+
+        /**
+         * 度
+         */
+        CELSIUS("°C", "ど"),
+
+        /**
+         * ルーメン
+         */
+        LUMEN("lm", "るーめん", NORMAL_ALL_PREFIX),
+
+        /**
+         * ルクス
+         */
+        LUX("lx", "るくす", NORMAL_ALL_PREFIX),
+
+        /**
+         * ベクレル
+         */
+        BECQUEREL("Bq", "べくれる", NORMAL_ALL_PREFIX),
+
+        /**
+         * グレイ
+         */
+        GRAY("Gy", "ぐれい", NORMAL_ALL_PREFIX),
+
+        /**
+         * シーベルト
+         */
+        SIEVERT("Sv", "しーべると", NORMAL_ALL_PREFIX),
+
+        /**
+         * カタール
+         */
+        KATAL("kat", "かたーる", NORMAL_ALL_PREFIX),
+
+        /**
+         * ケルビン
+         */
+        KELVIN("k", "けるびん"),
+
+        /**
+         * トン
+         */
+        TONS("t", "とん"),
+
+        /**
+         * リットル
+         */
+        LITER("l", "りっとる", ArrayUtils.addAll(NORMAL_ALL_PREFIX, Prefix.DECA, Prefix.DECI));
+
+        /**
+         * 置き換える文字
+         */
         private final String word;
+
+        /**
+         * 読み
+         */
         private final String read;
-        private final Prefix[] prefixes;
+
+        /**
+         * 単位の接頭辞
+         */
+        private final UnitDictionary.Prefix[] prefixes;
+
+        /**
+         * 置き換え対象正規表現
+         */
         private final Pattern pattern;
 
         Unit(String word, String read, Prefix... prefixes) {
@@ -196,18 +412,22 @@ public class UnitDictionary implements Dictionary {
             return read;
         }
 
-        public Prefix[] getPrefixes() {
+        public UnitDictionary.Prefix[] getPrefixes() {
             return prefixes;
         }
 
         public boolean isEndMache(String text) {
-            if (findPrefix(text))
+            if (findPrefix(text)) {
                 return true;
+            }
+
             Pattern alphabet = Pattern.compile("[a-zA-Z]+");
 
             text = alphabet.matcher(text).replaceAll(n -> n.group().toLowerCase(Locale.ROOT));
-            if (findPrefix(text))
+
+            if (findPrefix(text)) {
                 return true;
+            }
 
             text = alphabet.matcher(text).replaceAll(n -> n.group().toUpperCase(Locale.ROOT));
 
@@ -215,7 +435,7 @@ public class UnitDictionary implements Dictionary {
         }
 
         private boolean findPrefix(String text) {
-            var m = pattern.matcher(text);
+            Matcher m = pattern.matcher(text);
             int lstm = -1;
             while (m.find()) {
                 lstm = m.end();
@@ -227,55 +447,169 @@ public class UnitDictionary implements Dictionary {
             List<Unit> maches = new ArrayList<>();
 
             for (Unit unit : values()) {
-                if (unit.isEndMache(text))
+                if (unit.isEndMache(text)) {
                     maches.add(unit);
+                }
             }
 
-            if (maches.isEmpty()) return null;
-            if (maches.size() == 1) return maches.get(0);
+            if (maches.isEmpty()) {
+                return null;
+            }
+
+            if (maches.size() == 1) {
+                return maches.get(0);
+            }
 
             for (Unit unit : maches) {
-                if (unit.word.equals(text))
+                if (unit.word.equals(text)) {
                     return unit;
+                }
             }
 
             return maches.get(0);
         }
     }
 
-    //https://unit.aist.go.jp/nmij/info/SI_prefixes/index.html
-    private static enum Prefix {
+    /**
+     * 単位の接頭辞
+     *
+     * @author MORIMORI0317
+     * @see <a href="https://unit.aist.go.jp/nmij/info/SI_prefixes/index.html">参考サイト</a>
+     */
+    private enum Prefix {
+        /**
+         * デシ
+         */
         DECI("d", "でし"),
+
+        /**
+         * センチ
+         */
         CENTI("c", "せんち"),
+
+        /**
+         * ミリ
+         */
         MILLI("m", "みり"),
+
+        /**
+         * マイクロ
+         */
         MICRO("μ", "まいくろ"),
+
+        /**
+         * ナノ
+         */
         NANO("n", "なの"),
+
+        /**
+         * ピコ
+         */
         PICO("p", "ぴこ"),
+
+        /**
+         * フェムト
+         */
         FEMTO("f", "ふぇむと"),
+
+        /**
+         * アト
+         */
         ATTO("a", "あと"),
+
+        /**
+         * セプト
+         */
         ZEPTO("z", "せぷと"),
+
+        /**
+         * ヨクト
+         */
         YOCTO("y", "よくと"),
+
+        /**
+         * ロント
+         */
         RONTO("r", "ろんと"),
+
+        /**
+         * クエクト
+         */
         QUECTO("q", "くえくと"),
+
+        /**
+         * デカ
+         */
         DECA("da", "でか", true),
+
+        /**
+         * ヘクト
+         */
         HECTO("h", "へくと", true),
+
+        /**
+         * キロ
+         */
         KILO("k", "きろ", true),
+
+        /**
+         * メガ
+         */
         MEGA("m", "めが", true),
+
+        /**
+         * ギガ
+         */
         GIGA("g", "ぎが", true),
+
+        /**
+         * テラ
+         */
         TERA("t", "てら", true),
+
+        /**
+         * ペタ
+         */
         PETA("p", "ぺた", true),
+
+        /**
+         * エクサ
+         */
         EXA("e", "えくさ", true),
+
+        /**
+         * ヨタ
+         */
         ZETTA("y", "よた", true),
+
+        /**
+         * ゼタ
+         */
         YOTTA("z", "ぜた", true),
+
+        /**
+         * ロナ
+         */
         RONNA("r", "ろな", true),
+
+        /**
+         * クエタ
+         */
         QUETTA("q", "くえた", true);
 
-        private static final Prefix[] NORMAL_UP = {Prefix.KILO, Prefix.MEGA, Prefix.GIGA, Prefix.TERA, Prefix.PETA, Prefix.EXA, Prefix.ZETTA, Prefix.YOTTA, Prefix.RONNA, Prefix.QUETTA};
-        private static final Prefix[] NORMAL_DOWN = {Prefix.CENTI, Prefix.MILLI, Prefix.MICRO, Prefix.NANO, Prefix.PICO, Prefix.FEMTO, Prefix.ATTO, Prefix.ZEPTO, Prefix.YOCTO, Prefix.RONTO, Prefix.QUECTO};
-        private static final Prefix[] NORMAL_ALL = ArrayUtils.addAll(NORMAL_UP, NORMAL_DOWN);
-
+        /**
+         * 置き換える文字
+         */
         private final String word;
+
+        /**
+         * 読み
+         */
         private final String read;
+
+        /**
+         * 大きいかどうか
+         */
         private final boolean up;
 
         Prefix(String word, String read, boolean up) {
@@ -304,22 +638,31 @@ public class UnitDictionary implements Dictionary {
             return word.equalsIgnoreCase(text);
         }
 
-        public static Prefix getPrefix(String text, Unit unit, boolean big) {
+        public static Prefix getPrefix(String text, UnitDictionary.Unit unit, boolean big) {
             List<Prefix> prefixes = new ArrayList<>();
             for (Prefix prefix : unit.getPrefixes()) {
-                if (prefix.isMache(text))
+                if (prefix.isMache(text)) {
                     prefixes.add(prefix);
+                }
             }
-            if (prefixes.isEmpty()) return null;
-            if (prefixes.size() == 1) return prefixes.get(0);
+
+            if (prefixes.isEmpty()) {
+                return null;
+            }
+
+            if (prefixes.size() == 1) {
+                return prefixes.get(0);
+            }
 
             boolean pbig = Character.isUpperCase(text.charAt(0));
 
-            Prefix up = prefixes.stream().filter(Prefix::isUp).findFirst().get();
-            Prefix don = prefixes.stream().filter(n -> !n.isUp()).findFirst().get();
+            Prefix up = prefixes.stream().filter(Prefix::isUp).findFirst().orElseThrow();
+            Prefix don = prefixes.stream().filter(n -> !n.isUp()).findFirst().orElseThrow();
 
-            if (!big && pbig)
+            if (!big && pbig) {
                 return up;
+            }
+
             return don;
         }
     }

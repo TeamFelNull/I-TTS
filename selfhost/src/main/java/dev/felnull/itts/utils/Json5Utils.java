@@ -11,19 +11,29 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Json5関係のユーティリティ
+ *
+ * @author MORIMORI0317
+ */
 public class Json5Utils {
+    private Json5Utils() {
+    }
+
     /**
      * Jsonから文字列を取得する、存在しない場合は空の文字列を返す
      *
      * @param jo      Jsonオブジェクト
      * @param keyName キー名
+     * @param elseStr 存在品場合の文字列
      * @return 文字列
      */
     @NotNull
     public static String getStringOrElse(@NotNull JsonObject jo, @NotNull String keyName, @NotNull String elseStr) {
-        var je = jo.get(keyName);
-        if (je instanceof JsonPrimitive primitive)
+        JsonElement je = jo.get(keyName);
+        if (je instanceof JsonPrimitive primitive) {
             return primitive.asString();
+        }
         return elseStr;
     }
 
@@ -39,13 +49,15 @@ public class Json5Utils {
     @NotNull
     @Unmodifiable
     public static <T> List<T> getListOfJsonArray(@NotNull JsonObject jo, @NotNull String keyName, Function<JsonPrimitive, T> getter) {
-        var jsonElement = jo.get(keyName);
+        JsonElement jsonElement = jo.get(keyName);
 
-        if (jsonElement instanceof JsonArray jsonArray)
+        if (jsonElement instanceof JsonArray jsonArray) {
             return ofJsonArray(jsonArray, getter);
+        }
 
-        if (jsonElement instanceof JsonPrimitive jsonPrimitive)
+        if (jsonElement instanceof JsonPrimitive jsonPrimitive) {
             return ImmutableList.of(getter.apply(jsonPrimitive));
+        }
 
         return ImmutableList.of();
     }
@@ -53,8 +65,9 @@ public class Json5Utils {
     private static <T> List<T> ofJsonArray(JsonArray jsonArray, Function<JsonPrimitive, T> getter) {
         ImmutableList.Builder<T> builder = new ImmutableList.Builder<>();
         for (JsonElement jsonElement : jsonArray) {
-            if (jsonElement instanceof JsonPrimitive primitive)
+            if (jsonElement instanceof JsonPrimitive primitive) {
                 builder.add(getter.apply(primitive));
+            }
         }
         return builder.build();
     }
@@ -80,7 +93,7 @@ public class Json5Utils {
      */
     @NotNull
     public static JsonArray toJsonArray(@NotNull List<?> list) {
-        var ja = new JsonArray();
+        JsonArray ja = new JsonArray();
         for (Object o : list) {
             ja.add(new JsonPrimitive(o));
         }

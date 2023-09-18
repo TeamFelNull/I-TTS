@@ -17,20 +17,64 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * キーデータ形式のセーブデータ管理
+ *
+ * @param <K> キー
+ * @param <S> セーブデータの型
+ * @author MORIMORI0317
+ */
 public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDataBase> {
+
+    /**
+     * データ保持期間
+     */
     private static final long HOLD_DATA_TIME = 1000 * 60 * 10;
+
+    /**
+     * セーブデータのエントリ
+     */
     private final Map<K, SaveDataEntry> saveDataEntries = new ConcurrentHashMap<>();
+
+    /**
+     * ロック
+     */
     private final Map<K, Object> locks = new ConcurrentHashMap<>();
+
+    /**
+     * セーブフォルダ
+     */
     private final File saveFolder;
+
+    /**
+     * セーブデータの作成サプライヤー
+     */
     private final Supplier<S> newSaveDataFactory;
+
+    /**
+     * セーブデータファイルの検索
+     */
     private final SaveDataKey.SavedFileFinder<K> savedFileFinder;
 
+    /**
+     * コンストラクタ
+     *
+     * @param saveFolder         セーブデータの保存先フォルダ
+     * @param newSaveDataFactory 新規セーブデータ作成サプライヤー
+     * @param savedFileFinder    セブデータファイルの検索
+     */
     public KeySaveDataManage(File saveFolder, Supplier<S> newSaveDataFactory, SaveDataKey.SavedFileFinder<K> savedFileFinder) {
         this.saveFolder = saveFolder;
         this.newSaveDataFactory = newSaveDataFactory;
         this.savedFileFinder = savedFileFinder;
     }
 
+    /**
+     * セーブデータを取得
+     *
+     * @param key キー
+     * @return セーブデータ
+     */
     public S get(K key) {
         try {
             return load(key).get();
@@ -39,21 +83,31 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
         }
     }
 
+    /**
+     * セーブデータを読み込む
+     *
+     * @param key キー
+     * @return 読み込みの非同期CompletableFuture
+     */
     public CompletableFuture<S> load(K key) {
         synchronized (locks.computeIfAbsent(key, k -> new Object())) {
-            return saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.RUNTIME.getAsyncWorkerExecutor()))).getSaveData();
+            return saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.runtime.getAsyncWorkerExecutor()))).getSaveData();
         }
     }
 
     private void unload(K key) {
         SaveDataEntry p;
-        var lc = locks.get(key);
-        if (lc == null) return;
+        Object lc = locks.get(key);
+        if (lc == null) {
+            return;
+        }
 
         synchronized (lc) {
             locks.remove(key);
             p = saveDataEntries.remove(key);
-            if (p == null) return;
+            if (p == null) {
+                return;
+            }
             SaveDataBase sd;
             try {
                 sd = p.getSaveData().get();
@@ -65,9 +119,9 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
 
             try {
                 sd.dispose();
-                Main.RUNTIME.getLogger().debug("Successfully unloaded save data. ({})", name);
+                Main.runtime.getLogger().debug("Successfully unloaded save data. ({})", name);
             } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed to unloaded save data ({}).", name, ex);
+                Main.runtime.getLogger().error("Failed to unloaded save data ({}).", name, ex);
             }
         }
     }
@@ -85,6 +139,11 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
                 }));
     }
 
+    /**
+     * 全てを読み込む
+     *
+     * @return 読み込みの非同期CompletableFuture
+     */
     @NotNull
     @Unmodifiable
     public Map<K, CompletableFuture<S>> loadAll() {
@@ -93,7 +152,8 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
 
         for (K key : keys) {
             synchronized (locks.computeIfAbsent(key, k -> new Object())) {
-                ret.put(key, saveDataEntries.computeIfAbsent(key, ky -> new SaveDataEntry(key, computeInitAsync(key, Main.RUNTIME.getHeavyWorkerExecutor()))).getSaveData());
+                ret.put(key, saveDataEntries.computeIfAbsent(key, ky ->
+                        new SaveDataEntry(key, computeInitAsync(key, Main.runtime.getHeavyWorkerExecutor()))).getSaveData());
             }
         }
 
@@ -102,20 +162,33 @@ public class KeySaveDataManage<K extends Record & SaveDataKey, S extends SaveDat
 
     private CompletableFuture<S> computeInitAsync(K key, Executor executor) {
         return CompletableFuture.supplyAsync(() -> {
-            var ni = newSaveDataFactory.get();
+            S ni = newSaveDataFactory.get();
             String name = ni.getName() + ": " + key;
             try {
                 ni.init(key.getSavedFile(saveFolder), key);
-                Main.RUNTIME.getLogger().debug("Succeeded in loading the existing save data. ({})", name);
+                Main.runtime.getLogger().debug("Succeeded in loading the existing save data. ({})", name);
             } catch (Exception ex) {
-                Main.RUNTIME.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", name, ex);
+                Main.runtime.getLogger().error("Failed to initialize save data ({}), This data will not be saved.", name, ex);
             }
             return ni;
         }, executor);
     }
 
+    /**
+     * セーブデータのエントリ
+     *
+     * @author MORIMORI0317
+     */
     private class SaveDataEntry extends ApoptosisObject {
+
+        /**
+         * キー
+         */
         private final K key;
+
+        /**
+         * セーブデータ
+         */
         private final CompletableFuture<S> saveData;
 
         private SaveDataEntry(K key, CompletableFuture<S> saveData) {

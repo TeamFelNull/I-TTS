@@ -8,20 +8,38 @@ import java.nio.channels.FileLock;
 
 /**
  * 二重起動防止用ディレクトリロック
+ *
+ * @author MORIMORI0317
  */
 public class DirectoryLock implements ITTSRuntimeUse {
+
+    /**
+     * ロック用ファイル
+     */
     private static final File LOCK_FILE = new File("./dir.lock");
+
+    /**
+     * ロック用アウトプットストリーム
+     */
     private FileOutputStream fileOutputStream;
-    private FileChannel fileChannel;
+
+    /**
+     * ファイルロック
+     */
     private FileLock fileLock;
 
+    /**
+     * ロックを実行
+     */
     protected void lock() {
-        LOCK_FILE.delete();
+        if (!LOCK_FILE.delete()) {
+            throw new RuntimeException("Failed to delete old lock file");
+        }
 
         try {
             fileOutputStream = new FileOutputStream(LOCK_FILE);
             fileOutputStream.write(new byte[]{0});
-            fileChannel = fileOutputStream.getChannel();
+            FileChannel fileChannel = fileOutputStream.getChannel();
             fileLock = fileChannel.tryLock();
         } catch (IOException e) {
             throw new RuntimeException("Failed to lock directory, directory may be locked by another process", e);
@@ -32,12 +50,17 @@ public class DirectoryLock implements ITTSRuntimeUse {
             try {
                 fileLock.release();
             } catch (Exception ignored) {
+                // ファイルロックの解放に失敗した場合は諦める
             }
             try {
                 fileOutputStream.close();
             } catch (Exception ignored) {
+                // ファイルロック用アウトプットストリームを閉じることに失敗した場合も諦める
             }
-            LOCK_FILE.delete();
+
+            if (!LOCK_FILE.delete()) {
+                throw new RuntimeException("Failed to delete lock file");
+            }
         }));
     }
 }

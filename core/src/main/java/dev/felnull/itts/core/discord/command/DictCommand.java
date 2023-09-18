@@ -7,12 +7,16 @@ import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.savedata.DictData;
 import dev.felnull.itts.core.savedata.DictUseData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -30,9 +34,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 読み上げ辞書コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class DictCommand extends BaseCommand {
+
+    /**
+     * GSOUN
+     */
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
+    /**
+     * コンストラクタ
+     */
     public DictCommand() {
         super("dict");
     }
@@ -70,13 +86,16 @@ public class DictCommand extends BaseCommand {
             case "download" -> download(event);
             case "upload" -> upload(event);
             case "show" -> show(event);
+            default -> {
+            }
         }
     }
 
     private void show(SlashCommandInteractionEvent event) {
-        String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
+        Guild guild = Objects.requireNonNull(event.getGuild());
 
-        long guildId = event.getGuild().getIdLong();
+        String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
+        long guildId = guild.getIdLong();
         DictionaryManager dm = getDictionaryManager();
         Dictionary dic = dm.getDictionary(dictId, guildId);
 
@@ -90,8 +109,9 @@ public class DictCommand extends BaseCommand {
 
         String title = dic.getName();
 
-        if (dic.isBuiltIn())
+        if (dic.isBuiltIn()) {
             title += " [組み込み]";
+        }
 
         title += " (優先度: " + dic.getDefaultPriority() + ")";
 
@@ -105,14 +125,17 @@ public class DictCommand extends BaseCommand {
             show.forEach((k, v) -> addDictWordAndReadingField(replayEmbedBuilder, k, v));
         }
 
-        if (show.size() >= 2)
+        if (show.size() >= 2) {
             replayEmbedBuilder.setFooter("計" + show.size() + "個");
+        }
 
         event.replyEmbeds(replayEmbedBuilder.build()).setEphemeral(true).queue();
     }
 
     private void upload(SlashCommandInteractionEvent event) {
-        long guildId = event.getGuild().getIdLong();
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        long guildId = guild.getIdLong();
 
         Message.Attachment file = Objects.requireNonNull(event.getOption("file", OptionMapping::getAsAttachment));
         boolean overwrite = Objects.requireNonNull(event.getOption("overwrite", OptionMapping::getAsBoolean));
@@ -153,7 +176,9 @@ public class DictCommand extends BaseCommand {
     }
 
     private void download(SlashCommandInteractionEvent event) {
-        long guildId = event.getGuild().getIdLong();
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        long guildId = guild.getIdLong();
 
         if (getSaveDataManager().getAllServerDictData(guildId).isEmpty()) {
             event.reply("辞書は空です").setEphemeral(true).queue();
@@ -176,9 +201,11 @@ public class DictCommand extends BaseCommand {
     }
 
     private void remove(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         String word = Objects.requireNonNull(event.getOption("word", OptionMapping::getAsString));
 
-        long guildId = event.getGuild().getIdLong();
+        long guildId = guild.getIdLong();
         DictData dictData = getSaveDataManager().getServerDictData(guildId, word);
         if (dictData == null) {
             event.reply("未登録の単語です").setEphemeral(true).queue();
@@ -196,6 +223,8 @@ public class DictCommand extends BaseCommand {
     }
 
     private void add(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         String word = Objects.requireNonNull(event.getOption("word", OptionMapping::getAsString));
         String reading = Objects.requireNonNull(event.getOption("reading", OptionMapping::getAsString));
 
@@ -204,7 +233,7 @@ public class DictCommand extends BaseCommand {
             return;
         }
 
-        long guildId = event.getGuild().getIdLong();
+        long guildId = guild.getIdLong();
         boolean overwrite = getSaveDataManager().getServerDictData(guildId, word) != null;
 
         getSaveDataManager().addServerDictData(guildId, word, reading);
@@ -219,17 +248,19 @@ public class DictCommand extends BaseCommand {
     }
 
     private void addDictWordAndReadingField(EmbedBuilder builder, String word, String reading) {
-        var w = "` " + word.replace("\n", "\\n") + " `";
-        var r = "```" + reading.replace("```", "\\```") + "```";
+        String w = "` " + word.replace("\n", "\\n") + " `";
+        String r = "```" + reading.replace("```", "\\```") + "```";
         builder.addField(w, r, false);
     }
 
     private void toggleShow(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
         replayEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         replayEmbedBuilder.setTitle("現在の辞書の切り替え状況");
 
-        long guildId = event.getGuild().getIdLong();
+        long guildId = guild.getIdLong();
         DictionaryManager dictManager = getDictionaryManager();
         List<Dictionary> dicts = dictManager.getAllDictionaries(guildId);
 
@@ -245,11 +276,13 @@ public class DictCommand extends BaseCommand {
         String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
 
         boolean enabled = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        var enStr = enabled ? "有効" : "無効";
-        long guildId = event.getGuild().getIdLong();
-        var dm = getDictionaryManager();
-        var sm = getSaveDataManager();
-        var dic = dm.getDictionary(dictId, guildId);
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        String enStr = enabled ? "有効" : "無効";
+        long guildId = guild.getIdLong();
+        DictionaryManager dm = getDictionaryManager();
+        SaveDataManager sm = getSaveDataManager();
+        Dictionary dic = dm.getDictionary(dictId, guildId);
 
         if (dic == null) {
             event.reply("存在しない辞書です。").setEphemeral(true).queue();
@@ -276,12 +309,12 @@ public class DictCommand extends BaseCommand {
     @Override
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
         Objects.requireNonNull(event.getGuild());
-        var interact = event.getInteraction();
-        var fcs = interact.getFocusedOption();
+        CommandAutoCompleteInteraction interact = event.getInteraction();
+        AutoCompleteQuery fcs = interact.getFocusedOption();
         long guildId = event.getGuild().getIdLong();
 
         if (("toggle".equals(interact.getSubcommandName()) || "show".equals(interact.getSubcommandName())) && "name".equals(fcs.getName())) {
-            var dm = getDictionaryManager();
+            DictionaryManager dm = getDictionaryManager();
 
             event.replyChoices(dm.getAllDictionaries(guildId).stream()
                     .sorted(Comparator.comparingInt(d -> -StringUtils.getComplementPoint(d.getName(), fcs.getValue())))

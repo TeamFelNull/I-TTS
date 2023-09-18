@@ -11,7 +11,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * サーバー辞書使用データの実装
+ *
+ * @author MORIMORI0317
+ */
 public class ServerDictUseData extends SaveDataBase {
+
+    /**
+     * サーバー辞書使用データ
+     */
     private final Map<String, DictUseData> serverDictUseData = new ConcurrentHashMap<>();
 
     @Override
@@ -22,16 +31,17 @@ public class ServerDictUseData extends SaveDataBase {
     @Override
     protected void loadFromJson(@NotNull JsonObject jo) {
         serverDictUseData.clear();
-        var djo = jo.getAsJsonObject("data");
+        JsonObject djo = jo.getAsJsonObject("data");
         for (Map.Entry<String, JsonElement> entry : djo.entrySet()) {
-            if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber())
+            if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
                 serverDictUseData.put(entry.getKey(), new DictUseDataImpl(entry.getKey(), entry.getValue().getAsInt()));
+            }
         }
     }
 
     @Override
     protected void saveToJson(@NotNull JsonObject jo) {
-        var djo = new JsonObject();
+        JsonObject djo = new JsonObject();
         serverDictUseData.forEach((dictId, dictData) -> djo.addProperty(dictId, dictData.getPriority()));
         jo.add("data", djo);
     }
@@ -45,19 +55,38 @@ public class ServerDictUseData extends SaveDataBase {
         return ImmutableList.copyOf(serverDictUseData.values());
     }
 
+    /**
+     * 辞書使用データを取得する
+     *
+     * @param dictId 辞書ID
+     * @return 使用データ
+     */
     public DictUseData getDictUseData(String dictId) {
         return serverDictUseData.computeIfAbsent(dictId, DictUseDataImpl::new);
     }
 
+    /**
+     * 辞書使用データの実装
+     *
+     * @author MORIMORI0317
+     */
     private class DictUseDataImpl implements DictUseData {
+
+        /**
+         * 辞書ID
+         */
         private final String dictId;
+
+        /**
+         * 優先度
+         */
         private final AtomicInteger priority = new AtomicInteger();
 
-        public DictUseDataImpl(String dictId) {
+        DictUseDataImpl(String dictId) {
             this(dictId, DictUseData.initPriority(dictId));
         }
 
-        public DictUseDataImpl(String dictId, int priority) {
+        DictUseDataImpl(String dictId, int priority) {
             this.dictId = dictId;
             this.priority.set(priority);
         }

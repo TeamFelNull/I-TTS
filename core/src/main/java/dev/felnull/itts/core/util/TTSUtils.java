@@ -13,7 +13,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * TTS関係のユーティリティ
+ *
+ * @author MORIMORI0317
+ */
 public final class TTSUtils {
+    private TTSUtils() {
+    }
+
     /**
      * 読み上げられる名前を取得
      *
@@ -61,12 +69,23 @@ public final class TTSUtils {
         return roundText(voice, member.getGuild().getIdLong(), ret, true);
     }
 
+    /**
+     * 対象のテキストを読み上げるテキストに変換する<br/>
+     * "以下省略"などの処理を行う
+     *
+     * @param voice   音声タイプ
+     * @param guildId サーバーID
+     * @param text    テキスト
+     * @param name    名前かどうか
+     * @return 読み上げてるテキスト
+     */
     public static String roundText(Voice voice, long guildId, String text, boolean name) {
         ServerData sud = ITTSRuntime.getInstance().getSaveDataManager().getServerData(guildId);
         int max = name ? sud.getNameReadLimit() : Math.min(sud.getReadLimit(), voice.getReadLimit());
 
-        if (text.length() <= max)
+        if (text.length() <= max) {
             return text;
+        }
 
         String st = text.substring(0, max);
 
@@ -78,18 +97,32 @@ public final class TTSUtils {
         }
     }
 
+    /**
+     * 読み上げるチャンネル名を取得
+     *
+     * @param channel チャンネル
+     * @return チャンネルの読み上げテキスト
+     */
     @NotNull
     public static String getTTSChannelName(@NotNull StandardGuildChannel channel) {
-        if (channel.getPermissionOverrides().isEmpty())
+        if (channel.getPermissionOverrides().isEmpty()) {
             return channel.getName();
+        }
 
         return "別のチャンネル";
     }
 
+    /**
+     * 読み上げを聞くことが可能か確認
+     *
+     * @param voiceState 音声ステート
+     * @return 結果
+     */
     public static boolean canListen(GuildVoiceState voiceState) {
-        var user = voiceState.getMember().getUser();
-        if (user.isSystem() || user.isBot())
+        User user = voiceState.getMember().getUser();
+        if (user.isSystem() || user.isBot()) {
             return false;
+        }
 
         return !voiceState.isDeafened();
     }

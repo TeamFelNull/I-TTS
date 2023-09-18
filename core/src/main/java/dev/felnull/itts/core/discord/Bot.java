@@ -3,6 +3,7 @@ package dev.felnull.itts.core.discord;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
+import dev.felnull.itts.core.savedata.BotStateData;
 import dev.felnull.itts.core.tts.TTSInstance;
 import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -10,6 +11,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.managers.Presence;
@@ -17,12 +19,28 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * BOT管理
+ *
+ * @author MORIMORI0317
+ */
 public class Bot implements ITTSRuntimeUse {
+    /**
+     * 全コマンド
+     */
     protected final List<BaseCommand> baseCommands = new ArrayList<>();
+
+    /**
+     * JDA
+     */
     private JDA jda;
 
+    /**
+     * BOTを開始
+     */
     public void start() {
         registeringCommands();
 
@@ -53,19 +71,25 @@ public class Bot implements ITTSRuntimeUse {
 
     private void reconnect() {
         CompletableFuture.runAsync(() -> {
-            var allData = getSaveDataManager().getAllBotStateData();
+            Map<Long, BotStateData> allData = getSaveDataManager().getAllBotStateData();
             long selfId = getJDA().getSelfUser().getIdLong();
 
             allData.forEach((guildId, data) -> {
-                var guild = getJDA().getGuildById(guildId);
+                Guild guild = getJDA().getGuildById(guildId);
 
                 if (guild != null && data.getConnectedAudioChannel() >= 0 && data.getReadAroundTextChannel() >= 0) {
                     try {
-                        var audioChannel = guild.getChannelById(AudioChannel.class, data.getConnectedAudioChannel());
-                        if (audioChannel == null) return;
+                        AudioChannel audioChannel = guild.getChannelById(AudioChannel.class, data.getConnectedAudioChannel());
 
-                        var chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
-                        if (chatChannel == null) return;
+                        if (audioChannel == null) {
+                            return;
+                        }
+
+                        MessageChannel chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
+
+                        if (chatChannel == null) {
+                            return;
+                        }
 
                         getTTSManager().setReadAroundChannel(guild, chatChannel);
                         guild.getAudioManager().openAudioConnection(audioChannel);
@@ -75,8 +99,9 @@ public class Bot implements ITTSRuntimeUse {
                         VoiceType vt = getVoiceManager().getVoiceType(guildId, selfId);
 
                         if (ti != null && vt != null) {
-                            if (getTTSManager().canSpeak(guild))
+                            if (getTTSManager().canSpeak(guild)) {
                                 ti.sayText(new StartupSaidText(vt.createVoice(guildId, selfId)));
+                            }
                         }
 
                         getITTSLogger().info("Reconnected: {}", guild.getName());
@@ -111,12 +136,20 @@ public class Bot implements ITTSRuntimeUse {
         jda.updateCommands().addCommands(baseCommands.stream().map(BaseCommand::createSlashCommand).toList()).queue();
     }
 
+    /**
+     * 非同期にアクティビティを更新
+     */
     public void updateActivityAsync() {
         CompletableFuture.runAsync(() -> updateActivity(jda.getPresence()), getAsyncExecutor());
     }
 
+    /**
+     * アクティビティを更新
+     *
+     * @param presence プレセンス
+     */
     public void updateActivity(Presence presence) {
-        var vstr = getITTSRuntime().getVersionText();
+        String vstr = getITTSRuntime().getVersionText();
         int ct = getTTSManager().getTTSCount();
 
         if (ct > 0) {

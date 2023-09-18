@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.itts.core.savedata.ServerUserData;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -9,7 +10,18 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
+/**
+ * ニックネーム変更コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class VnickCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public VnickCommand() {
         super("vnick");
     }
@@ -26,8 +38,10 @@ public class VnickCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
         String name = event.getOption("name", OptionMapping::getAsString);
-        ServerUserData sud = getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), event.getUser().getIdLong());
+
+        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
 
         if ("reset".equals(name)) {
             sud.setNickName(null);

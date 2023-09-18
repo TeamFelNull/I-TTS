@@ -2,15 +2,22 @@ package dev.felnull.itts.core.discord.command;
 
 import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.ServerUserData;
 import dev.felnull.itts.core.util.DiscordUtils;
 import dev.felnull.itts.core.util.StringUtils;
+import dev.felnull.itts.core.voice.VoiceCategory;
+import dev.felnull.itts.core.voice.VoiceManager;
 import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -18,11 +25,18 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
+/**
+ * 音声コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class VoiceCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public VoiceCommand() {
         super("voice");
     }
@@ -50,29 +64,35 @@ public class VoiceCommand extends BaseCommand {
             case "change" -> change(event, null);
             case "check" -> check(event, null);
             case "show" -> show(event);
+            default -> {
+            }
         }
     }
 
     private void show(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         EmbedBuilder showEmbedBuilder = new EmbedBuilder();
         showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         showEmbedBuilder.setTitle("読み上げ音声タイプ一覧");
 
-        var vm = getVoiceManager();
-        var currentVt = vm.getVoiceType(event.getGuild().getIdLong(), event.getUser().getIdLong());
-        var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
-        var catAndTypes = vm.getAvailableVoiceTypes();
+        VoiceManager vm = getVoiceManager();
+        VoiceType currentVt = vm.getVoiceType(guild.getIdLong(), event.getUser().getIdLong());
+        VoiceType defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+        Map<VoiceCategory, List<VoiceType>> catAndTypes = vm.getAvailableVoiceTypes();
         catAndTypes.forEach((cat, types) -> {
             StringBuilder typeText = new StringBuilder();
 
             for (VoiceType type : types) {
                 String name = type.getName();
 
-                if (defaultVt != null && type.getId().equals(defaultVt.getId()))
+                if (defaultVt != null && type.getId().equals(defaultVt.getId())) {
                     name += " [デフォルト]";
+                }
 
-                if (currentVt != null && type.getId().equals(currentVt.getId()))
+                if (currentVt != null && type.getId().equals(currentVt.getId())) {
                     name += " [使用中]";
+                }
 
                 typeText.append(name).append("\n");
             }
@@ -83,26 +103,35 @@ public class VoiceCommand extends BaseCommand {
         event.replyEmbeds(showEmbedBuilder.build()).setEphemeral(true).queue();
     }
 
+    /**
+     * 音声変更
+     *
+     * @param event イベント
+     * @param user  ユーザ
+     */
     protected static void change(SlashCommandInteractionEvent event, User user) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
         boolean mine = user == null;
-        if (mine)
+        if (mine) {
             user = event.getUser();
+        }
 
-        var sdm = ITTSRuntime.getInstance().getSaveDataManager();
+        SaveDataManager sdm = ITTSRuntime.getInstance().getSaveDataManager();
 
-        var serverUserData = sdm.getServerUserData(event.getGuild().getIdLong(), user.getIdLong());
-        var odVc = Objects.requireNonNull(event.getOption("voice_category"));
-        var odVt = Objects.requireNonNull(event.getOption("voice_type"));
+        ServerUserData serverUserData = sdm.getServerUserData(guild.getIdLong(), user.getIdLong());
+        OptionMapping odVc = Objects.requireNonNull(event.getOption("voice_category"));
+        OptionMapping odVt = Objects.requireNonNull(event.getOption("voice_type"));
 
-        var vm = ITTSRuntime.getInstance().getVoiceManager();
-        var cat = vm.getVoiceCategory(odVc.getAsString());
+        VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
+        Optional<VoiceCategory> cat = vm.getVoiceCategory(odVc.getAsString());
 
         if (cat.isEmpty()) {
             event.reply("存在しない読み上げカテゴリーです。").setEphemeral(true).queue();
             return;
         }
 
-        var vt = vm.getVoiceType(odVt.getAsString());
+        Optional<VoiceType> vt = vm.getVoiceType(odVt.getAsString());
 
         if (vt.isEmpty()) {
             event.reply("存在しない読み上げタイプです。").setEphemeral(true).queue();
@@ -116,23 +145,32 @@ public class VoiceCommand extends BaseCommand {
 
         serverUserData.setVoiceType(vt.get().getId());
 
-        String userName = mine ? "自分" : DiscordUtils.getEscapedName(event.getGuild(), user);
+        String userName = mine ? "自分" : DiscordUtils.getEscapedName(guild, user);
         event.reply(userName + "の読み上げ音声タイプを" + vt.get().getName() + "に変更しました。").setEphemeral(mine).queue();
     }
 
+    /**
+     * 音声確認
+     *
+     * @param event イベント
+     * @param user  ユーザ
+     */
     protected static void check(SlashCommandInteractionEvent event, User user) {
         boolean mine = user == null;
-        if (mine)
+        if (mine) {
             user = event.getUser();
+        }
 
         ServerUserData serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(event.getGuild().getIdLong(), user.getIdLong());
-        var vm = ITTSRuntime.getInstance().getVoiceManager();
+        VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
         Optional<VoiceType> vt = vm.getVoiceType(serverUserData.getVoiceType());
 
         String type = vt.map(VoiceType::getName).orElseGet(() -> {
-            var dvt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
-            if (dvt != null)
+            VoiceType dvt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+
+            if (dvt != null) {
                 return dvt.getName() + " [デフォルト]";
+            }
 
             return "無効";
         });
@@ -144,24 +182,36 @@ public class VoiceCommand extends BaseCommand {
     @Override
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
         Objects.requireNonNull(event.getGuild());
-        var interact = event.getInteraction();
+        CommandAutoCompleteInteraction interact = event.getInteraction();
 
-        if (!"change".equals(interact.getSubcommandName())) return;
+        if (!"change".equals(interact.getSubcommandName())) {
+            return;
+        }
 
         voiceSelectComplete(event, null, true);
     }
 
+    /**
+     * 音声選択補完
+     *
+     * @param event    イベント
+     * @param user     ユーザ
+     * @param showUsed 使用中の音声を表示するかどうか
+     */
     protected static void voiceSelectComplete(CommandAutoCompleteInteractionEvent event, User user, boolean showUsed) {
-        if (user == null)
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        if (user == null) {
             user = event.getUser();
+        }
 
-        var interact = event.getInteraction();
+        CommandAutoCompleteInteraction interact = event.getInteraction();
 
-        var fcs = interact.getFocusedOption();
-        var val = fcs.getValue();
+        AutoCompleteQuery fcs = interact.getFocusedOption();
+        String val = fcs.getValue();
 
-        var vm = ITTSRuntime.getInstance().getVoiceManager();
-        var catAndTypes = vm.getAvailableVoiceTypes();
+        VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
+        Map<VoiceCategory, List<VoiceType>> catAndTypes = vm.getAvailableVoiceTypes();
 
         if ("voice_category".equals(fcs.getName())) {
 
@@ -172,11 +222,11 @@ public class VoiceCommand extends BaseCommand {
                     .toList()).queue();
 
         } else if ("voice_type".equals(fcs.getName())) {
-            var currentVt = showUsed ? vm.getVoiceType(event.getGuild().getIdLong(), user.getIdLong()) : null;
+            VoiceType currentVt = showUsed ? vm.getVoiceType(guild.getIdLong(), user.getIdLong()) : null;
 
-            var defaultVt = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+            VoiceType defaultVt = vm.getDefaultVoiceType(guild.getIdLong());
 
-            var cat = Optional.ofNullable(event.getOption("voice_category"))
+            Optional<VoiceCategory> cat = Optional.ofNullable(event.getOption("voice_category"))
                     .flatMap(catOp -> vm.getVoiceCategory(catOp.getAsString()));
 
             event.replyChoices(cat.map(catAndTypes::get)
@@ -184,12 +234,14 @@ public class VoiceCommand extends BaseCommand {
                             .sorted(Comparator.comparingInt(vt -> -StringUtils.getComplementPoint(vt.getName(), val)))
                             .limit(OptionData.MAX_CHOICES)
                             .map(vt -> {
-                                var name = vt.getName();
-                                if (defaultVt != null && vt.getId().equals(defaultVt.getId()))
+                                String name = vt.getName();
+                                if (defaultVt != null && vt.getId().equals(defaultVt.getId())) {
                                     name += " [デフォルト]";
+                                }
 
-                                if (showUsed && currentVt != null && vt.getId().equals(currentVt.getId()))
+                                if (showUsed && currentVt != null && vt.getId().equals(currentVt.getId())) {
                                     name += " [使用中]";
+                                }
 
                                 return new Command.Choice(name, vt.getId());
                             })

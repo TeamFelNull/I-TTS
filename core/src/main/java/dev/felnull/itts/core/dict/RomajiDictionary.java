@@ -7,10 +7,15 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
 
+/**
+ * ローマ字辞書
+ *
+ * @author MORIMORI0317
+ */
 public class RomajiDictionary implements Dictionary {
     @Override
     public @NotNull String apply(@NotNull String text, long guildId) {
-        var transliterator = Transliterator.getInstance("Latin-Hiragana");
+        Transliterator transliterator = Transliterator.getInstance("Latin-Hiragana");
         return transliterator.transliterate(text);
     }
 

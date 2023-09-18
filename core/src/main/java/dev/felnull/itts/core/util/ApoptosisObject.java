@@ -8,33 +8,74 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * 時間がたつと自動的に削除を行うオブジェクト
+ *
+ * @author MORIMORI0317
+ */
 public abstract class ApoptosisObject {
+
+    /**
+     * 最終実行時間
+     */
     private final AtomicLong lastExtensionTime = new AtomicLong(System.currentTimeMillis());
+
+    /**
+     * タスク
+     */
     private final AtomicReference<ImmortalityTimer.ImmortalityTimerTask> task = new AtomicReference<>();
+
+    /**
+     * 使用済みで壊れているかどうか
+     */
     private final AtomicBoolean broken = new AtomicBoolean();
+
+    /**
+     * 生存時間
+     */
     private final long lifeTime;
 
+    /**
+     * コンストラクタ
+     *
+     * @param lifeTime 生存時間
+     */
     protected ApoptosisObject(long lifeTime) {
         this.lifeTime = lifeTime;
         scheduleCheckTimer(this::check, this.lifeTime + 300L);
     }
 
-    abstract protected void lifeEnd(boolean force);
+    /**
+     * 削除時の処理
+     *
+     * @param force 強制かどうか
+     */
+    protected abstract void lifeEnd(boolean force);
 
+    /**
+     * 実行時間
+     */
     public void extensionLife() {
         this.lastExtensionTime.set(System.currentTimeMillis());
     }
 
+    /**
+     * 壊す
+     */
     public void broke() {
         broken.set(true);
-        var tsk = task.get();
-        if (tsk != null)
+        ImmortalityTimer.ImmortalityTimerTask tsk = task.get();
+        if (tsk != null) {
             tsk.cancel();
+        }
+
         lifeEnd(true);
     }
 
     private void check() {
-        if (broken.get()) return;
+        if (broken.get()) {
+            return;
+        }
         task.set(null);
 
         long now = System.currentTimeMillis();
@@ -51,7 +92,7 @@ public abstract class ApoptosisObject {
     }
 
     private void scheduleCheckTimer(Runnable runnable, long delay) {
-        var tsk = new ImmortalityTimer.ImmortalityTimerTask() {
+        ImmortalityTimer.ImmortalityTimerTask tsk = new ImmortalityTimer.ImmortalityTimerTask() {
             @Override
             public void run() {
                 CompletableFuture.runAsync(runnable, ITTSRuntime.getInstance().getAsyncWorkerExecutor());

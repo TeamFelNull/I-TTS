@@ -12,6 +12,11 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.Executor;
 
+/**
+ * ランタイムのメソッドを簡単に取得するためのインターフェイス
+ *
+ * @author MORIMORI0317
+ */
 public interface ITTSRuntimeUse {
 
     default ITTSRuntime getITTSRuntime() {

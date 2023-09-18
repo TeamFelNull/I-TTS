@@ -12,9 +12,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * 情報表示コマンド
+ *
+ * @author MORIMORI0317
+ */
 public class InfoCommand extends BaseCommand {
+
+    /**
+     * ソースコードのURL
+     */
     private static final String SOURCE_URL = "https://github.com/TeamFelnull/I-TTS";
 
+    /**
+     * コンストラクタ
+     */
     public InfoCommand() {
         super("info");
     }
@@ -36,6 +48,8 @@ public class InfoCommand extends BaseCommand {
             case "about" -> about(event);
             case "oss" -> oss(event);
             case "work" -> work(event);
+            default -> {
+            }
         }
     }
 

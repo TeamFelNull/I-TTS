@@ -13,7 +13,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+/**
+ * セルフホスト用ランタイムのコンテキスト
+ *
+ * @author MORIMORI0317
+ */
 public class SelfHostITTSRuntimeContext implements ITTSRuntimeContext {
+
+    /**
+     * ログコンテキスト
+     */
     private final LogContext logContext = new LogContextImpl();
 
     @Override
@@ -36,6 +45,11 @@ public class SelfHostITTSRuntimeContext implements ITTSRuntimeContext {
         return logContext;
     }
 
+    /**
+     * ログコンテキストの実装
+     *
+     * @author MORIMORI0317
+     */
     private static class LogContextImpl implements LogContext {
         @Override
         public @NotNull Logger getLogger() {

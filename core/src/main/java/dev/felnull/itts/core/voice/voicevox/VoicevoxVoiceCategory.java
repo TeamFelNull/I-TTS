@@ -4,9 +4,23 @@ import dev.felnull.itts.core.voice.VoiceCategory;
 
 import java.util.Locale;
 
+/**
+ * VOICEVOXのカテゴリ
+ *
+ * @author MORIMORI0317
+ */
 public class VoicevoxVoiceCategory implements VoiceCategory {
+
+    /**
+     * VOICEVOXのマネージャー
+     */
     private final VoicevoxManager manager;
 
+    /**
+     * コンストラクタ
+     *
+     * @param voicevoxManager マネージャー
+     */
     public VoicevoxVoiceCategory(VoicevoxManager voicevoxManager) {
         this.manager = voicevoxManager;
     }

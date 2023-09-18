@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+    <!-- FelNull開発用Checkstyle V1.0 -->
+
+<module name="Checker">
+    <!-- 文字コード -->
+    <property name="charset" value="UTF-8"/>
+
+
+    <!-- デフォルトの警告レベル -->
+    <!-- 警告レベル一覧 -> https://checkstyle.sourceforge.io/property_types.html#SeverityLevel -->
+    <property name="severity" value="error"/>
+
+
+    <!-- デフォルトのcheckstyleを適用するファイルの拡張子 -->
+    <property name="fileExtensions" value="java, properties, xml"/>
+
+
+    <!-- 除外するファイルフィルター -->
+    <!-- https://checkstyle.org/filefilters/beforeexecutionexclusionfilefilter.html#BeforeExecutionExclusionFileFilter を確認してください。 -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <!-- Java9のmodule-info.javaを除外 -->
+        <property name="fileNamePattern" value="module\-info\.java$"/>
+    </module>
+
+    <!-- package-info.javaのJavadoc確認 -->
+    <!-- https://checkstyle.org/checks/javadoc/javadocpackage.html#JavadocPackage -->
+    <module name="JavadocPackage"/>
+
+
+    <!-- 行の最大文字数確認 -->
+    <!-- https://checkstyle.org/checks/sizes/linelength.html#LineLength -->
+    <module name="LineLength">
+        <property name="fileExtensions" value="java"/>
+        <property name="max" value="170"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+        <property name="severity" value="warning"/>
+    </module>
+
+
+    <!-- タブ文字確認 -->
+    <!-- https://checkstyle.org/checks/whitespace/filetabcharacter.html#FileTabCharacter -->
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
+    <!--プロパティファイルの重複確認-->
+    <!-- https://checkstyle.org/checks/misc/uniqueproperties.html#UniqueProperties -->
+    <module name="UniqueProperties"/>
+
+    <module name="TreeWalker">
+
+        <!--アノテーション関係-->
+        <!-- https://checkstyle.org/checks/annotation/index.html -->
+        <module name="AnnotationLocation"/><!--アノテーション位置を確認-->
+
+
+        <!--{}ブロック確認-->
+        <!-- https://checkstyle.org/checks/blocks/index.html -->
+        <module name="AvoidNestedBlocks"/><!--ネストされたブロック確認-->
+        <module name="EmptyBlock"/><!--空のブロック確認-->
+        <module name="EmptyCatchBlock"/><!--空のcatch処理確認-->
+        <module name="LeftCurly"/><!--{の位置確認-->
+        <module name="NeedBraces"/><!--括弧なしコードブロック確認-->
+        <module name="RightCurly"/><!--}の位置確認-->
+
+
+        <!--クラス設計関係-->
+        <!-- https://checkstyle.org/checks/design/index.html -->
+        <module name="HideUtilityClassConstructor"/><!--ユーティリティクラスのコンストラクタ確認-->
+        <module name="InnerTypeLast"/><!--内部クラス等が最後に設置されているか確認-->
+
+
+        <!--コーディング関係-->
+        <!-- https://checkstyle.org/checks/coding/index.html -->
+        <module name="DeclarationOrder"/><!--宣言順番の確認-->
+        <module name="DefaultComesLast"/><!--switchのdefaultが最後あるかどうか確認-->
+        <module name="EmptyStatement"/><!--空のステートメント確認-->
+        <module name="EqualsAvoidNull"/><!--リテラルと変数の比較配置確認-->
+        <module name="EqualsHashCode"/><!--equalsとhashCode確認-->
+        <module name="IllegalInstantiation"/><!--不正なインスタンス化確認-->
+        <module name="MissingSwitchDefault"/><!--switchのデフォルト確認-->
+        <module name="ModifiedControlVariable"/><!--for文内で制御変数の変更を確認-->
+        <module name="NoArrayTrailingComma"/><!--配列の末尾カンマ確認-->
+        <module name="NoClone"/><!--クローン確認-->
+        <module name="NoEnumTrailingComma"/><!--列挙型の末尾カンマ確認-->
+        <module name="NoFinalizer"/><!--finalizeオーバーライド確認-->
+        <module name="OneStatementPerLine"/><!--1行変数定義確認-->
+        <module name="RequireThis"/><!--this確認-->
+        <module name="MultipleVariableDeclarations"/><!--複数の変数宣言確認-->
+        <module name="SimplifyBooleanExpression"/><!--複雑なBoolean確認-->
+        <module name="SimplifyBooleanReturn"/><!--複雑なBooleanのReturn確認-->
+        <module name="StringLiteralEquality"/><!--文字列を=で比較確認-->
+        <module name="UnnecessarySemicolonAfterOuterTypeDeclaration"/><!--クラス宣言後のセミコロン確認-->
+        <module name="UnnecessarySemicolonAfterTypeMemberDeclaration"/><!--不要なセミコロン確認-->
+
+        <!--ローカル変数型確認-->
+        <module name="IllegalType">
+            <property name="illegalClassNames" value="var"/>
+        </module>
+
+        <!--未使用変数確認-->
+        <module name="UnusedLocalVariable">
+            <property name="severity" value="warning"/>
+        </module>
+
+
+        <!--インポート関係-->
+        <!-- https://checkstyle.org/checks/imports/index.html -->
+        <module name="IllegalImport"/> <!-- sun.*のインポートを禁止 -->
+        <module name="RedundantImport"/><!--冗長なインポートを確認-->
+        <module name="UnusedImports"/><!--不要なインポートを確認-->
+
+
+        <!--Javadoc関係-->
+        <!-- https://checkstyle.org/checks/javadoc/index.html -->
+        <module name="InvalidJavadocPosition"/> <!--Javadocの場所確認-->
+
+        <!--メソッドのJavaDoc形式確認-->
+        <module name="JavadocMethod">
+            <property name="accessModifiers" value="public, protected"/>
+        </module>
+
+        <module name="JavadocMissingLeadingAsterisk"/><!--Javadocがアスタリスクから開始されてるか確認-->
+        <module name="JavadocMissingWhitespaceAfterAsterisk"/><!--Javadocとアスタリスクの間に空白があるか確認-->
+        <module name="JavadocParagraph"/><!--Javadocの段落確認-->
+        <module name="JavadocType"/><!--メソッドのJavadoc形式確認 -->
+        <module name="JavadocVariable"/> <!--フィールドのJavadoc確認-->
+        <module name="JavadocTagContinuationIndentation"/><!--Javadocのインデント確認-->
+        <module name="NonEmptyAtclauseDescription"/><!--空のブロックタグ説明確認-->
+        <module name="RequireEmptyLineBeforeBlockTagGroup"/><!--ブロックタグの前の空白確認-->
+        <module name="SingleLineJavadoc"/><!--一行Javadoc確認-->
+
+        <!--メソッドのJavadoc確認-->
+        <module name="MissingJavadocMethod">
+            <property name="scope" value="protected"/>
+            <property name="allowedAnnotations" value="Override, Test"/>
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+        </module>
+
+        <!--クラス、列挙型等のJavaDoc確認-->
+        <module name="MissingJavadocType">
+            <property name="scope" value="private"/>
+        </module>
+
+        <!--書き込み必須タグ確認-->
+        <module name="WriteTag">
+            <property name="tag" value="@author"/>
+            <property name="tagFormat" value="\S"/>
+            <property name="tagSeverity" value="ignore"/>
+        </module>
+
+
+        <!--その他-->
+        <!-- https://checkstyle.org/checks/misc/index.html -->
+        <module name="ArrayTypeStyle"/> <!--配列のスタイル確認-->
+
+        <!--エスケープされたユニコード文字確認-->
+        <module name="AvoidEscapedUnicodeCharacters">
+            <property name="allowEscapesForControlCharacters" value="true"/>
+            <property name="allowByTailComment" value="true"/>
+            <property name="allowNonPrintableEscapes" value="true"/>
+        </module>
+
+        <module name="OuterTypeFilename"/><!--型名とファイル名確認-->
+
+        <!--TODOコメント確認-->
+        <module name="TodoComment">
+            <property name="format" value="(TODO)|(FIXME)"/>
+            <property name="severity" value="info"/>
+        </module>
+
+        <module name="UpperEll"/><!--LongのLが大文字か確認-->
+
+
+        <!--修飾子関係-->
+        <!-- https://checkstyle.org/checks/modifier/index.html -->
+        <module name="ModifierOrder"/> <!--修飾子の順番確認-->
+        <module name="RedundantModifier"/><!--冗長な修飾子確認-->
+
+
+        <!--命名規則関係-->
+        <!-- https://checkstyle.org/checks/naming/index.html -->
+        <module name="ConstantName"/><!--定数の命名規則確認-->
+        <module name="LocalFinalVariableName"/><!--final修飾子付きローカル変数の命名規則確認-->
+        <module name="LocalVariableName"/><!--ローカル変数の命名規則確認-->
+        <module name="MemberName"/><!--メンバー変数の命名規則確認-->
+        <module name="MethodName"/><!--メソッドの命名規則確認-->
+
+        <!--パッケージの命名規則確認-->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <module name="ParameterName"/><!--メソッドパラメータの命名規則確認-->
+        <module name="LambdaParameterName"/><!--ラムダ式パラメータの命名規則確認-->
+        <module name="CatchParameterName"/><!--catchパラメータの命名規則確認-->
+        <module name="StaticVariableName"/><!--finalではないクラス変数の命名規則確認-->
+        <module name="TypeName"/><!--クラス、インターフェイスの命名規則確認-->
+
+        <!--クラス型パラメータの命名規則確認-->
+        <module name="ClassTypeParameterName">
+            <property name="format" value="^[A-Z]+([A-Z0-9]*)*$"/>
+        </module>
+
+        <!--インターフェイス型パラメータの命名規則確認-->
+        <module name="InterfaceTypeParameterName">
+            <property name="format" value="^[A-Z]+([A-Z0-9]*)*$"/>
+        </module>
+
+        <!--レコード型パラメータの命名規則確認-->
+        <module name="RecordTypeParameterName">
+            <property name="format" value="^[A-Z]+([A-Z0-9]*)*$"/>
+        </module>
+
+        <!--メソッド型パラメータの命名規則確認-->
+        <module name="MethodTypeParameterName">
+            <property name="format" value="^[A-Z]+([A-Z0-9]*)*$"/>
+        </module>
+
+        <module name="PatternVariableName"/><!--パターン変数の命名規則確認-->
+        <module name="RecordComponentName"/><!--レコードコンポーネントの命名規則確認-->
+
+
+        <!--空白関係-->
+        <!-- https://checkstyle.org/checks/whitespace/index.html -->
+        <module name="EmptyForIteratorPad"/><!--Iteratorの空白確認-->
+        <module name="EmptyLineSeparator"/><!--行間確認-->
+        <module name="NoLineWrap"/><!--改行確認-->
+        <module name="GenericWhitespace"/><!--総称型の空白確認-->
+        <module name="MethodParamPad"/><!--メソッドパラメータ前の空白確認-->
+        <module name="NoWhitespaceBeforeCaseDefaultColon"/><!--switchのコロン前空白確認-->
+        <module name="NoWhitespaceAfter"/><!--演算子後の空白確認-->
+        <module name="NoWhitespaceBefore"/><!--演算子前の空白確認-->
+        <module name="OperatorWrap"/><!--演算子の折り返し確認-->
+        <module name="ParenPad"/><!--括弧後の空白確認-->
+        <module name="TypecastParenPad"/><!--括弧キャスト後の空白確認-->
+        <module name="WhitespaceAfter"/><!--空白確認-->
+        <module name="WhitespaceAround"/><!--空白確認-->
+    </module>
+
+</module>

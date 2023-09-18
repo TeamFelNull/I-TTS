@@ -11,6 +11,11 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * グローバル辞書
+ *
+ * @author MORIMORI0317
+ */
 public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTSRuntimeUse {
     @Override
     public boolean isBuiltIn() {

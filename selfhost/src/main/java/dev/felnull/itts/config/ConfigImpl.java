@@ -10,15 +10,53 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
+/**
+ * コンフィグの実装
+ *
+ * @author MORIMORI0317
+ */
 public class ConfigImpl implements Config {
+
+    /**
+     * BOTのトークン
+     */
     private final String botToken;
+
+    /**
+     * テーマカラー
+     */
     private final int themeColor;
+
+    /**
+     * キャッシュの保持期間
+     */
     private final long cacheTime;
+
+    /**
+     * VoiceTextのコンフィグ
+     */
     private final VoiceTextConfigImpl voiceTextConfig;
+
+    /**
+     * VOICEVOXのコンフィグ
+     */
     private final VoicevoxConfigImpl voicevoxConfig;
+
+    /**
+     * COEIROLNKのコンフィグ
+     */
     private final VoicevoxConfigImpl coeirolnkConfig;
+
+    /**
+     * SHAREVOXのコンフィグ
+     */
     private final VoicevoxConfigImpl sharevoxConfig;
 
+    /**
+     * コンストラクタ
+     *
+     * @param jo Json
+     */
     public ConfigImpl(JsonObject jo) {
         this.botToken = Json5Utils.getStringOrElse(jo, "bot_token", DEFAULT_BOT_TOKEN);
         this.themeColor = jo.getInt("theme_color", DEFAULT_THEME_COLOR);
@@ -29,8 +67,13 @@ public class ConfigImpl implements Config {
         this.sharevoxConfig = new VoicevoxConfigImpl(Optional.ofNullable(jo.getObject("sharevox")).orElseGet(JsonObject::new));
     }
 
+    /**
+     * Jsonへ変換
+     *
+     * @return 変換済みJson
+     */
     public JsonObject toJson() {
-        var jo = new JsonObject();
+        JsonObject jo = new JsonObject();
         jo.put("config_version", new JsonPrimitive(VERSION), "コンフィグのバージョン 変更しないでください！");
         jo.put("bot_token", JsonPrimitive.of(this.botToken), "BOTのトークン");
         jo.put("theme_color", new JsonPrimitive(this.themeColor), "テーマカラー");

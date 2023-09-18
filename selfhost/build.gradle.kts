@@ -1,7 +1,16 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
+plugins {
+    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("checkstyle")
+}
+
 base {
     archivesName.set("itts-selfhost")
+}
+
+checkstyle {
+    toolVersion = "10.12.2"
 }
 
 tasks.named<Jar>("jar") {
@@ -9,10 +18,6 @@ tasks.named<Jar>("jar") {
         attributes("Main-Class" to "dev.felnull.itts.Main")
         attributes("Implementation-Version" to project.version)
     }
-}
-
-plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 val shadowIn by configurations.creating

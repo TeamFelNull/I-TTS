@@ -10,7 +10,16 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * サーバーのユーザ別データ
+ *
+ * @author MORIMORI0317
+ */
 public class ServerUsersData extends SaveDataBase {
+
+    /**
+     * サーバーユーザ別データ
+     */
     private final Map<Long, ServerUserDataImpl> serverUserData = new ConcurrentHashMap<>();
 
     @Override
@@ -31,6 +40,7 @@ public class ServerUsersData extends SaveDataBase {
                     try {
                         serverUserData.put(Long.parseLong(entry.getKey()), sudi);
                     } catch (NumberFormatException ignored) {
+                        // パーズ不可の場合は無視
                     }
                 }
             }
@@ -55,6 +65,12 @@ public class ServerUsersData extends SaveDataBase {
         return ServerUserData.VERSION;
     }
 
+    /**
+     * サーバーのユーザ別データを取得する
+     *
+     * @param userId ユーザID
+     * @return サーバーのユーザ別データ
+     */
     protected ServerUserData getUserData(long userId) {
         return serverUserData.computeIfAbsent(userId, id -> new ServerUserDataImpl(this::dirty));
     }

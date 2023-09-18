@@ -1,8 +1,14 @@
 package dev.felnull.itts.core.discord.command;
 
+import dev.felnull.itts.core.savedata.ServerData;
+import dev.felnull.itts.core.voice.VoiceCategory;
+import dev.felnull.itts.core.voice.VoiceManager;
+import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -12,8 +18,18 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Optional;
 
+/**
+ * Configコマンド
+ *
+ * @author MORIMORI0317
+ */
 public class ConfigCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public ConfigCommand() {
         super("config");
     }
@@ -67,6 +83,8 @@ public class ConfigCommand extends BaseCommand {
             case "read-ignore" -> readIgnore(event);
             case "default-voice" -> defaultVoice(event);
             case "show" -> show(event);
+            default -> {
+            }
         }
     }
 
@@ -75,9 +93,9 @@ public class ConfigCommand extends BaseCommand {
         showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         showEmbedBuilder.setTitle("現在のコンフィグ");
 
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
-        var vm = getVoiceManager();
-        var dv = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+        ServerData sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        VoiceManager vm = getVoiceManager();
+        VoiceType dv = vm.getDefaultVoiceType(event.getGuild().getIdLong());
 
         final boolean inline = true;
         showEmbedBuilder.addField("VCの入退室時にユーザー名を読み上げ", sd.isNotifyMove() ? "有効" : "無効", inline);
@@ -92,26 +110,28 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void defaultVoice(SlashCommandInteractionEvent event) {
-        var odVc = event.getOption("voice_category", OptionMapping::getAsString);
-        var odVt = event.getOption("voice_type", OptionMapping::getAsString);
+        Guild guild = Objects.requireNonNull(event.getGuild());
 
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
-        var vm = getVoiceManager();
-        var cat = vm.getVoiceCategory(odVc);
+        String odVc = event.getOption("voice_category", OptionMapping::getAsString);
+        String odVt = event.getOption("voice_type", OptionMapping::getAsString);
+
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        VoiceManager vm = getVoiceManager();
+        Optional<VoiceCategory> cat = vm.getVoiceCategory(odVc);
 
         if (cat.isEmpty()) {
             event.reply("存在しない読み上げカテゴリーです。").setEphemeral(true).queue();
             return;
         }
 
-        var vt = vm.getVoiceType(odVt);
+        Optional<VoiceType> vt = vm.getVoiceType(odVt);
 
         if (vt.isEmpty()) {
             event.reply("存在しない読み上げタイプです。").setEphemeral(true).queue();
             return;
         }
 
-        var pre = vm.getDefaultVoiceType(event.getGuild().getIdLong());
+        VoiceType pre = vm.getDefaultVoiceType(event.getGuild().getIdLong());
 
         if (pre == null || !vt.get().getId().equals(pre.getId())) {
             sd.setDefaultVoiceType(vt.get().getId());
@@ -123,8 +143,10 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void readIgnore(SlashCommandInteractionEvent event) {
-        var op = event.getOption("regex", OptionMapping::getAsString);
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        String op = Objects.requireNonNull(event.getOption("regex", OptionMapping::getAsString));
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         String pre = sd.getIgnoreRegex();
         if (!op.equals(pre)) {
@@ -138,7 +160,7 @@ public class ConfigCommand extends BaseCommand {
 
     private void readOverwrite(SlashCommandInteractionEvent event) {
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        ServerData sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         boolean pre = sd.isOverwriteAloud();
         String enStr = op ? "有効" : "無効";
@@ -154,8 +176,9 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void needJoin(SlashCommandInteractionEvent event) {
-        var op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         boolean pre = sd.isNeedJoin();
         String enStr = op ? "有効" : "無効";
@@ -170,9 +193,9 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void nameReadLimit(SlashCommandInteractionEvent event) {
-        Integer op = event.getOption("max-count", OptionMapping::getAsInt);
-        if (op == null) op = 0;
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+        Integer op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         int pre = sd.getNameReadLimit();
         if (op != pre) {
@@ -185,9 +208,8 @@ public class ConfigCommand extends BaseCommand {
     }
 
     private void readLimit(SlashCommandInteractionEvent event) {
-        Integer op = event.getOption("max-count", OptionMapping::getAsInt);
-        if (op == null) op = 0;
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        Integer op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
+        ServerData sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
 
         int pre = sd.getReadLimit();
         if (op != pre) {
@@ -201,8 +223,10 @@ public class ConfigCommand extends BaseCommand {
 
 
     private void notifyMove(SlashCommandInteractionEvent event) {
-        var op = Objects.requireNonNull(event.getOption("enable"));
-        var sd = getSaveDataManager().getServerData(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        OptionMapping op = Objects.requireNonNull(event.getOption("enable"));
+        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
 
         boolean pre = sd.isNotifyMove();
         String enStr = op.getAsBoolean() ? "有効" : "無効";
@@ -219,9 +243,11 @@ public class ConfigCommand extends BaseCommand {
     @Override
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
         Objects.requireNonNull(event.getGuild());
-        var interact = event.getInteraction();
+        CommandAutoCompleteInteraction interact = event.getInteraction();
 
-        if (!"default-voice".equals(interact.getSubcommandName())) return;
+        if (!"default-voice".equals(interact.getSubcommandName())) {
+            return;
+        }
 
         VoiceCommand.voiceSelectComplete(event, null, false);
     }

@@ -6,9 +6,23 @@ import dev.felnull.itts.core.voice.Voice;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceType;
 
+/**
+ * VoiceTextの声タイプ
+ *
+ * @author MORIMORI0317
+ */
 public class VoiceTextVoiceType implements VoiceType {
+
+    /**
+     * 話者
+     */
     private final VoiceTextSpeaker speakers;
 
+    /**
+     * コンストラクタ
+     *
+     * @param speakers 話者
+     */
     public VoiceTextVoiceType(VoiceTextSpeaker speakers) {
         this.speakers = speakers;
     }

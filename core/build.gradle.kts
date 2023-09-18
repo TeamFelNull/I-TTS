@@ -1,9 +1,14 @@
 plugins {
-    `maven-publish`
+    id("maven-publish")
+    id("checkstyle")
 }
 
 base {
     archivesName.set("itts-core")
+}
+
+checkstyle {
+    toolVersion = "10.12.2"
 }
 
 dependencies {

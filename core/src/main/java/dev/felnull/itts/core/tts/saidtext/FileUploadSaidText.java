@@ -9,7 +9,15 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public record FileUploadSaidText(Voice voice, List<Message.Attachment> attachments) implements SaidText, ITTSRuntimeUse {
+/**
+ * ファイル送信時の読み上げテキスト
+ *
+ * @param voice       音声タイプ
+ * @param attachments メッセージのアタッチメント
+ * @author MORIMORI0317
+ */
+public record FileUploadSaidText(Voice voice,
+                                 List<Message.Attachment> attachments) implements SaidText, ITTSRuntimeUse {
 
     @Override
     public CompletableFuture<String> getText() {
@@ -18,15 +26,17 @@ public record FileUploadSaidText(Voice voice, List<Message.Attachment> attachmen
 
             int count = 0;
 
-            var fileTypes = attachments.stream()
+            Map<FileType, List<FileType>> fileTypes = attachments.stream()
                     .map(FileUploadSaidText::getFileType)
                     .collect(Collectors.groupingBy(it -> it));
 
             for (Map.Entry<FileType, List<FileType>> entry : fileTypes.entrySet()) {
 
                 int ct = entry.getValue().size();
-                if (ct >= 2)
+
+                if (ct >= 2) {
                     sb.append(entry.getValue().size()).append("個の");
+                }
 
                 sb.append(entry.getKey().getName());
 
@@ -53,24 +63,50 @@ public record FileUploadSaidText(Voice voice, List<Message.Attachment> attachmen
     }
 
     private static FileType getFileType(Message.Attachment attachment) {
-        if (attachment.isImage())
+        if (attachment.isImage()) {
             return FileType.IMAGE;
+        }
 
-        if (attachment.isVideo())
+        if (attachment.isVideo()) {
             return FileType.VIDEO;
+        }
 
-        var ct = attachment.getContentType();
-        if (ct != null && ct.startsWith("audio/"))
+        String ct = attachment.getContentType();
+        if (ct != null && ct.startsWith("audio/")) {
             return FileType.AUDIO;
-
+        }
         return FileType.FILE;
     }
 
-    private static enum FileType {
+    /**
+     * ファイルの種類
+     *
+     * @author MORIMORI0317
+     */
+    private enum FileType {
+        /**
+         * 未分類のファイル
+         */
         FILE("ファイル"),
+
+        /**
+         * 画像ファイル
+         */
         IMAGE("画像"),
+
+        /**
+         * 動画ファイル
+         */
         VIDEO("動画"),
+
+        /**
+         * 音声ファイル
+         */
         AUDIO("音声");
+
+        /**
+         * 名前
+         */
         private final String name;
 
         FileType(String name) {

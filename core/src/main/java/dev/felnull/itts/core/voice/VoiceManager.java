@@ -1,6 +1,8 @@
 package dev.felnull.itts.core.voice;
 
 import dev.felnull.itts.core.ITTSBaseManager;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.ServerUserData;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -12,12 +14,42 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * 声関係の管理を行うクラス
+ *
+ * @author MORIMORI0317
+ */
 public class VoiceManager implements ITTSBaseManager {
-    private final VoiceTextManager voiceTextManager = new VoiceTextManager();
-    private final VoicevoxManager voicevoxManager = new VoicevoxManager("voicevox", () -> getConfigManager().getConfig().getVoicevoxConfig().getApiUrls(), () -> getConfigManager().getConfig().getVoicevoxConfig());
-    private final VoicevoxManager coeiroinkManager = new VoicevoxManager("coeiroink", () -> getConfigManager().getConfig().getCoeirolnkConfig().getApiUrls(), () -> getConfigManager().getConfig().getCoeirolnkConfig());
-    private final VoicevoxManager sharevoxManager = new VoicevoxManager("sharevox", () -> getConfigManager().getConfig().getSharevoxConfig().getApiUrls(), () -> getConfigManager().getConfig().getSharevoxConfig());
 
+    /**
+     * VoiceTextの管理
+     */
+    private final VoiceTextManager voiceTextManager = new VoiceTextManager();
+
+    /**
+     * VOICEVOXの管理
+     */
+    private final VoicevoxManager voicevoxManager =
+            new VoicevoxManager("voicevox", () ->
+                    getConfigManager().getConfig().getVoicevoxConfig().getApiUrls(), () -> getConfigManager().getConfig().getVoicevoxConfig());
+
+    /**
+     * COEIROINKの管理
+     */
+    private final VoicevoxManager coeiroinkManager =
+            new VoicevoxManager("coeiroink", () ->
+                    getConfigManager().getConfig().getCoeirolnkConfig().getApiUrls(), () -> getConfigManager().getConfig().getCoeirolnkConfig());
+
+    /**
+     * SHAREVOXの管理
+     */
+    private final VoicevoxManager sharevoxManager =
+            new VoicevoxManager("sharevox", () ->
+                    getConfigManager().getConfig().getSharevoxConfig().getApiUrls(), () -> getConfigManager().getConfig().getSharevoxConfig());
+
+    /**
+     * 全音声タイプ
+     */
     private final List<Supplier<List<VoiceType>>> voiceTypes = new ArrayList<>();
 
     private void registerVoiceTypes(Supplier<List<VoiceType>> availableVoiceTypes) {
@@ -65,12 +97,24 @@ public class VoiceManager implements ITTSBaseManager {
                 .collect(Collectors.groupingBy(VoiceType::getCategory));
     }
 
+    /**
+     * IDから声カテゴリを取得
+     *
+     * @param id 声ID
+     * @return 声カテゴリ
+     */
     public Optional<VoiceCategory> getVoiceCategory(String id) {
         return getAvailableVoiceTypes().keySet().stream()
                 .filter(r -> r.getId().equals(id))
                 .findAny();
     }
 
+    /**
+     * IDから声タイプを取得
+     *
+     * @param id 音声タイプID
+     * @return 声タイプ
+     */
     public Optional<VoiceType> getVoiceType(String id) {
         return getAvailableVoiceTypes().values().stream()
                 .flatMap(Collection::stream)
@@ -86,21 +130,35 @@ public class VoiceManager implements ITTSBaseManager {
                 .orElse(null);
     }
 
+    /**
+     * デフォルトの声タイプを取得
+     *
+     * @param guildId サーバーID
+     * @return 声タイプ
+     */
     @Nullable
     public VoiceType getDefaultVoiceType(long guildId) {
-        var defaultVt = getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
+        String defaultVt = getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
 
-        if (defaultVt == null)
+        if (defaultVt == null) {
             return getDefaultVoiceType();
+        }
 
         return getVoiceType(defaultVt).orElseGet(this::getDefaultVoiceType);
     }
 
+    /**
+     * 声タイプを取得
+     *
+     * @param guildId サーバーID
+     * @param userId  ユーザーID
+     * @return 声タイプ
+     */
     @Nullable
     public VoiceType getVoiceType(long guildId, long userId) {
-        var sdm = getSaveDataManager();
-        var serverUserData = sdm.getServerUserData(guildId, userId);
-        var vt = getVoiceType(serverUserData.getVoiceType());
+        SaveDataManager sdm = getSaveDataManager();
+        ServerUserData serverUserData = sdm.getServerUserData(guildId, userId);
+        Optional<VoiceType> vt = getVoiceType(serverUserData.getVoiceType());
 
         return vt.orElseGet(() -> getDefaultVoiceType(guildId));
     }

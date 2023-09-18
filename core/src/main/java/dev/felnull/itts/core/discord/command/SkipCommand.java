@@ -1,12 +1,24 @@
 package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.itts.core.tts.TTSInstance;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
+/**
+ * スキップコマンド
+ *
+ * @author MORIMORI0317
+ */
 public class SkipCommand extends BaseCommand {
+
+    /**
+     * コンストラクタ
+     */
     public SkipCommand() {
         super("skip");
     }
@@ -20,7 +32,9 @@ public class SkipCommand extends BaseCommand {
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        TTSInstance ttsInstance = getTTSManager().getTTSInstance(event.getGuild().getIdLong());
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        TTSInstance ttsInstance = getTTSManager().getTTSInstance(guild.getIdLong());
 
         if (ttsInstance == null) {
             event.reply("現在VCに接続していません。").setEphemeral(true).queue();
