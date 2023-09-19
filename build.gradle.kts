@@ -1,4 +1,5 @@
 plugins {
+    id("java")
     id("org.jetbrains.changelog") version "2.0.0"
 }
 
@@ -35,4 +36,13 @@ subprojects {
 
     group = rootProject.group
     version = rootProject.version
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
