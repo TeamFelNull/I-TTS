@@ -32,7 +32,7 @@ public class DirectoryLock implements ITTSRuntimeUse {
      * ロックを実行
      */
     protected void lock() {
-        if (!LOCK_FILE.delete()) {
+        if (LOCK_FILE.exists() && !LOCK_FILE.delete()) {
             throw new RuntimeException("Failed to delete old lock file");
         }
 
@@ -58,7 +58,7 @@ public class DirectoryLock implements ITTSRuntimeUse {
                 // ファイルロック用アウトプットストリームを閉じることに失敗した場合も諦める
             }
 
-            if (!LOCK_FILE.delete()) {
+            if (LOCK_FILE.exists() && !LOCK_FILE.delete()) {
                 throw new RuntimeException("Failed to delete lock file");
             }
         }));
