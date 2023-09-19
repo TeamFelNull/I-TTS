@@ -64,7 +64,7 @@ public final class TTSUtils {
         ServerUserData sud = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(member.getGuild().getIdLong(), user.getIdLong());
         String nick = sud.getNickName();
 
-        String ret = Objects.requireNonNullElseGet(nick, () -> DiscordUtils.getName(member));
+        String ret = Objects.requireNonNullElseGet(nick, member::getEffectiveName);
 
         return roundText(voice, member.getGuild().getIdLong(), ret, true);
     }

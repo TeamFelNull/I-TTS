@@ -40,9 +40,9 @@ public final class DiscordUtils {
             if (member == null) {
                 CacheRestAction<Member> memberCacheRestAction = guild.retrieveMember(user);
 
-                return CompletableFuture.supplyAsync(() -> getName(memberCacheRestAction.complete()), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
+                return CompletableFuture.supplyAsync(() -> memberCacheRestAction.complete().getEffectiveName(), ITTSRuntime.getInstance().getAsyncWorkerExecutor());
             } else {
-                return CompletableFuture.completedFuture(getName(member));
+                return CompletableFuture.completedFuture(member.getEffectiveName());
             }
 
         }
@@ -66,24 +66,11 @@ public final class DiscordUtils {
         if (guild != null) {
             Member member = guild.getMember(user);
             if (member != null) {
-                return getName(member);
+                return member.getEffectiveName();
             }
         }
 
-        return user.getName();
-    }
-
-    /**
-     * 名前もしくはニックネームを取得する
-     *
-     * @param member メンバー
-     * @return 名前
-     */
-    @NotNull
-    public static String getName(@NotNull Member member) {
-        Objects.requireNonNull(member);
-
-        return Objects.requireNonNullElseGet(member.getNickname(), () -> member.getUser().getName());
+        return user.getEffectiveName();
     }
 
     /**
@@ -94,7 +81,7 @@ public final class DiscordUtils {
      */
     @NotNull
     public static String getEscapedName(@NotNull Member member) {
-        return escapeMention(getName(member));
+        return escapeMention(member.getEffectiveName());
     }
 
 
