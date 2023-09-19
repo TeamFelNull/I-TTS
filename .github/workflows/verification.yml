@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-release:
+  verification:
     runs-on: ubuntu-latest
 
     steps:

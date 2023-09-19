@@ -28,6 +28,8 @@ public class DirectoryLock implements ITTSRuntimeUse {
      */
     private FileLock fileLock;
 
+    private String TEST_CODE;
+
     /**
      * ロックを実行
      */
