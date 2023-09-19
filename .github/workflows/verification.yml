@@ -1,0 +1,43 @@
+# Checkとビルド可能かコードを検証
+name: Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout # チェックアウト
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup JDK # JDKセットアップ
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Setup Gradle # Gradleセットアップ
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Check # Check
+        shell: bash
+        run: |
+          chmod +x gradlew
+          chmod -R +X gradle
+          ./gradlew check
+
+      - name: Build # ビルド
+        shell: bash
+        run: |
+          ./gradlew build --stacktrace --no-daemon
