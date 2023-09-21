@@ -116,7 +116,7 @@ jobs:
         run: |
           ./gradlew patchChangelog
 
-          git checkout "remotes/origin/master"
+          git checkout "remotes/origin/main"
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add ./CHANGELOG.md
