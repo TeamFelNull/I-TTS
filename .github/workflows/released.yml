@@ -7,6 +7,7 @@ on:
 
 
 jobs:
+  # ビルドとリリースまでの処理
   build-release:
     runs-on: ubuntu-latest
 
@@ -64,6 +65,11 @@ jobs:
           cd release
           cp -r ../selfhost/build/libs/. ./
 
+      - name: Generate Hash #リリースするファイルのハッシュファイルを生成
+        uses: TeamFelnull/actions-reusable-workflows/.github/actions/hashing-directory@master
+        with:
+          directory_path: "${{ github.workspace }}/release"
+
       - name: Upload Artifact #アーティファクトをアップロード
         uses: actions/upload-artifact@v3
         with:
@@ -76,44 +82,44 @@ jobs:
           body_path: LATEST_CHANGELOG.md
           files: release/*
 
-# とりあえず更新ログを手動更新
-#  post-release:
-#    name: Update after release
-#    needs: build-release
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Setup JDK #JDKセットアップ
-#        uses: actions/setup-java@v3
-#        with:
-#          distribution: 'corretto'
-#          java-version: '17'
-#
-#      - name: Setup Gradle #Gradleセットアップ
-#        uses: gradle/gradle-build-action@v2
-#        with:
-#          gradle-home-cache-cleanup: true
-#
-#      - name: Gradle Check #Gradle動作確認
-#        shell: bash
-#        run: |
-#          chmod +x gradlew
-#          chmod -R +X gradle
-#          ./gradlew check
-#
-#      - name: Generate Changelog #チェンジログ生成してコミット
-#        shell: bash
-#        run: |
-#          ./gradlew patchChangelog
-#
-#          git checkout $TARGET_BRANCH
-#          git config user.email "action@github.com"
-#          git config user.name "GitHub Action"
-#          git add ./CHANGELOG.md
-#          git commit -m "変更ログを更新(${{ github.ref_name }})"
-#          git push -u origin
-#          echo "Commit done!"
+  # リリース後の処理
+  post-release:
+    name: Update after release
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK #JDKセットアップ
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Setup Gradle #Gradleセットアップ
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Gradle Check #Gradle動作確認
+        shell: bash
+        run: |
+          chmod +x gradlew
+          chmod -R +X gradle
+          ./gradlew check
+
+      - name: Generate Changelog #チェンジログ生成してコミット
+        shell: bash
+        run: |
+          ./gradlew patchChangelog
+
+          git checkout "remotes/origin/master"
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add ./CHANGELOG.md
+          git commit -m "変更ログを更新(${{ github.ref_name }})"
+          git push -u origin
+          echo "Commit done!"
