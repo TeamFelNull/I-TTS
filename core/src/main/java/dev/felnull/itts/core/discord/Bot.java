@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -82,17 +83,30 @@ public class Bot implements ITTSRuntimeUse {
                         AudioChannel audioChannel = guild.getChannelById(AudioChannel.class, data.getConnectedAudioChannel());
 
                         if (audioChannel == null) {
+                            data.setConnectedAudioChannel(-1);
+                            getITTSLogger().info("Failed to reconnect (Audio channel does not exist): {}", guild.getName());
                             return;
                         }
 
                         MessageChannel chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
 
                         if (chatChannel == null) {
+                            data.setReadAroundTextChannel(-1);
+                            data.setConnectedAudioChannel(-1);
+                            getITTSLogger().info("Failed to reconnect (Message channel does not exist): {}", guild.getName());
                             return;
                         }
 
                         getTTSManager().setReadAroundChannel(guild, chatChannel);
-                        guild.getAudioManager().openAudioConnection(audioChannel);
+
+                        try {
+                            guild.getAudioManager().openAudioConnection(audioChannel);
+                        } catch (InsufficientPermissionException ex) {
+                            data.setConnectedAudioChannel(-1);
+                            getITTSLogger().info("Failed to reconnect (No permission): {}", guild.getName());
+                            return;
+                        }
+
                         getTTSManager().connect(guild, audioChannel);
 
                         TTSInstance ti = getTTSManager().getTTSInstance(guildId);
