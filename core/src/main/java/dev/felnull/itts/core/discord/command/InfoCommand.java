@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.fnjl.util.FNStringUtil;
+import dev.felnull.itts.core.tts.TTSManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -23,6 +23,11 @@ public class InfoCommand extends BaseCommand {
      * ソースコードのURL
      */
     private static final String SOURCE_URL = "https://github.com/TeamFelnull/I-TTS";
+
+    /**
+     * 時間を相対的に表示するフォーマット
+     */
+    private static final String RELATIVE_TIME_FORMAT = "<t:%d:R>";
 
     /**
      * コンストラクタ
@@ -80,14 +85,17 @@ public class InfoCommand extends BaseCommand {
     }
 
     private void work(SlashCommandInteractionEvent e) {
+        TTSManager ttsManager = getTTSManager();
+
         EmbedBuilder workEmbedBuilder = new EmbedBuilder();
         workEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
 
         workEmbedBuilder.setTitle("稼働情報");
 
-        workEmbedBuilder.addField("稼働時間", FNStringUtil.getTimeFormat(System.currentTimeMillis() - getITTSRuntime().getStartupTime()), false);
+        workEmbedBuilder.addField("稼働開始時間", String.format(RELATIVE_TIME_FORMAT, getITTSRuntime().getStartupTime() / 1000), false);
         workEmbedBuilder.addField("参加サーバー数", e.getJDA().getGuilds().size() + "個", false);
-        workEmbedBuilder.addField("読み上げサーバー数", getTTSManager().getTTSCount() + "個", false);
+        workEmbedBuilder.addField("読み上げサーバー数", ttsManager.getTTSCount() + "個", false);
+        workEmbedBuilder.addField("利用者数", ttsManager.getUserCount() + "人", false);
 
         e.replyEmbeds(workEmbedBuilder.build()).setEphemeral(true).queue();
     }

@@ -41,6 +41,36 @@ public class TTSManager implements ITTSRuntimeUse {
     }
 
     /**
+     * 利用者数を取得
+     *
+     * @return 利用者数
+     */
+    public int getUserCount() {
+        List<Guild> guilds = getBot().getJDA().getGuilds();
+
+        List<Long> ttsChannels = instances.values().stream()
+                .map(TTSInstance::getAudioChannel)
+                .toList();
+
+        long users = guilds.stream()
+                .flatMap(guild -> guild.getVoiceStates().stream())
+                .filter(voiceState -> voiceState.getChannel() != null)
+                .filter(voiceState -> {
+                    AudioChannelUnion channelUnion = voiceState.getChannel();
+                    if (channelUnion != null) {
+                        return ttsChannels.contains(channelUnion.getIdLong());
+                    }
+                    return false;
+                })
+                .filter(TTSUtils::canListen)
+                // .map(GuildVoiceState::getMember)
+                // .distinct()
+                .count();
+
+        return (int) users;
+    }
+
+    /**
      * 読み上げチャンネルを変更
      *
      * @param guild       サーバーID
