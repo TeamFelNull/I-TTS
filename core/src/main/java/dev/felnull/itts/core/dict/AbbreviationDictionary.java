@@ -35,9 +35,9 @@ public class AbbreviationDictionary implements Dictionary {
                 return matcher.find();
             })
             .addOption(1, "アイピーブイフォーショウリャク", s -> {
-                Pattern pattern = Pattern.compile("(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])");
+                Pattern pattern = Pattern.compile("^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$");
                 Matcher matcher = pattern.matcher(s);
-                return matcher.find();
+                return matcher.matches();
             })
             .addOption(1, "アイピーブイロクショウリャク", s -> {
                 Pattern pattern = Pattern.compile("(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|"
@@ -53,7 +53,7 @@ public class AbbreviationDictionary implements Dictionary {
                         + "(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|"
                         + "(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))");
                 Matcher matcher = pattern.matcher(s);
-                return matcher.find();
+                return matcher.matches();
             });
 
 
