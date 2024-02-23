@@ -78,7 +78,7 @@ public class RegexUtil {
             createdText.add(txt);
         }
 
-        return String.join(" ", createdText);
+        return String.join("", createdText);
     }
 
 
