@@ -46,7 +46,7 @@ public class Bot implements ITTSRuntimeUse {
         registeringCommands();
 
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(new DCEventListener(this))
                 .build();
 

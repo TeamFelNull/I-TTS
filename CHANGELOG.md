@@ -14,7 +14,7 @@
 ### Removed
 
 ### Fixed
-
+- 不要なIntentsを削除
 ### Security
 
 ## [2.0.0-alpha.9] - 2024-02-11
