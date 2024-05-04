@@ -22,6 +22,8 @@ dependencies {
     api("com.github.walkyst:lavaplayer-fork:1.4.3")
     api("commons-io:commons-io:2.11.0")
     api("com.ibm.icu:icu4j:72.1")
+    api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+
 
     api("org.jetbrains:annotations:23.0.0")
 }
