@@ -67,6 +67,12 @@ public class DCEventListener extends ListenerAdapter implements ITTSRuntimeUse {
             if (join != null) {
                 getTTSManager().connect(event.getGuild(), join);
             }
+        } else if (left != null) {
+            // 誰かが抜けて、BotだけになったらVCから切断
+            boolean isAlone = left.getMembers().stream().allMatch(n -> n.getUser().isBot());
+            if (isAlone) {
+                left.getGuild().getAudioManager().closeAudioConnection();
+            }
         }
 
         getTTSManager().onVCEvent(event.getGuild(), event.getMember(), join, left);
