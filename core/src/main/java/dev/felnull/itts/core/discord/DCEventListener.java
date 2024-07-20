@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -68,10 +69,17 @@ public class DCEventListener extends ListenerAdapter implements ITTSRuntimeUse {
                 getTTSManager().connect(event.getGuild(), join);
             }
         } else if (left != null) {
-            // 誰かが抜けて、BotだけになったらVCから切断
-            boolean isAlone = left.getMembers().stream().allMatch(n -> n.getUser().isBot());
-            if (isAlone) {
-                left.getGuild().getAudioManager().closeAudioConnection();
+            AudioManager audioManager = left.getGuild().getAudioManager();
+            AudioChannelUnion selfAudioChannelUnion = audioManager.getConnectedChannel();
+
+            // 現在接続中のチャンネルと退出したチャンネルが同じ場合
+            if (selfAudioChannelUnion != null && left.getIdLong() == selfAudioChannelUnion.getIdLong()) {
+
+                // 誰かが抜けて、BotだけになったらVCから切断
+                boolean isAlone = left.getMembers().stream().allMatch(n -> n.getUser().isBot());
+                if (isAlone) {
+                    audioManager.closeAudioConnection();
+                }
             }
         }
 
