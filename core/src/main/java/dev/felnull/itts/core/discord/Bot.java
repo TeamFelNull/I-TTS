@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,8 @@ public class Bot implements ITTSRuntimeUse {
         registeringCommands();
 
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_PRESENCES)
+                .enableCache(CacheFlag.ACTIVITY)
                 .addEventListeners(new DCEventListener(this))
                 .build();
 
@@ -88,7 +90,7 @@ public class Bot implements ITTSRuntimeUse {
                             return;
                         }
 
-                        MessageChannel chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
+                        MessageChannel chatChannel = guild.getTextChannelById(data.getReadAroundTextChannel());
 
                         if (chatChannel == null) {
                             data.setReadAroundTextChannel(-1);
