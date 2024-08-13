@@ -3,24 +3,15 @@ package dev.felnull.itts.core.discord;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
-import dev.felnull.itts.core.savedata.BotStateData;
-import dev.felnull.itts.core.tts.TTSInstance;
-import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
-import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -35,6 +26,11 @@ public class Bot implements ITTSRuntimeUse {
     protected final List<BaseCommand> baseCommands = new ArrayList<>();
 
     /**
+     * 接続制御
+     */
+    private final ConnectControl connectControl = new ConnectControl();
+
+    /**
      * JDA
      */
     private JDA jda;
@@ -47,7 +43,7 @@ public class Bot implements ITTSRuntimeUse {
 
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(new DCEventListener(this))
+                .addEventListeners(new DCEventListener(this), this.connectControl.getAdaptor())
                 .build();
 
         updateCommands(this.jda);
@@ -61,71 +57,6 @@ public class Bot implements ITTSRuntimeUse {
                 updateActivityAsync();
             }
         }, 0, 1000 * 10);
-
-        try {
-            this.jda.awaitReady();
-            reconnect();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void reconnect() {
-        CompletableFuture.runAsync(() -> {
-            Map<Long, BotStateData> allData = getSaveDataManager().getAllBotStateData();
-            long selfId = getJDA().getSelfUser().getIdLong();
-
-            allData.forEach((guildId, data) -> {
-                Guild guild = getJDA().getGuildById(guildId);
-
-                if (guild != null && data.getConnectedAudioChannel() >= 0 && data.getReadAroundTextChannel() >= 0) {
-                    try {
-                        AudioChannel audioChannel = guild.getChannelById(AudioChannel.class, data.getConnectedAudioChannel());
-
-                        if (audioChannel == null) {
-                            data.setConnectedAudioChannel(-1);
-                            getITTSLogger().info("Failed to reconnect (Audio channel does not exist): {}", guild.getName());
-                            return;
-                        }
-
-                        MessageChannel chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
-
-                        if (chatChannel == null) {
-                            data.setReadAroundTextChannel(-1);
-                            data.setConnectedAudioChannel(-1);
-                            getITTSLogger().info("Failed to reconnect (Message channel does not exist): {}", guild.getName());
-                            return;
-                        }
-
-                        getTTSManager().setReadAroundChannel(guild, chatChannel);
-
-                        try {
-                            guild.getAudioManager().openAudioConnection(audioChannel);
-                        } catch (InsufficientPermissionException ex) {
-                            data.setConnectedAudioChannel(-1);
-                            getITTSLogger().info("Failed to reconnect (No permission): {}", guild.getName());
-                            return;
-                        }
-
-                        getTTSManager().connect(guild, audioChannel);
-
-                        TTSInstance ti = getTTSManager().getTTSInstance(guildId);
-                        VoiceType vt = getVoiceManager().getVoiceType(guildId, selfId);
-
-                        if (ti != null && vt != null) {
-                            if (getTTSManager().canSpeak(guild)) {
-                                ti.sayText(new StartupSaidText(vt.createVoice(guildId, selfId)));
-                            }
-                        }
-
-                        getITTSLogger().info("Reconnected: {}", guild.getName());
-                    } catch (Exception ex) {
-                        getITTSLogger().error("Failed to reconnect: {}", guild.getName(), ex);
-                    }
-                }
-            });
-
-        }, getAsyncExecutor());
     }
 
     private void registeringCommands() {

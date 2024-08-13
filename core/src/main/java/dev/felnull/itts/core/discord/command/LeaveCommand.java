@@ -1,6 +1,8 @@
 package dev.felnull.itts.core.discord.command;
 
+import dev.felnull.itts.core.savedata.KariAutoDisconnectData;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -38,12 +40,31 @@ public class LeaveCommand extends BaseCommand {
         AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.isConnected()) {
-            AudioChannelUnion connectedChannel = Objects.requireNonNull(audioManager.getConnectedChannel());
-            event.reply(connectedChannel.getAsMention() + "から切断します。").queue();
+            AudioChannelUnion connectedChannel = audioManager.getConnectedChannel();
 
-            audioManager.closeAudioConnection();
+            if (connectedChannel != null) {
+                event.reply(connectedChannel.getAsMention() + "から切断します。").queue();
+                audioManager.closeAudioConnection();
+            } else {
+                event.reply("切断できませんでした。").queue();
+            }
+
         } else {
-            event.reply("現在VCに接続していません。").setEphemeral(true).queue();
+            boolean reconnectFlg = false;
+
+            KariAutoDisconnectData.TTSChannelPair ttsChannelPair = KariAutoDisconnectData.getReconnectChannel(guild.getIdLong());
+            if (ttsChannelPair != null && ttsChannelPair.speakAudioChannel() != -1 && ttsChannelPair.readAroundTextChannel() != -1) {
+                AudioChannel audioChannel = event.getJDA().getVoiceChannelById(ttsChannelPair.speakAudioChannel());
+                if (audioChannel != null) {
+                    event.reply(audioChannel.getAsMention() + "から切断します。").queue();
+                    KariAutoDisconnectData.setReconnectChannel(guild.getIdLong(), new KariAutoDisconnectData.TTSChannelPair(-1, -1));
+                    reconnectFlg = true;
+                }
+            }
+
+            if (!reconnectFlg) {
+                event.reply("現在VCに接続していません。").setEphemeral(true).queue();
+            }
         }
     }
 }
