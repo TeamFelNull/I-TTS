@@ -51,8 +51,6 @@ public class ConnectControl {
      */
     private final DiscordEventAdaptor adaptor = new DiscordEventAdaptor();
 
-    /*    */
-
     /**
      * 自動切断の待機タイマーのマップ
      */
@@ -87,7 +85,6 @@ public class ConnectControl {
         if (disconnecter != null) {
             disconnecter.cancel();
         }
-
     }
 
     /**
@@ -261,10 +258,8 @@ public class ConnectControl {
             KariAutoDisconnectData.Mode autoDisMode = KariAutoDisconnectData.getMode(guildId);
 
             if (member.getUser().getIdLong() == jda.getSelfUser().getIdLong()) {
-                // このBOTがVCから切断された時に、自動切断の処理を停止
-                if (leftCh != null) {
-                    stopAutoDisconnecter(guildId);
-                }
+                // このBOTがVCから切断、もしくは接続された時に、自動切断の処理を停止
+                stopAutoDisconnecter(guildId);
 
                 // このBOTがVCに接続したとき
                 if (joinCh != null) {
