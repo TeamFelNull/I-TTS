@@ -9,6 +9,7 @@ base {
 
 checkstyle {
     toolVersion = "10.12.2"
+    sourceSets = listOf(project.sourceSets.getByName("main"))
 }
 
 dependencies {
