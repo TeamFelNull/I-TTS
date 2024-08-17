@@ -24,6 +24,7 @@ dependencies {
     api("commons-io:commons-io:2.16.1")
     api("com.ibm.icu:icu4j:75.1")
     api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+    api("it.unimi.dsi:fastutil:8.5.14")
 
     api("org.jetbrains:annotations:23.0.0")
 }
