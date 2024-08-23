@@ -6,6 +6,7 @@ package dev.felnull.itts.core.savedata;
  * @author MORIMORI0317
  */
 public interface BotStateData {
+
     /**
      * バージョン
      */

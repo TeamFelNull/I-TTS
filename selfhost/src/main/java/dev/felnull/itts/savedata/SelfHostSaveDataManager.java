@@ -1,6 +1,7 @@
 package dev.felnull.itts.savedata;
 
 import dev.felnull.itts.Main;
+import dev.felnull.itts.core.oldsavedata.*;
 import dev.felnull.itts.core.savedata.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

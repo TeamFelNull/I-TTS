@@ -5,7 +5,7 @@ import dev.felnull.itts.core.ITTSRuntimeContext;
 import dev.felnull.itts.core.cache.GlobalCacheAccess;
 import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.core.log.LogContext;
-import dev.felnull.itts.core.savedata.SaveDataAccess;
+import dev.felnull.itts.core.oldsavedata.SaveDataAccess;
 import dev.felnull.itts.savedata.SelfHostSaveDataManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;

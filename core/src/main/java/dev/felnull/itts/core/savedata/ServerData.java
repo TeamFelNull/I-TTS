@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.savedata;
 
+import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,6 +49,11 @@ public interface ServerData {
      * 初期状態の名前読み上げ数
      */
     int INIT_NAME_READ_LIMIT = 20;
+
+    /**
+     * 初期状態の自動切断モード
+     */
+    AutoDisconnectMode INIT_AUTO_DISCONNECT_MODE = AutoDisconnectMode.OFF;
 
     /**
      * デフォルトの音声タイプを取得
@@ -148,4 +154,19 @@ public interface ServerData {
      * @param nameReadLimit 名前の最大読み上げ数
      */
     void setNameReadLimit(int nameReadLimit);
+
+    /**
+     * 自動切断モードを取得
+     *
+     * @return 自動切断モード
+     */
+    AutoDisconnectMode getAutoDisconnectMode();
+
+    /**
+     * 自動切断モードを変更
+     *
+     * @param autoDisconnectMode 自動切断モード
+     */
+    void setAutoDisconnectMode(AutoDisconnectMode autoDisconnectMode);
+
 }

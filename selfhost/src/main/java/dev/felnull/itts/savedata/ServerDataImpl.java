@@ -1,6 +1,7 @@
 package dev.felnull.itts.savedata;
 
 import com.google.gson.JsonObject;
+import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import dev.felnull.itts.core.savedata.ServerData;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -160,5 +161,15 @@ public class ServerDataImpl extends SaveDataBase implements ServerData {
     public void setNameReadLimit(int nameReadLimit) {
         this.nameReadLimit.set(nameReadLimit);
         dirty();
+    }
+
+    @Override
+    public AutoDisconnectMode getAutoDisconnectMode() {
+        return null;
+    }
+
+    @Override
+    public void setAutoDisconnectMode(AutoDisconnectMode autoDisconnectMode) {
+
     }
 }

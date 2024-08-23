@@ -6,7 +6,9 @@ import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
+import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.impl.SaveDataManagerImpl;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -117,7 +119,7 @@ public class ITTSRuntime {
     /**
      * セーブデータマネージャー
      */
-    private final SaveDataManager saveDataManager;
+    private final SaveDataManagerOld saveDataManager;
 
     /**
      * DiscordのBOT関係
@@ -151,7 +153,7 @@ public class ITTSRuntime {
 
         this.bot = new Bot();
         this.configManager = new ConfigManager(runtimeContext.getConfigContext());
-        this.saveDataManager = new SaveDataManager(runtimeContext.getSaveDataAccess());
+        this.saveDataManager = new SaveDataManagerOld(runtimeContext.getSaveDataAccess());
         this.cacheManager = new CacheManager(runtimeContext.getGlobalCacheAccessFactory());
 
         this.managers = ImmutableList.of(configManager, saveDataManager, voiceManager);
@@ -203,6 +205,9 @@ public class ITTSRuntime {
         managers.stream()
                 .map(ITTSBaseManager::init)
                 .forEach(CompletableFuture::join);
+
+        SaveDataManager.getInstance().init();
+        SaveDataManagerImpl.INSTANCE.test();
 
         logger.info("Setup complete");
 
@@ -257,7 +262,7 @@ public class ITTSRuntime {
         return voiceAudioManager;
     }
 
-    public SaveDataManager getSaveDataManager() {
+    public SaveDataManagerOld getSaveDataManager() {
         return saveDataManager;
     }
 

@@ -4,6 +4,7 @@ import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
 import dev.felnull.itts.core.savedata.BotStateData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSInstance;
 import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -49,7 +50,7 @@ public class Bot implements ITTSRuntimeUse {
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_PRESENCES)
                 .enableCache(CacheFlag.ACTIVITY)
-                .addEventListeners(new DCEventListener(this))
+                .addEventListeners(new DCEventListener(this), SaveDataManager.getInstance().getDiscordListenerAdapter())
                 .build();
 
         updateCommands(this.jda);

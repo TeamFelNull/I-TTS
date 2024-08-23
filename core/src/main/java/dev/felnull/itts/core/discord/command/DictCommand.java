@@ -7,7 +7,7 @@ import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.savedata.DictData;
 import dev.felnull.itts.core.savedata.DictUseData;
-import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -281,7 +281,7 @@ public class DictCommand extends BaseCommand {
         String enStr = enabled ? "有効" : "無効";
         long guildId = guild.getIdLong();
         DictionaryManager dm = getDictionaryManager();
-        SaveDataManager sm = getSaveDataManager();
+        SaveDataManagerOld sm = getSaveDataManager();
         Dictionary dic = dm.getDictionary(dictId, guildId);
 
         if (dic == null) {

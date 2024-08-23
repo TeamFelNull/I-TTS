@@ -3,7 +3,7 @@ package dev.felnull.itts.core;
 import dev.felnull.itts.core.cache.GlobalCacheAccess;
 import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.core.log.LogContext;
-import dev.felnull.itts.core.savedata.SaveDataAccess;
+import dev.felnull.itts.core.oldsavedata.SaveDataAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

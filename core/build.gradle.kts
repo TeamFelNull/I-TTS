@@ -13,6 +13,9 @@ checkstyle {
 }
 
 dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+
     //https://github.com/DV8FromTheWorld/JDA/pull/2240 <-音声の遅れが生じる可能あり
     api("net.dv8tion:JDA:5.0.2")
     api("org.apache.commons:commons-lang3:3.16.0")
@@ -24,8 +27,11 @@ dependencies {
     api("commons-io:commons-io:2.16.1")
     api("com.ibm.icu:icu4j:75.1")
     api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+    api("com.zaxxer:HikariCP:5.1.0")
+    api("mysql:mysql-connector-java:8.0.32")
+    api("org.xerial:sqlite-jdbc:3.46.0.1")
 
-    api("org.jetbrains:annotations:23.0.0")
+    api("org.jetbrains:annotations:24.1.0")
 }
 
 tasks.getByName<Test>("test") {

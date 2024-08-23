@@ -2,7 +2,7 @@ package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.BotStateData;
-import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.savedata.ServerData;
 import dev.felnull.itts.core.tts.saidtext.FileUploadSaidText;
 import dev.felnull.itts.core.tts.saidtext.MessageSaidText;
@@ -168,7 +168,7 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param message        メッセージ
      */
     public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull Message message) {
-        SaveDataManager sm = getSaveDataManager();
+        SaveDataManagerOld sm = getSaveDataManager();
         String ignoreRegex = sm.getServerData(guild.getIdLong()).getIgnoreRegex();
         if (ignoreRegex != null) {
             Pattern ignorePattern = Pattern.compile(ignoreRegex);
@@ -229,7 +229,7 @@ public class TTSManager implements ITTSRuntimeUse {
             return;
         }
 
-        SaveDataManager sm = getSaveDataManager();
+        SaveDataManagerOld sm = getSaveDataManager();
         if (sm.getServerData(guildId).isNeedJoin()) {
             GuildVoiceState vs = member.getVoiceState();
             if (vs == null) {
@@ -313,7 +313,7 @@ public class TTSManager implements ITTSRuntimeUse {
             return;
         }
 
-        SaveDataManager sm = getSaveDataManager();
+        SaveDataManagerOld sm = getSaveDataManager();
         if (!sm.getServerData(guildId).isNotifyMove()) {
             return;
         }

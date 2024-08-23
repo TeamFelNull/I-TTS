@@ -1,56 +1,45 @@
 package dev.felnull.itts.core.savedata;
 
-import dev.felnull.itts.core.ITTSBaseManager;
+import dev.felnull.itts.core.savedata.impl.SaveDataManagerImpl;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
- * セーブデータの管理
+ * 保存データの管理
  *
  * @author MORIMORI0317
  */
-public class SaveDataManager implements ITTSBaseManager {
+public interface SaveDataManager {
+
+    static SaveDataManager getInstance() {
+        return SaveDataManagerImpl.INSTANCE;
+    }
 
     /**
-     * セーブデータへのアクセス
+     * 初期化処理
      */
-    private final SaveDataAccess saveDataAccess;
+    void init();
 
     /**
-     * コンストラクタ
+     * Discordのイベント受信用アダプター
      *
-     * @param saveDataAccess セーブデータへのアクセス
+     * @return リスナーアダプター
      */
-    public SaveDataManager(SaveDataAccess saveDataAccess) {
-        this.saveDataAccess = saveDataAccess;
-    }
-
-    @Override
-    public @NotNull CompletableFuture<?> init() {
-        return CompletableFuture.runAsync(() -> {
-            if (!saveDataAccess.init()) {
-                throw new RuntimeException("Failed to initialize");
-            }
-
-            getITTSLogger().info("Save data setup complete");
-        }, getAsyncExecutor());
-    }
+    ListenerAdapter getDiscordListenerAdapter();
 
     /**
-     * 全てのサーバーデータを取得
+     * サーバーデータを取得
      *
      * @param guildId サーバーID
      * @return サーバーデータ
      */
     @NotNull
-    public ServerData getServerData(long guildId) {
-        return saveDataAccess.getServerData(guildId);
-    }
+    ServerData getServerData(long guildId);
 
     /**
      * サーバーごとのユーザデータを取得
@@ -60,9 +49,7 @@ public class SaveDataManager implements ITTSBaseManager {
      * @return サーバーごとのユーザデータ
      */
     @NotNull
-    public ServerUserData getServerUserData(long guildId, long userId) {
-        return saveDataAccess.getServerUserData(guildId, userId);
-    }
+    ServerUserData getServerUserData(long guildId, long userId);
 
     /**
      * 辞書使用データを取得
@@ -72,20 +59,16 @@ public class SaveDataManager implements ITTSBaseManager {
      * @return 辞書使用データ
      */
     @NotNull
-    public DictUseData getDictUseData(long guildId, @NotNull String dictId) {
-        return saveDataAccess.getDictUseData(guildId, dictId);
-    }
+    DictUseData getDictUseData(long guildId, @NotNull String dictId);
 
     /**
-     * BOT状態データを取得
+     * ボットの状態データを取得
      *
      * @param guildId サーバーID
-     * @return BOT状態データ
+     * @return ボットの状態データ
      */
     @NotNull
-    public BotStateData getBotStateData(long guildId) {
-        return saveDataAccess.getBotStateData(guildId);
-    }
+    BotStateData getBotStateData(long guildId);
 
     /**
      * 全てのBOT状態データを取得
@@ -94,9 +77,7 @@ public class SaveDataManager implements ITTSBaseManager {
      */
     @NotNull
     @Unmodifiable
-    public Map<Long, BotStateData> getAllBotStateData() {
-        return saveDataAccess.getAllBotStateData();
-    }
+    Map<Long, BotStateData> getAllBotStateData();
 
     /**
      * 全てのサーバー辞書データ
@@ -106,9 +87,7 @@ public class SaveDataManager implements ITTSBaseManager {
      */
     @NotNull
     @Unmodifiable
-    public List<DictData> getAllServerDictData(long guildId) {
-        return saveDataAccess.getAllServerDictData(guildId);
-    }
+    List<DictData> getAllServerDictData(long guildId);
 
     /**
      * サーバー辞書データを取得
@@ -118,9 +97,7 @@ public class SaveDataManager implements ITTSBaseManager {
      * @return 辞書データ
      */
     @Nullable
-    public DictData getServerDictData(long guildId, @NotNull String target) {
-        return saveDataAccess.getServerDictData(guildId, target);
-    }
+    DictData getServerDictData(long guildId, @NotNull String target);
 
     /**
      * サーバー辞書データを追加
@@ -129,9 +106,7 @@ public class SaveDataManager implements ITTSBaseManager {
      * @param target  対象の文字列
      * @param read    読み
      */
-    public void addServerDictData(long guildId, @NotNull String target, @NotNull String read) {
-        saveDataAccess.addServerDictData(guildId, target, read);
-    }
+    void addServerDictData(long guildId, @NotNull String target, @NotNull String read);
 
     /**
      * サーバー辞書データを削除
@@ -139,9 +114,7 @@ public class SaveDataManager implements ITTSBaseManager {
      * @param guildId サーバーID
      * @param target  対象の文字列
      */
-    public void removeServerDictData(long guildId, @NotNull String target) {
-        saveDataAccess.removeServerDictData(guildId, target);
-    }
+    void removeServerDictData(long guildId, @NotNull String target);
 
     /**
      * 全てのグローバル辞書データを取得
@@ -150,9 +123,7 @@ public class SaveDataManager implements ITTSBaseManager {
      */
     @NotNull
     @Unmodifiable
-    public List<DictData> getAllGlobalDictData() {
-        return saveDataAccess.getAllGlobalDictData();
-    }
+    List<DictData> getAllGlobalDictData();
 
     /**
      * グローバル辞書データを取得
@@ -161,9 +132,7 @@ public class SaveDataManager implements ITTSBaseManager {
      * @return グローバル辞書データ
      */
     @Nullable
-    public DictData getGlobalDictData(@NotNull String target) {
-        return saveDataAccess.getGlobalDictData(target);
-    }
+    DictData getGlobalDictData(@NotNull String target);
 
     /**
      * グローバル辞書データを追加
@@ -171,18 +140,14 @@ public class SaveDataManager implements ITTSBaseManager {
      * @param target 対象の文字列
      * @param read   読み
      */
-    public void addGlobalDictData(@NotNull String target, @NotNull String read) {
-        saveDataAccess.addGlobalDictData(target, read);
-    }
+    void addGlobalDictData(@NotNull String target, @NotNull String read);
 
     /**
      * グローバル辞書データを削除
      *
      * @param target 対象の文字列
      */
-    public void removeGlobalDictData(@NotNull String target) {
-        saveDataAccess.removeGlobalDictData(target);
-    }
+    void removeGlobalDictData(@NotNull String target);
 
     /**
      * 全ての読み上げ拒否ユーザを取得
@@ -192,7 +157,5 @@ public class SaveDataManager implements ITTSBaseManager {
      */
     @NotNull
     @Unmodifiable
-    public List<Long> getAllDenyUser(long guildId) {
-        return saveDataAccess.getAllDenyUser(guildId);
-    }
+    List<Long> getAllDenyUser(long guildId);
 }

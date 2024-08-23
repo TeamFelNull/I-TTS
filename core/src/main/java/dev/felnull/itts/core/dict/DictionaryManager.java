@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.DictData;
 import dev.felnull.itts.core.savedata.DictUseData;
-import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @return 辞書が有効かどうか
      */
     public boolean isEnable(@NotNull Dictionary dictionary, long guildId) {
-        SaveDataManager sdm = getSaveDataManager();
+        SaveDataManagerOld sdm = getSaveDataManager();
         DictUseData dud = sdm.getDictUseData(guildId, dictionary.getId());
         return dud.getPriority() >= 0;
     }
@@ -96,6 +96,17 @@ public class DictionaryManager implements ITTSRuntimeUse {
     @Unmodifiable
     @NotNull
     public List<Dictionary> getAllDictionaries(long guildId) {
+        return getAllDictionaries();
+    }
+
+    /**
+     * 全辞書を取得
+     *
+     * @return 全辞書のリスト
+     */
+    @Unmodifiable
+    @NotNull
+    public List<Dictionary> getAllDictionaries() {
         return dictionaries;
     }
 
@@ -186,7 +197,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
 
         if (jo.get("entry").isJsonObject()) {
             JsonObject entry = jo.getAsJsonObject("entry");
-            SaveDataManager sdm = getSaveDataManager();
+            SaveDataManagerOld sdm = getSaveDataManager();
 
             for (Map.Entry<String, JsonElement> en : entry.entrySet()) {
                 String target = en.getKey();
