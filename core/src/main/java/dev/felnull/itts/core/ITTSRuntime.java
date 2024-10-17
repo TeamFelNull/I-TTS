@@ -8,7 +8,6 @@ import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.savedata.SaveDataManager;
-import dev.felnull.itts.core.savedata.impl.SaveDataManagerImpl;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -207,7 +206,7 @@ public class ITTSRuntime {
                 .forEach(CompletableFuture::join);
 
         SaveDataManager.getInstance().init();
-        SaveDataManagerImpl.INSTANCE.test();
+       // SaveDataManagerImpl.INSTANCE.test();
 
         logger.info("Setup complete");
 

@@ -10,11 +10,28 @@ import java.util.Optional;
  */
 public interface NameSerializableEnum {
 
+    /**
+     * 名前の文字列から列挙型を取得
+     *
+     * @param enumClass 列挙型
+     * @param name      名前
+     * @param defaults  存在しない場合に取得される値
+     * @param <T>       列挙型
+     * @return 取得された列挙型
+     */
     @NotNull
     static <T extends Enum<T> & NameSerializableEnum> T getByName(@NotNull Class<T> enumClass, @NotNull String name, @NotNull T defaults) {
         return getByName(enumClass, name).orElse(defaults);
     }
 
+    /**
+     * 名前の文字列から列挙型を取得
+     *
+     * @param enumClass 列挙型
+     * @param name      名前
+     * @param <T>       列挙型
+     * @return 取得された列挙型
+     */
     @NotNull
     static <T extends Enum<T> & NameSerializableEnum> Optional<T> getByName(@NotNull Class<T> enumClass, @NotNull String name) {
         T[] values = enumClass.getEnumConstants();

@@ -1,6 +1,5 @@
 package dev.felnull.itts.core.savedata;
 
-import dev.felnull.itts.core.savedata.impl.SaveDataManagerImpl;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,8 @@ import java.util.Map;
 public interface SaveDataManager {
 
     static SaveDataManager getInstance() {
-        return SaveDataManagerImpl.INSTANCE;
+        return null;
+        //   return SaveDataManagerImpl.INSTANCE;
     }
 
     /**

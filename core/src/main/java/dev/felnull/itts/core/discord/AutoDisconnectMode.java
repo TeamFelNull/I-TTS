@@ -4,11 +4,17 @@ import dev.felnull.itts.core.util.NameSerializableEnum;
 
 import java.util.Optional;
 
+/**
+ * 自動切断モードの種類
+ */
 public enum AutoDisconnectMode implements NameSerializableEnum {
     OFF("off"),
     ON("on"),
     ON_RECONNECT("on_reconnect");
 
+    /**
+     * 名前
+     */
     private final String name;
 
     AutoDisconnectMode(String name) {
