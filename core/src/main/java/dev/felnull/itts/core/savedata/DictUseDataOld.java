@@ -11,7 +11,7 @@ import java.util.Optional;
  *
  * @author MORIMORI0317
  */
-public interface DictUseData {
+public interface DictUseDataOld {
     /**
      * バージョン
      */

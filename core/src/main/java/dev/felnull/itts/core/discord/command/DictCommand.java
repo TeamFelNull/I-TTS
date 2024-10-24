@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.savedata.DictData;
-import dev.felnull.itts.core.savedata.DictUseData;
+import dev.felnull.itts.core.savedata.DictUseDataOld;
 import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -265,7 +265,7 @@ public class DictCommand extends BaseCommand {
         List<Dictionary> dicts = dictManager.getAllDictionaries(guildId);
 
         for (Dictionary dict : dicts) {
-            DictUseData useData = getSaveDataManager().getDictUseData(guildId, dict.getId());
+            DictUseDataOld useData = getSaveDataManager().getDictUseData(guildId, dict.getId());
             replayEmbedBuilder.addField(dict.getName(), dictManager.isEnable(dict, guildId) ? ("有効 (" + useData.getPriority() + ")") : "無効", false);
         }
 
@@ -289,7 +289,7 @@ public class DictCommand extends BaseCommand {
             return;
         }
 
-        DictUseData useData = sm.getDictUseData(guildId, dictId);
+        DictUseDataOld useData = sm.getDictUseData(guildId, dictId);
         boolean preEnable = useData.getPriority() >= 0;
 
         if (preEnable == enabled) {

@@ -1,13 +1,11 @@
 package dev.felnull.itts.core.savedata.dao;
 
-import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.dict.ReplaceType;
 import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import dev.felnull.itts.core.savedata.AbstractSaveDataTest;
+import dev.felnull.itts.core.tts.TTSChannelPair;
 import dev.felnull.itts.core.util.TestUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -15,49 +13,16 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public abstract class DAOBaseTest extends AbstractSaveDataTest {
-
-    private static final ServerDataRecord[] SERVER_DATA_RECORDS = new ServerDataRecord[]{
-            new ServerDataRecord(null, null, true, true, false, 0, 15, 0),
-            new ServerDataRecord(null, "", false, true, true, 100, 0, 0),
-            new ServerDataRecord(null, null, false, false, false, 364, 12, 0),
-            new ServerDataRecord(null, "(;).*", true, false, false, 130, 1, 0),
-            new ServerDataRecord(null, "(!|/|\\\\$|`).*", false, true, false, Integer.MAX_VALUE, 5, 0),
-            new ServerDataRecord(null, "ikisugi", false, false, true, 30, Integer.MAX_VALUE, 0),
-            new ServerDataRecord(null, "F.C.O.H", true, true, true, 1, 40, 0)
-    };
-
-    private static final ServerUserDataRecord[] SERVER_USER_DATA_RECORDS = new ServerUserDataRecord[]{
-            new ServerUserDataRecord(null, false, null),
-            new ServerUserDataRecord(null, true, null),
-            new ServerUserDataRecord(null, false, "野獣先輩"),
-            new ServerUserDataRecord(null, true, "NKTIDKSG")
-    };
-
-    private static final DictionaryUseDataRecord[] DICTIONARY_USE_DATA_RECORDS = new DictionaryUseDataRecord[]{
-            new DictionaryUseDataRecord(null, 0),
-            new DictionaryUseDataRecord(true, 1),
-            new DictionaryUseDataRecord(false, -1),
-    };
-
-    private static final List<Pair<Pair<Long, Long>, Pair<Long, Long>>> BOT_STATE_DATA_PAIR = ImmutableList.of(
-            Pair.of(null, null),
-            Pair.of(Pair.of(1919L, 810L), null),
-            Pair.of(null, Pair.of(364364L, 114514L)),
-            Pair.of(Pair.of(1919L, 810L), Pair.of(364364L, 114514L))
-    );
-
+public abstract class DAOAccessTest extends AbstractSaveDataTest {
     protected static DAO dao;
 
     @AfterAll
     static void afterAll() throws IOException {
-        dao.close();
+        dao.dispose();
         dao = null;
     }
 
@@ -99,7 +64,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
     void testDictionaryKeyTable() throws Exception {
         try (Connection connection = dao.getConnection()) {
             Set<Integer> ids = new HashSet<>();
-            TestUtils.testForEach(dictionaryNamesData(), it -> keyTableTest(connection, ids, dao.dictionaryKeyTable(), it));
+            TestUtils.testForEach(dictionaryIdsData(), it -> keyTableTest(connection, ids, dao.dictionaryKeyTable(), it));
         }
     }
 
@@ -264,7 +229,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
 
     private Stream<ServerDataRecord> serverDataTableTestRecordData(Connection connection) {
         // テストで使うデータのストリームを作成
-        return createTestDataStream(Arrays.stream(SERVER_DATA_RECORDS), voiceTypeNamesNullableData(), autoDisconnectModesData().map(AutoDisconnectMode::getName))
+        return createTestDataStream(serverDataRecordData(), voiceTypeNamesNullableData(), autoDisconnectModesData().map(AutoDisconnectMode::getName))
                 .map(data -> {
                     try {
                         Integer voiceTypeKeyId = insertAndSelectKeyId(connection, dao.voiceTypeKeyTable(), data.getMiddle());
@@ -412,7 +377,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
 
             List<Long> expectedDenyUsers = new ArrayList<>();
 
-            TestUtils.testForEach(createTestDataStream(discordUserIdsData().boxed(), Arrays.stream(SERVER_USER_DATA_RECORDS)), data -> {
+            TestUtils.testForEach(createTestDataStream(discordUserIdsData().boxed(), serverUserDataRecordData()), data -> {
                 int userKeyId = insertAndSelectKeyId(connection, dao.userKeyTable(), data.getLeft());
                 ServerUserKey serverUserKey = new ServerUserKey(serverKeyId, userKeyId);
                 ServerUserDataRecord dataRecord = data.getRight();
@@ -438,7 +403,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
     }
 
     private Stream<ServerUserDataRecord> serverUserDataTableTestRecordData(Connection connection) {
-        return createTestDataStream(Arrays.stream(SERVER_USER_DATA_RECORDS), voiceTypeNamesNullableData())
+        return createTestDataStream(serverUserDataRecordData(), voiceTypeNamesNullableData())
                 .map(data -> {
                     try {
                         Integer voiceTypeKeyId = insertAndSelectKeyId(connection, dao.voiceTypeKeyTable(), data.getRight());
@@ -479,7 +444,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
         try (Connection connection = dao.getConnection()) {
             dictionaryUseDataTableTestCreateTable(connection);
 
-            TestUtils.testForEach(createTestDataStream(discordServerIdsData().boxed(), dictionaryNamesData()), serverIdAndDictName -> {
+            TestUtils.testForEach(createTestDataStream(discordServerIdsData().boxed(), dictionaryIdsData()), serverIdAndDictName -> {
                 int serverKeyId = insertAndSelectKeyId(connection, dao.serverKeyTable(), serverIdAndDictName.getLeft());
                 int dictKeyId = insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), serverIdAndDictName.getRight());
 
@@ -508,7 +473,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
 
             DictionaryUseDataRecord initRecord = new DictionaryUseDataRecord(null, 0);
 
-            TestUtils.testForEach(createTestDataStream(discordServerIdsData().boxed(), dictionaryNamesData()), serverIdAndDictName -> {
+            TestUtils.testForEach(createTestDataStream(discordServerIdsData().boxed(), dictionaryIdsData()), serverIdAndDictName -> {
                 int serverKeyId = insertAndSelectKeyId(connection, dao.serverKeyTable(), serverIdAndDictName.getLeft());
                 int dictId = insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), serverIdAndDictName.getRight());
                 ServerDictionaryKey serverDictionaryKey = new ServerDictionaryKey(serverKeyId, dictId);
@@ -566,7 +531,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
     }
 
     private Stream<DictionaryUseDataRecord> dictionaryUseDataTableTestRecordData() {
-        return Arrays.stream(DICTIONARY_USE_DATA_RECORDS)
+        return dictionaryUseDataRecordData()
                 .map(data -> new DictionaryUseDataRecord(data.enable(), data.priority()));
     }
 
@@ -587,7 +552,7 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
 
         // レコードの値を単体で取得して確認
         assertEquals(expectedRecord.enable(), dao.dictionaryUseDataTable().selectEnable(connection, tableId).orElse(null));
-        assertEquals(expectedRecord.priority(), dao.dictionaryUseDataTable().selectPriority(connection, tableId));
+        assertEquals(TestUtils.getOptionalIntByInteger(expectedRecord.priority()), dao.dictionaryUseDataTable().selectPriority(connection, tableId));
     }
 
     // BotStateData
@@ -695,13 +660,13 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
     }
 
     private Stream<BotStateDataRecord> botStateDataTableTestRecordData(Connection connection) {
-        return BOT_STATE_DATA_PAIR.stream()
+        return botStatePairsData()
                 .map(it -> {
                     try {
-                        Integer speakAudioChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getLeft() == null ? null : it.getLeft().getLeft());
-                        Integer readTextChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getLeft() == null ? null : it.getLeft().getRight());
-                        Integer reconnectSpeakAudioChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getRight() == null ? null : it.getRight().getLeft());
-                        Integer reconnectReadTextChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getRight() == null ? null : it.getRight().getRight());
+                        Integer speakAudioChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getLeft() == null ? null : it.getLeft().speakAudioChannel());
+                        Integer readTextChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getLeft() == null ? null : it.getLeft().readTextChannel());
+                        Integer reconnectSpeakAudioChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getRight() == null ? null : it.getRight().speakAudioChannel());
+                        Integer reconnectReadTextChannelKey = insertAndSelectKeyId(connection, dao.channelKeyTable(), it.getRight() == null ? null : it.getRight().readTextChannel());
                         return new BotStateDataRecord(speakAudioChannelKey, readTextChannelKey, reconnectSpeakAudioChannelKey, reconnectReadTextChannelKey);
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
@@ -739,6 +704,58 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
 
         assertEquals(connectedChannel, dao.botStateDataTable().selectConnectedChannelKeyPair(connection, tableId).orElse(null));
         assertEquals(reconnectConnectedChannel, dao.botStateDataTable().selectReconnectChannelKeyPair(connection, tableId).orElse(null));
+    }
+
+    @Test
+    void testBotStateDataTableSelectAllConnectedChannelPairByBotKeyId() throws Exception {
+        try (Connection connection = dao.getConnection()) {
+            botStateDataTableTestCreateTable(connection);
+
+            ServerBotKey serverBotKey1 =
+                    new ServerBotKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 114514L), insertAndSelectKeyId(connection, dao.botKeyTable(), 110L));
+            ServerBotKey serverBotKey2 =
+                    new ServerBotKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 114514L), insertAndSelectKeyId(connection, dao.botKeyTable(), 13L));
+            ServerBotKey serverBotKey3 =
+                    new ServerBotKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 364364L), insertAndSelectKeyId(connection, dao.botKeyTable(), 110L));
+            ServerBotKey serverBotKey4 =
+                    new ServerBotKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L), insertAndSelectKeyId(connection, dao.botKeyTable(), 200L));
+            ServerBotKey serverBotKey5 =
+                    new ServerBotKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 114514L), insertAndSelectKeyId(connection, dao.botKeyTable(), 200L));
+
+            dao.botStateDataTable().insertRecordIfNotExists(connection, serverBotKey1,
+                    new BotStateDataRecord(
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 10L),
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 20L),
+                            null, null));
+            dao.botStateDataTable().insertRecordIfNotExists(connection, serverBotKey2,
+                    new BotStateDataRecord(
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 30L),
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 40L),
+                            null, null));
+            dao.botStateDataTable().insertRecordIfNotExists(connection, serverBotKey3,
+                    new BotStateDataRecord(
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 50L),
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 60L),
+                            null, null));
+            dao.botStateDataTable().insertRecordIfNotExists(connection, serverBotKey4,
+                    new BotStateDataRecord(
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 70L),
+                            insertAndSelectKeyId(connection, dao.channelKeyTable(), 80L),
+                            null, null));
+            dao.botStateDataTable().insertRecordIfNotExists(connection, serverBotKey5,
+                    new BotStateDataRecord(
+                            null,
+                            null,
+                            null, null));
+
+            Map<Long, TTSChannelPair> allConnectedChannel1 = dao.botStateDataTable().selectAllConnectedChannelPairByBotKeyId(connection, insertAndSelectKeyId(connection, dao.botKeyTable(), 110L));
+            assertEquals(2, allConnectedChannel1.size());
+            assertEquals(new TTSChannelPair(10L, 20L), allConnectedChannel1.get(114514L));
+            assertEquals(new TTSChannelPair(50L, 60L), allConnectedChannel1.get(364364L));
+
+            Map<Long, TTSChannelPair> allConnectedChannel2 = dao.botStateDataTable().selectAllConnectedChannelPairByBotKeyId(connection, insertAndSelectKeyId(connection, dao.botKeyTable(), 10L));
+            assertTrue(allConnectedChannel2.isEmpty());
+        }
     }
 
     // ServerCustomDictionaryTable
@@ -807,6 +824,52 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
         }
     }
 
+    @Test
+    void testServerCustomDictionaryTableSelectByTarget() throws Exception {
+        try (Connection connection = dao.getConnection()) {
+            DAO.ServerCustomDictionaryTable serverCustomDictionaryTable = dao.serverCustomDictionaryTable();
+
+            // テーブルの作成
+            serverCustomDictionaryTable.createTableIfNotExists(connection);
+            dao.serverKeyTable().createTableIfNotExists(connection);
+            dao.dictionaryReplaceTypeKeyTable().createTableIfNotExists(connection);
+
+            ServerKey serverKey1 = new ServerKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L));
+            ServerKey serverKey2 = new ServerKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 114514L));
+            ServerKey serverKey3 = new ServerKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 63464L));
+
+            // 辞書を追加
+            int replaceTypeId = insertAndSelectKeyId(connection, dao.dictionaryReplaceTypeKeyTable(), ReplaceType.CHARACTER.getName());
+            serverCustomDictionaryTable.insertRecord(connection, serverKey1, new DictionaryRecord("課長", "壊れる", replaceTypeId));
+            serverCustomDictionaryTable.insertRecord(connection, serverKey1, new DictionaryRecord("kbtit", "kbhit", replaceTypeId));
+            serverCustomDictionaryTable.insertRecord(connection, serverKey1, new DictionaryRecord("課長", "壊れちゃ＾～う", replaceTypeId));
+            serverCustomDictionaryTable.insertRecord(connection, serverKey1, new DictionaryRecord("yj", "senpai", replaceTypeId));
+
+            serverCustomDictionaryTable.insertRecord(connection, serverKey2, new DictionaryRecord("114", "いいよ", replaceTypeId));
+            serverCustomDictionaryTable.insertRecord(connection, serverKey2, new DictionaryRecord("ikisugi", "イキスギ", replaceTypeId));
+            serverCustomDictionaryTable.insertRecord(connection, serverKey2, new DictionaryRecord("nu", "nu!", replaceTypeId));
+            serverCustomDictionaryTable.insertRecord(connection, serverKey2, new DictionaryRecord("fa", "fa!?", replaceTypeId));
+
+            // 読みから取得できるか確認
+            Map<Integer, DictionaryRecord> ret1_1 = serverCustomDictionaryTable.selectRecordByTarget(connection, serverKey1, "課長");
+            Map<Integer, DictionaryRecord> ret1_2 = serverCustomDictionaryTable.selectRecordByTarget(connection, serverKey1, "許して");
+
+            assertEquals(2, ret1_1.size());
+            ret1_1.forEach((id, record) -> assertEquals("課長", record.target()));
+            assertTrue(ret1_2.isEmpty());
+
+            Map<Integer, DictionaryRecord> ret2_1 = serverCustomDictionaryTable.selectRecordByTarget(connection, serverKey2, "ikisugi");
+            Map<Integer, DictionaryRecord> ret2_2 = serverCustomDictionaryTable.selectRecordByTarget(connection, serverKey2, "課長");
+            assertEquals(1, ret2_1.size());
+            assertEquals("ikisugi", ret2_1.entrySet().stream().findFirst().orElseThrow().getValue().target());
+            assertEquals("イキスギ", ret2_1.entrySet().stream().findFirst().orElseThrow().getValue().read());
+            assertTrue(ret2_2.isEmpty());
+
+            Map<Integer, DictionaryRecord> ret3 = serverCustomDictionaryTable.selectRecordByTarget(connection, serverKey3, "");
+            assertTrue(ret3.isEmpty());
+        }
+    }
+
     // GlobalCustomDictionaryTable
 
     @Test
@@ -846,6 +909,45 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
         }
     }
 
+    @Test
+    void testGlobalCustomDictionaryTableSelectByTarget() throws Exception {
+        try (Connection connection = dao.getConnection()) {
+            DAO.GlobalCustomDictionaryTable globalCustomDictionaryTable = dao.globalCustomDictionaryTable();
+
+            // テーブルの作成
+            globalCustomDictionaryTable.createTableIfNotExists(connection);
+            dao.dictionaryReplaceTypeKeyTable().createTableIfNotExists(connection);
+
+            // 辞書を追加
+            int replaceTypeId = insertAndSelectKeyId(connection, dao.dictionaryReplaceTypeKeyTable(), ReplaceType.CHARACTER.getName());
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("課長", "壊れる", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("kbtit", "kbhit", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("課長", "壊れちゃ＾～う", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("yj", "senpai", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("114", "いいよ", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("ikisugi", "イキスギ", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("nu", "nu!", replaceTypeId));
+            globalCustomDictionaryTable.insertRecord(connection, new DictionaryRecord("fa", "fa!?", replaceTypeId));
+
+            // 読みから取得できるか確認
+            Map<Integer, DictionaryRecord> ret1 = globalCustomDictionaryTable.selectRecordByTarget(connection, "課長");
+            Map<Integer, DictionaryRecord> ret2 = globalCustomDictionaryTable.selectRecordByTarget(connection, "許して");
+            Map<Integer, DictionaryRecord> ret3 = globalCustomDictionaryTable.selectRecordByTarget(connection, "ikisugi");
+            Map<Integer, DictionaryRecord> ret5 = globalCustomDictionaryTable.selectRecordByTarget(connection, "");
+
+            assertEquals(2, ret1.size());
+            ret1.forEach((id, record) -> assertEquals("課長", record.target()));
+
+            assertTrue(ret2.isEmpty());
+
+            assertEquals(1, ret3.size());
+            assertEquals("ikisugi", ret3.entrySet().stream().findFirst().orElseThrow().getValue().target());
+            assertEquals("イキスギ", ret3.entrySet().stream().findFirst().orElseThrow().getValue().read());
+
+            assertTrue(ret5.isEmpty());
+        }
+    }
+
     // Common
 
     private <T> Integer insertAndSelectKeyId(Connection connection, DAO.KeyTable<T> table, T key) throws SQLException {
@@ -857,37 +959,6 @@ public abstract class DAOBaseTest extends AbstractSaveDataTest {
 
         table.insertKeyIfNotExists(connection, key);
         return table.selectId(connection, key).orElseThrow();
-    }
-
-    private <T, U> Stream<Pair<T, U>> createTestDataStream(Stream<T> data1, Stream<U> data2) {
-        // 2個のデータがすべてテストできるストリームを作成
-
-        List<T> data1List = data1.toList();
-        List<U> data2List = data2.toList();
-        int maxNumOfData = Math.max(data1List.size(), data2List.size());
-
-        return IntStream.range(0, maxNumOfData)
-                .mapToObj(i ->
-                        Pair.of(data1List.get(i % data1List.size()), data2List.get(i % data2List.size()))
-                );
-    }
-
-    private Stream<Pair<Long, Long>> createTestDataStream(LongStream data1, LongStream data2) {
-        return createTestDataStream(data1.boxed(), data2.boxed());
-    }
-
-    private <T, U, V> Stream<Triple<T, U, V>> createTestDataStream(Stream<T> data1, Stream<U> data2, Stream<V> data3) {
-        // 3個のデータがすべてテストできるストリームを作成
-
-        List<T> data1List = data1.toList();
-        List<U> data2List = data2.toList();
-        List<V> data3List = data3.toList();
-        int maxNumOfData = Math.max(data1List.size(), Math.max(data2List.size(), data3List.size()));
-
-        return IntStream.range(0, maxNumOfData)
-                .mapToObj(i ->
-                        Triple.of(data1List.get(i % data1List.size()), data2List.get(i % data2List.size()), data3List.get(i % data3List.size()))
-                );
     }
 
 }

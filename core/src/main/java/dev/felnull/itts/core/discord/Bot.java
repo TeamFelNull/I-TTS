@@ -3,7 +3,7 @@ package dev.felnull.itts.core.discord;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
-import dev.felnull.itts.core.savedata.BotStateData;
+import dev.felnull.itts.core.savedata.BotStateDataOld;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSInstance;
 import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
@@ -75,7 +75,7 @@ public class Bot implements ITTSRuntimeUse {
 
     private void reconnect() {
         CompletableFuture.runAsync(() -> {
-            Map<Long, BotStateData> allData = getSaveDataManager().getAllBotStateData();
+            Map<Long, BotStateDataOld> allData = getSaveDataManager().getAllBotStateData();
             long selfId = getJDA().getSelfUser().getIdLong();
 
             allData.forEach((guildId, data) -> {

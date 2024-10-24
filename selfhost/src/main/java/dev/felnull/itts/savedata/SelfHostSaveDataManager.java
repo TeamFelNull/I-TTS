@@ -80,27 +80,27 @@ public class SelfHostSaveDataManager implements SaveDataAccess {
     }
 
     @Override
-    public @NotNull ServerData getServerData(long guildId) {
+    public @NotNull ServerDataOld getServerData(long guildId) {
         return serverData.get(new LongSaveDataKey(guildId));
     }
 
     @Override
-    public @NotNull ServerUserData getServerUserData(long guildId, long userId) {
+    public @NotNull ServerUserDataOld getServerUserData(long guildId, long userId) {
         return serverUsersData.get(new LongSaveDataKey(guildId)).getUserData(userId);
     }
 
     @Override
-    public @NotNull DictUseData getDictUseData(long guildId, @NotNull String dictId) {
+    public @NotNull DictUseDataOld getDictUseData(long guildId, @NotNull String dictId) {
         return serverDictUseData.get(new LongSaveDataKey(guildId)).getDictUseData(dictId);
     }
 
     @Override
-    public @NotNull BotStateData getBotStateData(long guildId) {
+    public @NotNull BotStateDataOld getBotStateData(long guildId) {
         return botStateData.get(new LongSaveDataKey(guildId));
     }
 
     @Override
-    public @NotNull @Unmodifiable Map<Long, BotStateData> getAllBotStateData() {
+    public @NotNull @Unmodifiable Map<Long, BotStateDataOld> getAllBotStateData() {
         return botStateData.getAll().entrySet().stream()
                 .collect(Collectors.toMap(it -> it.getKey().id(), Map.Entry::getValue));
     }

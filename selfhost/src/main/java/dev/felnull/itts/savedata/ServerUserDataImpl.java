@@ -1,7 +1,7 @@
 package dev.felnull.itts.savedata;
 
 import com.google.gson.JsonObject;
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.ServerUserDataOld;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author MORIMORI0317
  */
-public class ServerUserDataImpl implements ServerUserData {
+public class ServerUserDataImpl implements ServerUserDataOld {
 
     /**
      * 音声タイプ

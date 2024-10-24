@@ -1,10 +1,10 @@
 package dev.felnull.itts.core.savedata.dao;
 
+import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.Closeable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -17,12 +17,17 @@ import java.util.OptionalInt;
  *
  * @author MORIMORI0317
  */
-public interface DAO extends Closeable {
+public interface DAO {
 
     /**
      * 初期化
      */
     void init();
+
+    /**
+     * 破棄
+     */
+    void dispose();
 
     /**
      * コネクションを取得
@@ -128,6 +133,13 @@ public interface DAO extends Closeable {
      * @return テーブルインスタンス
      */
     GlobalCustomDictionaryTable globalCustomDictionaryTable();
+
+    /**
+     * 絵文字をサポートしているか確認
+     *
+     * @return サポートしているかどうか
+     */
+    boolean checkEmojiSupport();
 
     /**
      * データベースのテーブル
@@ -537,7 +549,7 @@ public interface DAO extends Closeable {
          * @return 辞書優先度
          * @throws SQLException エラー
          */
-        int selectPriority(Connection connection, int recordId) throws SQLException;
+        OptionalInt selectPriority(Connection connection, int recordId) throws SQLException;
 
         /**
          * "辞書優先度"を更新する
@@ -547,7 +559,7 @@ public interface DAO extends Closeable {
          * @param priority   辞書優先度
          * @throws SQLException エラー
          */
-        void updatePriority(Connection connection, int recordId, int priority) throws SQLException;
+        void updatePriority(Connection connection, int recordId, @Nullable Integer priority) throws SQLException;
     }
 
     /**
@@ -595,6 +607,16 @@ public interface DAO extends Closeable {
          */
         void updateReconnectChannelKeyPair(Connection connection, int recordId, @Nullable TTSChannelKeyPair channelKeyPair) throws SQLException;
 
+
+        /**
+         * 指定されたBOTが接続しているサーバーとチャンネルをすべて取得する
+         *
+         * @param connection コネクション
+         * @param botKeyId   BOTのキーID
+         * @return サーバーと接続チャンネルペアのマップ
+         * @throws SQLException エラー
+         */
+        Map<Long, TTSChannelPair> selectAllConnectedChannelPairByBotKeyId(Connection connection, int botKeyId) throws SQLException;
     }
 
     /**
@@ -632,6 +654,15 @@ public interface DAO extends Closeable {
          */
         void deleteRecord(Connection connection, int recordId) throws SQLException;
 
+        /**
+         * 対象の読みのエントリを取得する
+         *
+         * @param connection コネクション
+         * @param key        サーバーキー
+         * @param targetWord 読み
+         * @return IDと読み
+         */
+        Map<Integer, DictionaryRecord> selectRecordByTarget(Connection connection, @NotNull ServerKey key, @NotNull String targetWord) throws SQLException;
     }
 
     /**
@@ -666,6 +697,15 @@ public interface DAO extends Closeable {
          * @throws SQLException エラー
          */
         void deleteRecord(Connection connection, int recordId) throws SQLException;
+
+        /**
+         * 対象の読みのエントリを取得する
+         *
+         * @param connection コネクション
+         * @param targetWord 読み
+         * @return IDと読み
+         */
+        Map<Integer, DictionaryRecord> selectRecordByTarget(Connection connection, @NotNull String targetWord) throws SQLException;
     }
 
 }

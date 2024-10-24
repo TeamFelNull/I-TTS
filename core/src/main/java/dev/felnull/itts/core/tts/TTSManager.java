@@ -1,9 +1,9 @@
 package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.savedata.BotStateData;
+import dev.felnull.itts.core.savedata.BotStateDataOld;
 import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
-import dev.felnull.itts.core.savedata.ServerData;
+import dev.felnull.itts.core.savedata.ServerDataOld;
 import dev.felnull.itts.core.tts.saidtext.FileUploadSaidText;
 import dev.felnull.itts.core.tts.saidtext.MessageSaidText;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
@@ -78,7 +78,7 @@ public class TTSManager implements ITTSRuntimeUse {
      */
     public void setReadAroundChannel(@NotNull Guild guild, @NotNull MessageChannel textChannel) {
         long guildId = guild.getIdLong();
-        BotStateData data = getSaveDataManager().getBotStateData(guildId);
+        BotStateDataOld data = getSaveDataManager().getBotStateData(guildId);
         data.setReadAroundTextChannel(textChannel.getIdLong());
     }
 
@@ -101,8 +101,8 @@ public class TTSManager implements ITTSRuntimeUse {
             disconnect(guild);
         }
 
-        BotStateData data = getSaveDataManager().getBotStateData(guildId);
-        ServerData serverData = getSaveDataManager().getServerData(guildId);
+        BotStateDataOld data = getSaveDataManager().getBotStateData(guildId);
+        ServerDataOld serverData = getSaveDataManager().getServerData(guildId);
         instances.put(guildId, new TTSInstance(guild, channelId, data.getReadAroundTextChannel(), serverData.isOverwriteAloud()));
         data.setConnectedAudioChannel(channelId);
     }
@@ -123,7 +123,7 @@ public class TTSManager implements ITTSRuntimeUse {
         instance.dispose();
         instances.remove(guildId);
 
-        BotStateData data = getSaveDataManager().getBotStateData(guildId);
+        BotStateDataOld data = getSaveDataManager().getBotStateData(guildId);
         data.setConnectedAudioChannel(-1);
     }
 

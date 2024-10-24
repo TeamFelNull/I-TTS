@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author MORIMORI0317
  */
-public interface ServerUserData {
+public interface ServerUserDataOld {
 
     /**
      * バージョン

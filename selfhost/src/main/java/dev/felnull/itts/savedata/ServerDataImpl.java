@@ -2,7 +2,7 @@ package dev.felnull.itts.savedata;
 
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.discord.AutoDisconnectMode;
-import dev.felnull.itts.core.savedata.ServerData;
+import dev.felnull.itts.core.savedata.ServerDataOld;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author MORIMORI0317
  */
-public class ServerDataImpl extends SaveDataBase implements ServerData {
+public class ServerDataImpl extends SaveDataBase implements ServerDataOld {
 
     /**
      * デフォルトの音声タイプ

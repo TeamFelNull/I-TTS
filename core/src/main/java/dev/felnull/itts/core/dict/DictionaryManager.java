@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.DictData;
-import dev.felnull.itts.core.savedata.DictUseData;
+import dev.felnull.itts.core.savedata.DictUseDataOld;
 import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -83,7 +83,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
      */
     public boolean isEnable(@NotNull Dictionary dictionary, long guildId) {
         SaveDataManagerOld sdm = getSaveDataManager();
-        DictUseData dud = sdm.getDictUseData(guildId, dictionary.getId());
+        DictUseDataOld dud = sdm.getDictUseData(guildId, dictionary.getId());
         return dud.getPriority() >= 0;
     }
 
@@ -118,7 +118,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
      */
     @Unmodifiable
     @NotNull
-    public List<DictUseData> getAllDictUseData(long guildId) {
+    public List<DictUseDataOld> getAllDictUseData(long guildId) {
         return dictionaries.stream()
                 .map(it -> getSaveDataManager().getDictUseData(guildId, it.getId()))
                 .toList();
@@ -132,9 +132,9 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @return 適用済みテキスト
      */
     public String applyDict(String text, long guildId) {
-        Stream<DictUseData> allDict = getAllDictUseData(guildId).stream()
+        Stream<DictUseDataOld> allDict = getAllDictUseData(guildId).stream()
                 .filter(it -> it.getPriority() >= 0)
-                .sorted(Comparator.comparingInt(DictUseData::getPriority));
+                .sorted(Comparator.comparingInt(DictUseDataOld::getPriority));
         AtomicReference<String> retText = new AtomicReference<>(text);
 
         allDict.forEach(ud -> {

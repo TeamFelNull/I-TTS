@@ -3,7 +3,7 @@ package dev.felnull.itts.core.discord.command;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.ServerUserDataOld;
 import dev.felnull.itts.core.util.DiscordUtils;
 import dev.felnull.itts.core.util.StringUtils;
 import dev.felnull.itts.core.voice.VoiceCategory;
@@ -119,7 +119,7 @@ public class VoiceCommand extends BaseCommand {
 
         SaveDataManagerOld sdm = ITTSRuntime.getInstance().getSaveDataManager();
 
-        ServerUserData serverUserData = sdm.getServerUserData(guild.getIdLong(), user.getIdLong());
+        ServerUserDataOld serverUserData = sdm.getServerUserData(guild.getIdLong(), user.getIdLong());
         OptionMapping odVc = Objects.requireNonNull(event.getOption("voice_category"));
         OptionMapping odVt = Objects.requireNonNull(event.getOption("voice_type"));
 
@@ -163,7 +163,7 @@ public class VoiceCommand extends BaseCommand {
             user = event.getUser();
         }
 
-        ServerUserData serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
+        ServerUserDataOld serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
         VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
         Optional<VoiceType> vt = vm.getVoiceType(serverUserData.getVoiceType());
 

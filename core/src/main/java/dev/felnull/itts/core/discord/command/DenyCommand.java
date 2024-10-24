@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.ServerUserDataOld;
 import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
@@ -66,7 +66,7 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
+        ServerUserDataOld sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
         if (!sud.isDeny()) {
             event.reply("読み上げ拒否をされていないユーザです。").setEphemeral(true).queue();
             return;
@@ -104,7 +104,7 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
+        ServerUserDataOld sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
         if (sud.isDeny()) {
             event.reply("すでに読み上げ拒否をされているユーザです。").setEphemeral(true).queue();
             return;

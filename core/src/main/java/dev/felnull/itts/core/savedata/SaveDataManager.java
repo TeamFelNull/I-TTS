@@ -39,7 +39,7 @@ public interface SaveDataManager {
      * @return サーバーデータ
      */
     @NotNull
-    ServerData getServerData(long guildId);
+    ServerDataOld getServerData(long guildId);
 
     /**
      * サーバーごとのユーザデータを取得
@@ -49,7 +49,7 @@ public interface SaveDataManager {
      * @return サーバーごとのユーザデータ
      */
     @NotNull
-    ServerUserData getServerUserData(long guildId, long userId);
+    ServerUserDataOld getServerUserData(long guildId, long userId);
 
     /**
      * 辞書使用データを取得
@@ -59,7 +59,7 @@ public interface SaveDataManager {
      * @return 辞書使用データ
      */
     @NotNull
-    DictUseData getDictUseData(long guildId, @NotNull String dictId);
+    DictUseDataOld getDictUseData(long guildId, @NotNull String dictId);
 
     /**
      * ボットの状態データを取得
@@ -68,7 +68,7 @@ public interface SaveDataManager {
      * @return ボットの状態データ
      */
     @NotNull
-    BotStateData getBotStateData(long guildId);
+    BotStateDataOld getBotStateData(long guildId);
 
     /**
      * 全てのBOT状態データを取得
@@ -77,7 +77,7 @@ public interface SaveDataManager {
      */
     @NotNull
     @Unmodifiable
-    Map<Long, BotStateData> getAllBotStateData();
+    Map<Long, BotStateDataOld> getAllBotStateData();
 
     /**
      * 全てのサーバー辞書データ

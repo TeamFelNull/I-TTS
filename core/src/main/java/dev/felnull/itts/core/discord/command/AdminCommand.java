@@ -1,6 +1,6 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.ServerUserDataOld;
 import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
@@ -70,7 +70,7 @@ public class AdminCommand extends BaseCommand {
         User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
         String name = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
         Guild guild = Objects.requireNonNull(event.getGuild());
-        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
+        ServerUserDataOld sud = getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
 
         if ("reset".equals(name)) {
             sud.setNickName(null);

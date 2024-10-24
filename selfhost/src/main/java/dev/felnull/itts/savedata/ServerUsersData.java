@@ -3,7 +3,7 @@ package dev.felnull.itts.savedata;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.ServerUserDataOld;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -62,7 +62,7 @@ public class ServerUsersData extends SaveDataBase {
 
     @Override
     protected int getVersion() {
-        return ServerUserData.VERSION;
+        return ServerUserDataOld.VERSION;
     }
 
     /**
@@ -71,13 +71,13 @@ public class ServerUsersData extends SaveDataBase {
      * @param userId ユーザID
      * @return サーバーのユーザ別データ
      */
-    protected ServerUserData getUserData(long userId) {
+    protected ServerUserDataOld getUserData(long userId) {
         return serverUserData.computeIfAbsent(userId, id -> new ServerUserDataImpl(this::dirty));
     }
 
     @NotNull
     @Unmodifiable
-    protected Map<Long, ServerUserData> getAllUserData() {
+    protected Map<Long, ServerUserDataOld> getAllUserData() {
         return ImmutableMap.copyOf(serverUserData);
     }
 }

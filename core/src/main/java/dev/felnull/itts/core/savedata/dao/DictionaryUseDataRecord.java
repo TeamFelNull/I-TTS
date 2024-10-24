@@ -9,6 +9,6 @@ import org.jetbrains.annotations.Nullable;
  * @param priority 辞書優先度
  */
 public record DictionaryUseDataRecord(@Nullable Boolean enable,
-                                      int priority
+                                      @Nullable Integer priority
 ) {
 }

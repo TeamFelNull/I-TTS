@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class SQLiteDAOTest extends DAOBaseTest {
+public class SQLiteDAOAccessTest extends DAOAccessTest {
 
     @TempDir
     private static Path dbDir;

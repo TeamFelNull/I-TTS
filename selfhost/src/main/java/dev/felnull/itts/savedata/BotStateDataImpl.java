@@ -1,7 +1,7 @@
 package dev.felnull.itts.savedata;
 
 import com.google.gson.JsonObject;
-import dev.felnull.itts.core.savedata.BotStateData;
+import dev.felnull.itts.core.savedata.BotStateDataOld;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author MORIMORI0317
  */
-public class BotStateDataImpl extends SaveDataBase implements BotStateData {
+public class BotStateDataImpl extends SaveDataBase implements BotStateDataOld {
 
     /**
      * 接続中のオーディオチャンネル

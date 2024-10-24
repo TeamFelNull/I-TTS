@@ -3,7 +3,7 @@ package dev.felnull.itts.savedata;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.felnull.itts.core.savedata.DictUseData;
+import dev.felnull.itts.core.savedata.DictUseDataOld;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class ServerDictUseData extends SaveDataBase {
     /**
      * サーバー辞書使用データ
      */
-    private final Map<String, DictUseData> serverDictUseData = new ConcurrentHashMap<>();
+    private final Map<String, DictUseDataOld> serverDictUseData = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -48,10 +48,10 @@ public class ServerDictUseData extends SaveDataBase {
 
     @Override
     protected int getVersion() {
-        return DictUseData.VERSION;
+        return DictUseDataOld.VERSION;
     }
 
-    public List<DictUseData> getAllDictUseData() {
+    public List<DictUseDataOld> getAllDictUseData() {
         return ImmutableList.copyOf(serverDictUseData.values());
     }
 
@@ -61,7 +61,7 @@ public class ServerDictUseData extends SaveDataBase {
      * @param dictId 辞書ID
      * @return 使用データ
      */
-    public DictUseData getDictUseData(String dictId) {
+    public DictUseDataOld getDictUseData(String dictId) {
         return serverDictUseData.computeIfAbsent(dictId, DictUseDataImpl::new);
     }
 
@@ -70,7 +70,7 @@ public class ServerDictUseData extends SaveDataBase {
      *
      * @author MORIMORI0317
      */
-    private class DictUseDataImpl implements DictUseData {
+    private class DictUseDataImpl implements DictUseDataOld {
 
         /**
          * 辞書ID
@@ -83,7 +83,7 @@ public class ServerDictUseData extends SaveDataBase {
         private final AtomicInteger priority = new AtomicInteger();
 
         DictUseDataImpl(String dictId) {
-            this(dictId, DictUseData.initPriority(dictId));
+            this(dictId, DictUseDataOld.initPriority(dictId));
         }
 
         DictUseDataImpl(String dictId, int priority) {

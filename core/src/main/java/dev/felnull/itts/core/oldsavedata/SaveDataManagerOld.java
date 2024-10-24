@@ -49,7 +49,7 @@ public class SaveDataManagerOld implements ITTSBaseManager {
      * @return サーバーデータ
      */
     @NotNull
-    public ServerData getServerData(long guildId) {
+    public ServerDataOld getServerData(long guildId) {
         return saveDataAccess.getServerData(guildId);
     }
 
@@ -61,7 +61,7 @@ public class SaveDataManagerOld implements ITTSBaseManager {
      * @return サーバーごとのユーザデータ
      */
     @NotNull
-    public ServerUserData getServerUserData(long guildId, long userId) {
+    public ServerUserDataOld getServerUserData(long guildId, long userId) {
         return saveDataAccess.getServerUserData(guildId, userId);
     }
 
@@ -73,7 +73,7 @@ public class SaveDataManagerOld implements ITTSBaseManager {
      * @return 辞書使用データ
      */
     @NotNull
-    public DictUseData getDictUseData(long guildId, @NotNull String dictId) {
+    public DictUseDataOld getDictUseData(long guildId, @NotNull String dictId) {
         return saveDataAccess.getDictUseData(guildId, dictId);
     }
 
@@ -84,7 +84,7 @@ public class SaveDataManagerOld implements ITTSBaseManager {
      * @return BOT状態データ
      */
     @NotNull
-    public BotStateData getBotStateData(long guildId) {
+    public BotStateDataOld getBotStateData(long guildId) {
         return saveDataAccess.getBotStateData(guildId);
     }
 
@@ -95,7 +95,7 @@ public class SaveDataManagerOld implements ITTSBaseManager {
      */
     @NotNull
     @Unmodifiable
-    public Map<Long, BotStateData> getAllBotStateData() {
+    public Map<Long, BotStateDataOld> getAllBotStateData() {
         return saveDataAccess.getAllBotStateData();
     }
 

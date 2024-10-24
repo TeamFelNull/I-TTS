@@ -2,7 +2,7 @@ package dev.felnull.itts.core.voice;
 
 import dev.felnull.itts.core.ITTSBaseManager;
 import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.ServerUserDataOld;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +157,7 @@ public class VoiceManager implements ITTSBaseManager {
     @Nullable
     public VoiceType getVoiceType(long guildId, long userId) {
         SaveDataManagerOld sdm = getSaveDataManager();
-        ServerUserData serverUserData = sdm.getServerUserData(guildId, userId);
+        ServerUserDataOld serverUserData = sdm.getServerUserData(guildId, userId);
         Optional<VoiceType> vt = getVoiceType(serverUserData.getVoiceType());
 
         return vt.orElseGet(() -> getDefaultVoiceType(guildId));

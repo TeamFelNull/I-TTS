@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.itts.core.savedata.dao.*;
+import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,9 +117,13 @@ public class SQLiteDAO extends BaseDAO {
     public void init() {
         super.init();
 
-        // 外部キー制約を有効化
         try (Connection connection = getConnection()) {
+            // 外部キー制約を有効化
             execute(connection, "PRAGMA foreign_keys=true");
+
+            // クエリを実行できるか確認
+            execute(connection, "select tbl_name from sqlite_master");
+
         } catch (SQLException e) {
             throw new RuntimeException("Init SQL error", e);
         }
@@ -198,6 +203,11 @@ public class SQLiteDAO extends BaseDAO {
     @Override
     public GlobalCustomDictionaryTable globalCustomDictionaryTable() {
         return globalCustomDictionaryTable;
+    }
+
+    @Override
+    public boolean checkEmojiSupport() {
+        return true;
     }
 
     /**
@@ -1523,7 +1533,7 @@ public class SQLiteDAO extends BaseDAO {
             String sql = """
                     select user_key.discord_id as user_discord_id
                     from server_user_data
-                        left join user_key on user_id = user_key.id
+                        inner join user_key on user_id = user_key.id
                     where server_id = ? and deny = TRUE
                     """;
 
@@ -1597,7 +1607,7 @@ public class SQLiteDAO extends BaseDAO {
         }
 
         @Override
-        public int selectPriority(Connection connection, int recordId) throws SQLException {
+        public OptionalInt selectPriority(Connection connection, int recordId) throws SQLException {
             @Language("SQLite")
             String sql = """
                     select priority
@@ -1611,7 +1621,8 @@ public class SQLiteDAO extends BaseDAO {
 
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {
-                        return rs.getInt("priority");
+                        Integer val = (Integer) rs.getObject("priority");
+                        return val == null ? OptionalInt.empty() : OptionalInt.of(val);
                     }
                 }
             }
@@ -1620,7 +1631,7 @@ public class SQLiteDAO extends BaseDAO {
         }
 
         @Override
-        public void updatePriority(Connection connection, int recordId, int priority) throws SQLException {
+        public void updatePriority(Connection connection, int recordId, Integer priority) throws SQLException {
             @Language("SQLite")
             String sql = """
                     update dictionary_use_data
@@ -1630,7 +1641,11 @@ public class SQLiteDAO extends BaseDAO {
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
 
-                statement.setInt(1, priority);
+                if (priority != null) {
+                    statement.setInt(1, priority);
+                } else {
+                    statement.setNull(1, Types.INTEGER);
+                }
                 statement.setLong(2, recordId);
 
                 if (statement.executeUpdate() == 0) {
@@ -1660,7 +1675,11 @@ public class SQLiteDAO extends BaseDAO {
                     statement.setNull(3, Types.BOOLEAN);
                 }
 
-                statement.setInt(4, record.priority());
+                if (record.priority() != null) {
+                    statement.setInt(4, record.priority());
+                } else {
+                    statement.setNull(4, Types.INTEGER);
+                }
 
                 statement.setInt(5, key.serverKeyId());
                 statement.setInt(6, key.dictionaryKeyId());
@@ -1723,7 +1742,7 @@ public class SQLiteDAO extends BaseDAO {
             Object enableRet = resultSet.getObject("enable");
             return new DictionaryUseDataRecord(
                     enableRet == null ? null : (Integer) enableRet != 0,
-                    resultSet.getInt("priority")
+                    (Integer) resultSet.getObject("priority")
             );
         }
 
@@ -1736,7 +1755,7 @@ public class SQLiteDAO extends BaseDAO {
                         server_id integer not null, -- サーバーID
                         dictionary_id integer not null, -- 辞書ID
                         enable boolean, -- 辞書を有効にしているかどうか
-                        priority integer not null default 0, -- 優先度
+                        priority integer, -- 優先度
                     
                         foreign key (server_id) references server_key(id),
                         foreign key (dictionary_id) references dictionary_key(id)
@@ -2000,6 +2019,40 @@ public class SQLiteDAO extends BaseDAO {
 
             execute(connection, sql);
         }
+
+        @Override
+        public Map<Long, TTSChannelPair> selectAllConnectedChannelPairByBotKeyId(Connection connection, int botKeyId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select server_key.discord_id as server_discord_id,
+                           speak_audio_channel_key.discord_id as speak_audio_channel_discord_id,
+                           read_text_channel_key.discord_id as read_text_channel_discord_id
+                     from bot_state_data
+                        inner join server_key on server_id = server_key.id
+                        inner join channel_key as speak_audio_channel_key on speak_audio_channel = speak_audio_channel_key.id
+                        inner join channel_key as read_text_channel_key on read_text_channel = read_text_channel_key.id
+                     where bot_id = ? and speak_audio_channel is not null and read_text_channel is not null
+                    """;
+
+            ImmutableMap.Builder<Long, TTSChannelPair> retBuilder = ImmutableMap.builder();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, botKeyId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (rs.getObject("speak_audio_channel_discord_id") != null && rs.getObject("read_text_channel_discord_id") != null) {
+                            long speakAudioChannel = rs.getLong("speak_audio_channel_discord_id");
+                            long readTextChannel = rs.getLong("read_text_channel_discord_id");
+                            TTSChannelPair channelPair = new TTSChannelPair(speakAudioChannel, readTextChannel);
+                            retBuilder.put(rs.getLong("server_discord_id"), channelPair);
+                        }
+                    }
+                }
+            }
+
+            return retBuilder.build();
+        }
     }
 
     /**
@@ -2048,7 +2101,7 @@ public class SQLiteDAO extends BaseDAO {
                 statement.setInt(1, key.serverKeyId());
                 statement.setString(2, record.target());
                 statement.setString(3, record.read());
-                statement.setInt(4, record.replaceType());
+                statement.setInt(4, record.replaceTypeKeyId());
 
                 statement.execute();
             }
@@ -2084,6 +2137,36 @@ public class SQLiteDAO extends BaseDAO {
                     """;
 
             execute(connection, sql);
+        }
+
+        @Override
+        public Map<Integer, DictionaryRecord> selectRecordByTarget(Connection connection, @NotNull ServerKey key, @NotNull String targetWord) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select id,
+                           target_word,
+                           read_word,
+                           replace_type
+                    from server_custom_dictionary
+                    where server_id = ? and target_word = ?
+                    """;
+
+            ImmutableMap.Builder<Integer, DictionaryRecord> ret = ImmutableMap.builder();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, key.serverKeyId());
+                statement.setString(2, targetWord);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        DictionaryRecord record =
+                                new DictionaryRecord(rs.getString("target_word"), rs.getString("read_word"), rs.getInt("replace_type"));
+                        ret.put(rs.getInt("id"), record);
+                    }
+                }
+            }
+
+            return ret.build();
         }
     }
 
@@ -2129,7 +2212,7 @@ public class SQLiteDAO extends BaseDAO {
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, record.target());
                 statement.setString(2, record.read());
-                statement.setInt(3, record.replaceType());
+                statement.setInt(3, record.replaceTypeKeyId());
 
                 statement.execute();
             }
@@ -2163,6 +2246,35 @@ public class SQLiteDAO extends BaseDAO {
                     """;
 
             execute(connection, sql);
+        }
+
+        @Override
+        public Map<Integer, DictionaryRecord> selectRecordByTarget(Connection connection, @NotNull String targetWord) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select id,
+                           target_word,
+                           read_word,
+                           replace_type
+                    from global_custom_dictionary
+                    where target_word = ?
+                    """;
+
+            ImmutableMap.Builder<Integer, DictionaryRecord> ret = ImmutableMap.builder();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, targetWord);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        DictionaryRecord record =
+                                new DictionaryRecord(rs.getString("target_word"), rs.getString("read_word"), rs.getInt("replace_type"));
+                        ret.put(rs.getInt("id"), record);
+                    }
+                }
+            }
+
+            return ret.build();
         }
     }
 }

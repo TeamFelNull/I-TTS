@@ -4,7 +4,6 @@ package dev.felnull.itts.core.savedata.dao.impl;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.felnull.itts.core.savedata.dao.DAO;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -31,7 +30,7 @@ abstract class BaseDAO implements DAO {
     }
 
     @Override
-    public void close() throws IOException {
+    public void dispose() {
         if (this.dataSource != null) {
             this.dataSource.close();
         }
