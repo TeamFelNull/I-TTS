@@ -26,7 +26,11 @@ abstract class BaseDAO implements DAO {
 
     @Override
     public void init() {
-        this.dataSource = createDataSource();
+        try {
+            this.dataSource = createDataSource();
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Data source creation failed", e);
+        }
     }
 
     @Override

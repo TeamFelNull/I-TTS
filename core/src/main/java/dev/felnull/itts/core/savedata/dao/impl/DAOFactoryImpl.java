@@ -2,6 +2,7 @@ package dev.felnull.itts.core.savedata.dao.impl;
 
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -21,8 +22,7 @@ public final class DAOFactoryImpl implements DAOFactory {
     }
 
     @Override
-    public DAO createMysqlDAO(String host, int port, String databaseName, String user, String password) {
-        return null;
+    public DAO createMysqlDAO(@NotNull String host, int port, @NotNull String databaseName, @NotNull String user, @NotNull String password) {
+        return new MySQLDAO(host, port, databaseName, user, password);
     }
-
 }

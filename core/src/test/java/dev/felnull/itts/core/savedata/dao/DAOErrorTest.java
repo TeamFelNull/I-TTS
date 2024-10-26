@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.savedata.dao;
 
+import dev.felnull.itts.core.savedata.MySQLTestOperation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -39,6 +40,13 @@ public class DAOErrorTest {
         // 元のデータが壊れていないか確認
         assertArrayEquals(data, Files.readAllBytes(dbFile.toPath()));
         assertEquals(1, Objects.requireNonNull(dbDir.toFile().list()).length);
+    }
+
+    @Test
+    void testMySQLConnectionFailure() {
+        DAO dao = DAOFactory.getInstance().createMysqlDAO(MySQLTestOperation.HOST, MySQLTestOperation.PORT + 1, MySQLTestOperation.DATABASE_NAME, MySQLTestOperation.USER, MySQLTestOperation.PASSWORD);
+        assertThrowsExactly(RuntimeException.class, dao::init);
+        dao.dispose();
     }
 
 }

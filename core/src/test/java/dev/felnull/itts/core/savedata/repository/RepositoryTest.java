@@ -1,14 +1,45 @@
 package dev.felnull.itts.core.savedata.repository;
 
+import dev.felnull.itts.core.savedata.MySQLTestOperation;
+import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RepositoryTest extends RepoBaseTest {
+
+    @Test
+    void testMySQL() throws Exception {
+
+        DAO dao1 = MySQLTestOperation.createDAO();
+        dao1.init();
+        try (Connection connection = dao1.getConnection()) {
+            MySQLTestOperation.clearDataBase(connection);
+        }
+        dao1.dispose();
+
+        DataRepository repo = DataRepository.create(MySQLTestOperation::createDAO);
+        repo.init();
+
+        ServerData serverData = repo.getServerData(114514);
+        serverData.setIgnoreRegex("イキスギ");
+        assertEquals("イキスギ", serverData.getIgnoreRegex());
+
+        repo.dispose();
+
+        DAO dao2 = MySQLTestOperation.createDAO();
+        dao2.init();
+        try (Connection connection = dao2.getConnection()) {
+            MySQLTestOperation.clearDataBase(connection);
+        }
+        dao2.dispose();
+    }
 
     @Test
     void testGetAllConnectedChannel() {

@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.savedata.dao;
 
 import dev.felnull.itts.core.savedata.dao.impl.DAOFactoryImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -31,6 +32,6 @@ public interface DAOFactory {
      * @param password     パスワード
      * @return DAO
      */
-    DAO createMysqlDAO(String host, int port, String databaseName, String user, String password);
+    DAO createMysqlDAO(@NotNull String host, int port, @NotNull String databaseName, @NotNull String user, @NotNull String password);
 }
 

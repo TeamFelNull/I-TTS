@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.savedata.dao;
 
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
@@ -40,7 +41,7 @@ public class SQLiteDAOAccessTest extends DAOAccessTest {
 
     private void clearTables(Connection connection) throws SQLException {
         @Language("SQLite")
-        String sql = """
+        String showSql = """
                 select tbl_name
                 from sqlite_master
                 where type = 'table'
@@ -49,12 +50,16 @@ public class SQLiteDAOAccessTest extends DAOAccessTest {
 
         List<String> tables = new LinkedList<>();
 
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(showSql)) {
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
                     tables.add(rs.getString("tbl_name"));
                 }
             }
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement("PRAGMA foreign_keys=false")) {
+            statement.execute();
         }
 
         for (String table : tables) {
@@ -63,6 +68,18 @@ public class SQLiteDAOAccessTest extends DAOAccessTest {
 
             try (PreparedStatement statement = connection.prepareStatement(delSql)) {
                 statement.execute();
+            }
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement("PRAGMA foreign_keys=true")) {
+            statement.execute();
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement(showSql)) {
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    Assertions.fail();
+                }
             }
         }
     }

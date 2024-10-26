@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.itts.core.savedata.dao.*;
 import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.intellij.lang.annotations.Language;
@@ -12,14 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
 import java.sql.*;
 import java.util.*;
 
 /**
- * SQLiteのDAO実装
+ * MySQLLiteのDAO実装
  */
-public class SQLiteDAO extends BaseDAO {
+class MySQLDAO extends BaseDAO {
 
     /**
      * サーバーキーテーブルのインスタンス
@@ -92,44 +90,62 @@ public class SQLiteDAO extends BaseDAO {
     private final GlobalCustomDictionaryTable globalCustomDictionaryTable = new GlobalCustomDictionaryTableImpl();
 
     /**
-     * DBファイル
+     * ホスト名
      */
-    private final File dbFile;
+    private final String host;
 
-    SQLiteDAO(File dbFile) {
-        this.dbFile = dbFile;
+    /**
+     * ポート番号
+     */
+    private final int port;
+
+    /**
+     * データベース名
+     */
+    private final String databaseName;
+
+    /**
+     * ユーザー名
+     */
+    private final String user;
+
+    /**
+     * パスワード
+     */
+    private final String password;
+
+    /**
+     * コンストラクタ
+     *
+     * @param host         ホスト名
+     * @param port         ポート番号
+     * @param databaseName データベース名
+     * @param user         ユーザー名
+     * @param password     パスワード
+     */
+    MySQLDAO(String host, int port, String databaseName, String user, String password) {
+        this.host = host;
+        this.port = port;
+        this.databaseName = databaseName;
+        this.user = user;
+        this.password = password;
     }
 
     @Override
     protected HikariDataSource createDataSource() {
-        FNDataUtil.wishMkdir(dbFile.getParentFile());
-
         HikariConfig config = new HikariConfig();
+
         config.setPoolName("I-TTS Pool");
-        config.setDriverClassName("org.sqlite.JDBC");
         config.setConnectionTestQuery("SELECT 1");
-        config.setJdbcUrl(String.format("jdbc:sqlite:%s", dbFile.getAbsolutePath()));
+        config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        config.setJdbcUrl(String.format("jdbc:mysql://%s:%d/%s", host, port, databaseName));
+        config.setUsername(user);
+        config.setPassword(password);
 
         return new HikariDataSource(config);
     }
 
-    @Override
-    public void init() {
-        super.init();
-
-        try (Connection connection = getConnection()) {
-            // 外部キー制約を有効化
-            execute(connection, "PRAGMA foreign_keys=true");
-
-            // クエリを実行できるか確認
-            execute(connection, "select tbl_name from sqlite_master");
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Init SQL error", e);
-        }
-    }
-
-    private void execute(@NotNull Connection connection, @NotNull @Language("SQLite") String sql) throws SQLException {
+    private void execute(@NotNull Connection connection, @NotNull @Language("MySQL") String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.execute();
         }
@@ -207,7 +223,7 @@ public class SQLiteDAO extends BaseDAO {
 
     @Override
     public boolean checkEmojiSupport() {
-        return true;
+        throw new AssertionError("TODO");
     }
 
     /**
@@ -216,27 +232,8 @@ public class SQLiteDAO extends BaseDAO {
     private final class ServerKeyTableImpl implements ServerKeyTable {
 
         @Override
-        public Optional<Long> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
-            String sql = """
-                    select discord_id from server_key where id = ? limit 1;
-                    """;
-
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setLong(1, keyId);
-
-                try (ResultSet rs = statement.executeQuery()) {
-                    if (rs.next()) {
-                        return Optional.of(rs.getLong("discord_id"));
-                    }
-                }
-            }
-            return Optional.empty();
-        }
-
-        @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from server_key where discord_id = ? limit 1;
                     """;
@@ -254,8 +251,27 @@ public class SQLiteDAO extends BaseDAO {
         }
 
         @Override
+        public Optional<Long> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
+            @Language("MySQL")
+            String sql = """
+                    select discord_id from server_key where id = ? limit 1;
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, keyId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(rs.getLong("discord_id"));
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+
+        @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into server_key(discord_id)
                     select ? where not exists(select * from server_key where discord_id = ?);
@@ -270,11 +286,11 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists server_key(
-                        id integer not null primary key autoincrement, -- ID
-                        discord_id bigint not null unique -- DiscordのID
+                            id integer not null primary key auto_increment, -- ID
+                            discord_id bigint not null unique -- DiscordのID
                     );
                     """;
 
@@ -289,7 +305,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<Long> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select discord_id from user_key where id = ? limit 1;
                     """;
@@ -308,7 +324,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from user_key where discord_id = ? limit 1;
                     """;
@@ -327,7 +343,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into user_key(discord_id)
                     select ? where not exists(select * from user_key where discord_id = ?);
@@ -342,10 +358,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists user_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         discord_id bigint not null unique -- DiscordのID
                     );
                     """;
@@ -361,7 +377,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<Long> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select discord_id from bot_key where id = ? limit 1;
                     """;
@@ -380,7 +396,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from bot_key where discord_id = ? limit 1;
                     """;
@@ -399,7 +415,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into bot_key(discord_id)
                     select ? where not exists(select * from bot_key where discord_id = ?);
@@ -414,10 +430,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists bot_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         discord_id bigint not null unique -- DiscordのID
                     );
                     """;
@@ -433,7 +449,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<Long> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select discord_id from channel_key where id = ? limit 1;
                     """;
@@ -452,7 +468,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from channel_key where discord_id = ? limit 1;
                     """;
@@ -471,7 +487,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull Long key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into channel_key(discord_id)
                     select ? where not exists(select * from channel_key where discord_id = ?);
@@ -486,10 +502,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists channel_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         discord_id bigint not null unique -- DiscordのID
                     );
                     """;
@@ -505,7 +521,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<String> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select name from dictionary_key where id = ? limit 1;
                     """;
@@ -524,7 +540,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from dictionary_key where name = ? limit 1;
                     """;
@@ -543,7 +559,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into dictionary_key(name)
                     select ? where not exists(select * from dictionary_key where name = ?);
@@ -558,10 +574,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists dictionary_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         name varchar(30) not null unique -- 参照名
                     );
                     """;
@@ -578,7 +594,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<String> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select name from dictionary_replace_type_key where id = ? limit 1;
                     """;
@@ -597,7 +613,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from dictionary_replace_type_key where name = ? limit 1;
                     """;
@@ -616,7 +632,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into dictionary_replace_type_key(name)
                     select ? where not exists(select * from dictionary_replace_type_key where name = ?);
@@ -631,10 +647,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists dictionary_replace_type_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         name varchar(30) not null unique -- 参照名
                     );
                     """;
@@ -650,7 +666,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<String> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select name from auto_disconnect_mode_key where id = ? limit 1;
                     """;
@@ -669,7 +685,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from auto_disconnect_mode_key where name = ? limit 1;
                     """;
@@ -688,7 +704,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into auto_disconnect_mode_key(name)
                     select ? where not exists(select * from auto_disconnect_mode_key where name = ?);
@@ -703,10 +719,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists auto_disconnect_mode_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         name varchar(30) not null unique -- 参照名
                     );
                     """;
@@ -722,7 +738,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<String> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select name from voice_type_key where id = ? limit 1;
                     """;
@@ -741,7 +757,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectId(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id from voice_type_key where name = ? limit 1;
                     """;
@@ -760,7 +776,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into voice_type_key(name)
                     select ? where not exists(select * from voice_type_key where name = ?);
@@ -775,10 +791,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists voice_type_key(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         name varchar(30) not null unique -- 参照名
                     );
                     """;
@@ -795,7 +811,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectDefaultVoiceType(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select default_voice_type
                     from server_data
@@ -819,7 +835,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateDefaultVoiceType(Connection connection, int recordId, @Nullable Integer defaultVoiceTypeKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set default_voice_type = ?
@@ -843,7 +859,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<String> selectIgnoreRegex(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select ignore_regex
                     from server_data
@@ -866,7 +882,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateIgnoreRegex(Connection connection, int recordId, @Nullable String ignoreRegex) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set ignore_regex = ?
@@ -886,7 +902,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public boolean selectNeedJoin(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select need_join
                     from server_data
@@ -909,7 +925,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateNeedJoin(Connection connection, int recordId, boolean needJoin) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set need_join = ?
@@ -928,7 +944,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public boolean selectOverwriteAloud(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select overwrite_aloud
                     from server_data
@@ -951,7 +967,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateOverwriteAloud(Connection connection, int recordId, boolean overwriteAloud) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set overwrite_aloud = ?
@@ -971,7 +987,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public boolean selectNotifyMove(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select notify_move
                     from server_data
@@ -994,7 +1010,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateNotifyMove(Connection connection, int recordId, boolean notifyMove) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set notify_move = ?
@@ -1014,7 +1030,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public int selectReadLimit(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select read_limit
                     from server_data
@@ -1037,7 +1053,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateReadLimit(Connection connection, int recordId, int readLimit) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set read_limit = ?
@@ -1057,7 +1073,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public int selectNameReadLimit(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select name_read_limit
                     from server_data
@@ -1080,7 +1096,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateNameReadLimit(Connection connection, int recordId, int nameReadLimit) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set name_read_limit = ?
@@ -1100,7 +1116,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public int selectAutoDisconnectMode(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select auto_disconnect_mode
                     from server_data
@@ -1123,7 +1139,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateAutoDisconnectMode(Connection connection, int recordId, int autoDisconnectModeKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_data
                     set auto_disconnect_mode = ?
@@ -1146,7 +1162,7 @@ public class SQLiteDAO extends BaseDAO {
             Objects.requireNonNull(record);
 
             // https://qiita.com/shakechi/items/c5be910d924b9661c216
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into server_data(server_id, default_voice_type, ignore_regex, need_join, overwrite_aloud, notify_move,
                                read_limit, name_read_limit, auto_disconnect_mode)
@@ -1177,7 +1193,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<IdRecordPair<ServerDataRecord>> selectRecordByKey(@NotNull Connection connection, @NotNull ServerKey key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            default_voice_type,
@@ -1208,7 +1224,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<ServerDataRecord> selectRecordById(@NotNull Connection connection, int id) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select default_voice_type,
                            ignore_regex,
@@ -1251,10 +1267,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists server_data(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         server_id integer not null unique, -- サーバーID
                         default_voice_type integer, -- デフォルトの声タイプ
                         ignore_regex nvarchar(100), -- 読み上げを無視する正規表現
@@ -1283,7 +1299,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectVoiceType(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select voice_type
                     from server_user_data
@@ -1307,7 +1323,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateVoiceType(Connection connection, int recordId, @Nullable Integer voiceTypeKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_user_data
                     set voice_type = ?
@@ -1331,7 +1347,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public boolean selectDeny(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select deny
                     from server_user_data
@@ -1354,7 +1370,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateDeny(Connection connection, int recordId, boolean deny) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_user_data
                     set deny = ?
@@ -1374,7 +1390,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<String> selectNickName(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select nick_name
                     from server_user_data
@@ -1397,7 +1413,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateNickName(Connection connection, int recordId, @Nullable String nickName) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update server_user_data
                     set nick_name = ?
@@ -1419,7 +1435,7 @@ public class SQLiteDAO extends BaseDAO {
         public void insertRecordIfNotExists(@NotNull Connection connection, @NotNull ServerUserKey key, @NotNull ServerUserDataRecord record) throws SQLException {
             Objects.requireNonNull(record);
 
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into server_user_data(server_id, user_id, voice_type, deny, nick_name)
                     select ?, ?, ?, ?, ? where not exists(select * from server_user_data where server_id = ? and user_id = ?);
@@ -1448,7 +1464,7 @@ public class SQLiteDAO extends BaseDAO {
         @Override
         public Optional<IdRecordPair<ServerUserDataRecord>> selectRecordByKey(@NotNull Connection connection,
                                                                               @NotNull ServerUserKey key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            voice_type,
@@ -1475,7 +1491,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<ServerUserDataRecord> selectRecordById(@NotNull Connection connection, int id) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select voice_type,
                            deny,
@@ -1508,10 +1524,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists server_user_data(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         server_id integer not null, -- サーバーID
                         user_id integer not null, -- ユーザーID
                         voice_type integer, -- 声タイプ
@@ -1529,7 +1545,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public List<Long> selectAllDenyUser(Connection connection, int serverKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select user_key.discord_id as user_discord_id
                     from server_user_data
@@ -1560,7 +1576,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<Boolean> selectEnable(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select enable
                     from dictionary_use_data
@@ -1574,7 +1590,7 @@ public class SQLiteDAO extends BaseDAO {
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {
                         Object enableRet = rs.getObject("enable");
-                        return Optional.ofNullable(enableRet == null ? null : (Integer) enableRet != 0);
+                        return Optional.ofNullable((Boolean) enableRet);
                     }
                 }
             }
@@ -1584,7 +1600,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateEnable(Connection connection, int recordId, @Nullable Boolean enable) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update dictionary_use_data
                     set enable = ?
@@ -1608,7 +1624,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectPriority(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select priority
                     from dictionary_use_data
@@ -1632,7 +1648,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updatePriority(Connection connection, int recordId, Integer priority) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update dictionary_use_data
                     set priority = ?
@@ -1659,7 +1675,7 @@ public class SQLiteDAO extends BaseDAO {
                                             @NotNull DictionaryUseDataRecord record) throws SQLException {
             Objects.requireNonNull(record);
 
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into dictionary_use_data(server_id, dictionary_id, enable, priority)
                     select ?, ?, ?, ? where not exists(select * from dictionary_use_data where server_id = ? and dictionary_id = ?);
@@ -1690,7 +1706,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<IdRecordPair<DictionaryUseDataRecord>> selectRecordByKey(@NotNull Connection connection, @NotNull ServerDictionaryKey key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            enable,
@@ -1716,7 +1732,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<DictionaryUseDataRecord> selectRecordById(@NotNull Connection connection, int id) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select enable,
                            priority
@@ -1741,17 +1757,17 @@ public class SQLiteDAO extends BaseDAO {
         private DictionaryUseDataRecord createRecord(ResultSet resultSet) throws SQLException {
             Object enableRet = resultSet.getObject("enable");
             return new DictionaryUseDataRecord(
-                    enableRet == null ? null : (Integer) enableRet != 0,
+                    (Boolean) enableRet,
                     (Integer) resultSet.getObject("priority")
             );
         }
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists dictionary_use_data(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         server_id integer not null, -- サーバーID
                         dictionary_id integer not null, -- 辞書ID
                         enable boolean, -- 辞書を有効にしているかどうか
@@ -1773,7 +1789,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<TTSChannelKeyPair> selectConnectedChannelKeyPair(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select speak_audio_channel,
                            read_text_channel
@@ -1804,7 +1820,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateConnectedChannelKeyPair(Connection connection, int recordId, @Nullable TTSChannelKeyPair channelKeyPair) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update bot_state_data
                     set speak_audio_channel = ?, read_text_channel = ?
@@ -1831,7 +1847,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<TTSChannelKeyPair> selectReconnectChannelKeyPair(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select reconnect_speak_audio_channel,
                            reconnect_read_text_channel
@@ -1862,7 +1878,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void updateReconnectChannelKeyPair(Connection connection, int recordId, @Nullable TTSChannelKeyPair channelKeyPair) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update bot_state_data
                     set reconnect_speak_audio_channel = ?, reconnect_read_text_channel = ?
@@ -1891,7 +1907,7 @@ public class SQLiteDAO extends BaseDAO {
         public void insertRecordIfNotExists(@NotNull Connection connection, @NotNull ServerBotKey key, @NotNull BotStateDataRecord record) throws SQLException {
             Objects.requireNonNull(record);
 
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into bot_state_data(server_id, bot_id, speak_audio_channel, read_text_channel, reconnect_speak_audio_channel, reconnect_read_text_channel)
                     select ?, ?, ?, ?, ?, ? where not exists(select * from bot_state_data where server_id = ? and bot_id = ?);
@@ -1934,7 +1950,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<IdRecordPair<BotStateDataRecord>> selectRecordByKey(@NotNull Connection connection, @NotNull ServerBotKey key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            speak_audio_channel,
@@ -1962,7 +1978,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Optional<BotStateDataRecord> selectRecordById(@NotNull Connection connection, int id) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select speak_audio_channel,
                            read_text_channel,
@@ -1997,10 +2013,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists bot_state_data(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         server_id integer not null, -- サーバーID
                         bot_id integer not null, -- BOT ID
                         speak_audio_channel integer, -- 接続オーディオチャンネル
@@ -2022,7 +2038,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Map<Long, TTSChannelPair> selectAllConnectedChannelPairByBotKeyId(Connection connection, int botKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select server_key.discord_id as server_discord_id,
                            speak_audio_channel_key.discord_id as speak_audio_channel_discord_id,
@@ -2062,7 +2078,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Map<Integer, DictionaryRecord> selectRecords(Connection connection, @NotNull ServerKey key) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            target_word,
@@ -2091,7 +2107,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertRecord(Connection connection, @NotNull ServerKey key, @NotNull DictionaryRecord record) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into server_custom_dictionary(server_id, target_word, read_word, replace_type)
                     values(?, ?, ?, ?)
@@ -2109,7 +2125,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void deleteRecord(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     delete from server_custom_dictionary where id=?
                     """;
@@ -2122,10 +2138,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists server_custom_dictionary(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         server_id integer not null, -- サーバーID
                         target_word nvarchar(100) not null, -- 置き換え対象の文字
                         read_word nvarchar(100) not null, -- 実際に読み上げる文字
@@ -2141,7 +2157,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Map<Integer, DictionaryRecord> selectRecordByTarget(Connection connection, @NotNull ServerKey key, @NotNull String targetWord) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            target_word,
@@ -2177,7 +2193,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public @Unmodifiable Map<Integer, DictionaryRecord> selectRecords(Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            target_word,
@@ -2203,7 +2219,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void insertRecord(Connection connection, @NotNull DictionaryRecord record) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     insert into global_custom_dictionary(target_word, read_word, replace_type)
                     values(?, ?, ?)
@@ -2220,7 +2236,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void deleteRecord(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     delete from global_custom_dictionary where id=?
                     """;
@@ -2233,10 +2249,10 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     create table if not exists global_custom_dictionary(
-                        id integer not null primary key autoincrement, -- ID
+                        id integer not null primary key auto_increment, -- ID
                         target_word nvarchar(100) not null, -- 置き換え対象の文字
                         read_word nvarchar(100) not null, -- 実際に読み上げる文字
                         replace_type integer not null, -- 置き換え方法
@@ -2250,7 +2266,7 @@ public class SQLiteDAO extends BaseDAO {
 
         @Override
         public Map<Integer, DictionaryRecord> selectRecordByTarget(Connection connection, @NotNull String targetWord) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select id,
                            target_word,

@@ -96,6 +96,9 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
         // テーブル作成
         table.createTableIfNotExists(connection);
 
+        // 作成済みの場合にエラーが出ないか確認
+        table.createTableIfNotExists(connection);
+
         // エントリが存在しないことを確認
         assertTrue(table.selectId(connection, key).isEmpty());
         assertTrue(table.selectKey(connection, ids.isEmpty() ? 1 : (Collections.max(ids) + 1)).isEmpty());
@@ -221,10 +224,14 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
 
     private void serverDataTableTestCreateTable(Connection connection) throws Exception {
         // テストで必要なテーブルを作成
-        dao.serverDataTable().createTableIfNotExists(connection);
         dao.serverKeyTable().createTableIfNotExists(connection);
         dao.voiceTypeKeyTable().createTableIfNotExists(connection);
         dao.autoDisconnectModeKeyTable().createTableIfNotExists(connection);
+
+        dao.serverDataTable().createTableIfNotExists(connection);
+
+        // 作成済みの場合にエラーが出ないか確認
+        dao.serverDataTable().createTableIfNotExists(connection);
     }
 
     private Stream<ServerDataRecord> serverDataTableTestRecordData(Connection connection) {
@@ -396,10 +403,14 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
 
     private void serverUserDataTableTestCreateTable(Connection connection) throws Exception {
         // テストで必要なテーブルを作成
-        dao.serverUserDataTable().createTableIfNotExists(connection);
         dao.serverKeyTable().createTableIfNotExists(connection);
         dao.userKeyTable().createTableIfNotExists(connection);
         dao.voiceTypeKeyTable().createTableIfNotExists(connection);
+
+        dao.serverUserDataTable().createTableIfNotExists(connection);
+
+        // 作成済みの場合にエラーが出ないか確認
+        dao.serverUserDataTable().createTableIfNotExists(connection);
     }
 
     private Stream<ServerUserDataRecord> serverUserDataTableTestRecordData(Connection connection) {
@@ -525,9 +536,13 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
 
     private void dictionaryUseDataTableTestCreateTable(Connection connection) throws Exception {
         // テストで必要なテーブルを作成
-        dao.dictionaryUseDataTable().createTableIfNotExists(connection);
         dao.serverKeyTable().createTableIfNotExists(connection);
         dao.dictionaryKeyTable().createTableIfNotExists(connection);
+
+        dao.dictionaryUseDataTable().createTableIfNotExists(connection);
+
+        // 作成済みの場合にエラーが出ないか確認
+        dao.dictionaryUseDataTable().createTableIfNotExists(connection);
     }
 
     private Stream<DictionaryUseDataRecord> dictionaryUseDataTableTestRecordData() {
@@ -653,10 +668,14 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
 
     private void botStateDataTableTestCreateTable(Connection connection) throws Exception {
         // テストで必要なテーブルを作成
-        dao.botStateDataTable().createTableIfNotExists(connection);
         dao.serverKeyTable().createTableIfNotExists(connection);
         dao.botKeyTable().createTableIfNotExists(connection);
         dao.channelKeyTable().createTableIfNotExists(connection);
+
+        dao.botStateDataTable().createTableIfNotExists(connection);
+
+        // 作成済みの場合にエラーが出ないか確認
+        dao.botStateDataTable().createTableIfNotExists(connection);
     }
 
     private Stream<BotStateDataRecord> botStateDataTableTestRecordData(Connection connection) {
@@ -770,6 +789,9 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
             dao.serverKeyTable().createTableIfNotExists(connection);
             dao.dictionaryReplaceTypeKeyTable().createTableIfNotExists(connection);
 
+            // 作成済みの場合にエラーが出ないか確認
+            serverCustomDictionaryTable.createTableIfNotExists(connection);
+
             ServerKey serverKey1 = new ServerKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L));
             ServerKey serverKey2 = new ServerKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 114514L));
             ServerKey serverKey3 = new ServerKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 63464L));
@@ -880,6 +902,10 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
             // テーブルの作成
             globalCustomDictionaryTable.createTableIfNotExists(connection);
             dao.dictionaryReplaceTypeKeyTable().createTableIfNotExists(connection);
+
+            // 作成済みの場合にエラーが出ないか確認
+            globalCustomDictionaryTable.createTableIfNotExists(connection);
+
 
             // 辞書が空かどうか確認
             assertTrue(globalCustomDictionaryTable.selectRecords(connection).isEmpty());
