@@ -11,9 +11,11 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * データレポジトリの実装
@@ -137,29 +139,32 @@ public final class DataRepositoryImpl implements DataRepository {
     private final GlobalCustomDictionaryData globalCustomDictionaryData = new GlobalCustomDictionaryData(DataRepositoryImpl.this);
 
     /**
-     * DAO取得プロバイダ
-     */
-    private final Supplier<DAO> daoProvider;
-
-    /**
      * データ取得用DAO
      */
-    private DAO dao;
+    private final DAO dao;
+
+
+    /**
+     * 登録済みエラーリスナー
+     */
+    private final Set<RepoErrorListener> errorListeners = new HashSet<>();
+
+    /**
+     * 破棄済みかどうか
+     */
+    private final AtomicBoolean destroyed = new AtomicBoolean(false);
 
     /**
      * コンストラクタ
      *
-     * @param daoProvider レポジトリで使用するDAO取得用プロバイダ
+     * @param dao 初期化前のDAO
      */
-    public DataRepositoryImpl(Supplier<DAO> daoProvider) {
-        this.daoProvider = daoProvider;
+    public DataRepositoryImpl(DAO dao) {
+        this.dao = dao;
     }
-
 
     @Override
     public void init() {
-        this.dao = daoProvider.get();
-
         try {
             this.dao.init();
         } catch (RuntimeException e) {
@@ -197,18 +202,43 @@ public final class DataRepositoryImpl implements DataRepository {
 
     @Override
     public void dispose() {
+        if (destroyed.getAndSet(true)) {
+            return;
+        }
+
         if (this.dao != null) {
             try {
                 this.dao.dispose();
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to close DAO", e);
-            } finally {
-                this.dao = null;
             }
         }
     }
 
-    public DAO getDAO() {
+    @Override
+    public void addErrorListener(RepoErrorListener errorListener) {
+        this.errorListeners.add(errorListener);
+    }
+
+    @Override
+    public void removeErrorListener(RepoErrorListener errorListener) {
+        this.errorListeners.remove(errorListener);
+    }
+
+    /**
+     * エラーイベントを発火させる
+     */
+    void fireErrorEvent() {
+        if (destroyed.get()) {
+            return;
+        }
+
+        for (RepoErrorListener errorListener : this.errorListeners) {
+            errorListener.onError();
+        }
+    }
+
+    DAO getDAO() {
         return dao;
     }
 
@@ -278,8 +308,12 @@ public final class DataRepositoryImpl implements DataRepository {
     public @NotNull @Unmodifiable Map<Long, TTSChannelPair> getAllConnectedChannel(long botId) {
         try (Connection connection = dao.getConnection()) {
             return dao.botStateDataTable().selectAllConnectedChannelPairByBotKeyId(connection, botKeyData.getId(botId));
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            fireErrorEvent();
             throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent();
+            throw throwable;
         }
     }
 
@@ -287,8 +321,12 @@ public final class DataRepositoryImpl implements DataRepository {
     public @NotNull @Unmodifiable List<Long> getAllDenyUser(long serverId) {
         try (Connection connection = dao.getConnection()) {
             return dao.serverUserDataTable().selectAllDenyUser(connection, serverKeyData.getId(serverId));
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            fireErrorEvent();
             throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent();
+            throw throwable;
         }
     }
 

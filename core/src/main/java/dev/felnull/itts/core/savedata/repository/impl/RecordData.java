@@ -28,8 +28,9 @@ abstract class RecordData<K extends Record, T extends Record> extends SaveDataBa
     void init() {
         try (Connection con = dao().getConnection()) {
             initRecord(con, getInitRecordContext());
-        } catch (SQLException ex) {
-            throw new IllegalStateException("Record initialization failure", ex);
+        } catch (Throwable throwable) {
+            this.repository.fireErrorEvent();
+            throw new IllegalStateException("Record initialization failure", throwable);
         }
     }
 

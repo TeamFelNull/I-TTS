@@ -20,7 +20,7 @@ public interface DAOFactory {
      * @param dbFile データベースのファイル
      * @return DAO
      */
-    DAO createSQliteDAO(File dbFile);
+    DAO createSQLiteDAO(File dbFile);
 
     /**
      * MySQLのDAOを作成

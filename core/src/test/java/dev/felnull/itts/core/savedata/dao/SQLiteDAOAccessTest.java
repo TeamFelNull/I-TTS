@@ -23,16 +23,16 @@ public class SQLiteDAOAccessTest extends DAOAccessTest {
     private static Path dbDir;
 
     @BeforeAll
-    static void setupAll() {
+    static void setUpAll() {
         File dbFile = new File(dbDir.toFile(), "save_data.db");
         assertFalse(dbFile.exists());
 
-        dao = DAOFactory.getInstance().createSQliteDAO(dbFile);
+        dao = DAOFactory.getInstance().createSQLiteDAO(dbFile);
         dao.init();
     }
 
     @BeforeEach
-    void clearDataBase() throws SQLException {
+    void tearDownAll() throws SQLException {
         // テストが終わるたびにデータベースをクリアする
         try (Connection connection = dao.getConnection()) {
             clearTables(connection);

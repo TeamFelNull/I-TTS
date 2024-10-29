@@ -206,7 +206,6 @@ public class ITTSRuntime {
                 .forEach(CompletableFuture::join);
 
         SaveDataManager.getInstance().init();
-       // SaveDataManagerImpl.INSTANCE.test();
 
         logger.info("Setup complete");
 

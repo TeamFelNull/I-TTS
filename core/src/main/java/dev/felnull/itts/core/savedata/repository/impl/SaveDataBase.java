@@ -22,7 +22,14 @@ abstract class SaveDataBase {
     }
 
     protected DAO dao() {
-        return this.repository.getDAO();
+        DAO dao = this.repository.getDAO();
+
+        if (dao == null) {
+            this.repository.fireErrorEvent();
+            throw new IllegalStateException("The DAO does not exist. The repository may not have been initialized or may have been destroyed.");
+        }
+
+        return dao;
     }
 
     /**
@@ -34,7 +41,7 @@ abstract class SaveDataBase {
         try (Connection con = dao().getConnection()) {
             return proc.apply(con);
         } catch (Throwable throwable) {
-            //errorCounter.inc();
+            this.repository.fireErrorEvent();
             throw new IllegalStateException("SQL processing failed.", throwable);
         }
     }
@@ -48,7 +55,7 @@ abstract class SaveDataBase {
         try (Connection con = dao().getConnection()) {
             proc.accept(con);
         } catch (Throwable throwable) {
-            //errorCounter.inc();
+            this.repository.fireErrorEvent();
             throw new IllegalStateException("SQL processing failed.", throwable);
         }
     }

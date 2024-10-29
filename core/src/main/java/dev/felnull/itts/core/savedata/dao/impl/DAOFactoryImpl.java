@@ -17,7 +17,7 @@ public final class DAOFactoryImpl implements DAOFactory {
     public static final DAOFactoryImpl INSTANCE = new DAOFactoryImpl();
 
     @Override
-    public DAO createSQliteDAO(File dbFile) {
+    public DAO createSQLiteDAO(File dbFile) {
         return new SQLiteDAO(dbFile);
     }
 

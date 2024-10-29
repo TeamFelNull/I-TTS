@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.savedata.repository;
 
 import dev.felnull.itts.core.savedata.AbstractSaveDataTest;
+import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,16 +17,19 @@ public abstract class RepoBaseTest extends AbstractSaveDataTest {
     private static Path dbDir;
 
     @BeforeAll
-    static void setupAll() {
+    static void setUpAll() {
         File dbFile = new File(dbDir.toFile(), "save_data.db");
         assertFalse(dbFile.exists());
     }
 
     protected DataRepository createRepository() {
-        File dbFile = new File(dbDir.toFile(), "save_data.db");
-        DataRepository repo = DataRepository.create(() -> DAOFactory.getInstance().createSQliteDAO(dbFile));
+        DataRepository repo = DataRepository.create(createDAO());
         repo.init();
         return repo;
     }
 
+    protected DAO createDAO() {
+        File dbFile = new File(dbDir.toFile(), "save_data.db");
+        return DAOFactory.getInstance().createSQLiteDAO(dbFile);
+    }
 }

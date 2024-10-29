@@ -8,22 +8,21 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * データを管理するレポジトリ<br/>
- * スレッドセーフです。
+ * 一部を除きスレッドセーフです。
  */
 public interface DataRepository {
 
     /**
      * インスタンス作成
      *
-     * @param daoProvider レポジトリで使用するDAO取得用プロバイダ
+     * @param dao 初期化前のDAO
      * @return データレポジトリインスタンス
      */
-    static DataRepository create(Supplier<DAO> daoProvider) {
-        return new DataRepositoryImpl(daoProvider);
+    static DataRepository create(DAO dao) {
+        return new DataRepositoryImpl(dao);
     }
 
     /**
@@ -35,6 +34,22 @@ public interface DataRepository {
      * 破棄
      */
     void dispose();
+
+    /**
+     * エラーリスナーを追加<br/>
+     * スレッドセーフではありません。
+     *
+     * @param errorListener エラーリスナー
+     */
+    void addErrorListener(RepoErrorListener errorListener);
+
+    /**
+     * エラーリスナーを削除<br/>
+     * スレッドセーフではありません。
+     *
+     * @param errorListener エラーリスナー
+     */
+    void removeErrorListener(RepoErrorListener errorListener);
 
     /**
      * サーバーデータを取得

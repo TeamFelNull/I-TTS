@@ -2,6 +2,7 @@ package dev.felnull.itts.core.savedata.dao;
 
 import dev.felnull.itts.core.savedata.MySQLTestOperation;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
@@ -33,7 +34,7 @@ public class DAOErrorTest {
         byte[] data = Files.readAllBytes(dbFile.toPath());
 
         // DBファイル以外が存在する場合はエラーを吐くか確認
-        DAO dao = DAOFactory.getInstance().createSQliteDAO(dbFile);
+        DAO dao = DAOFactory.getInstance().createSQLiteDAO(dbFile);
         assertThrowsExactly(RuntimeException.class, dao::init);
         dao.dispose();
 
@@ -43,6 +44,7 @@ public class DAOErrorTest {
     }
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "I_TTS_MYSQL_TEST", matches = "ENABLE")
     void testMySQLConnectionFailure() {
         DAO dao = DAOFactory.getInstance().createMysqlDAO(MySQLTestOperation.HOST, MySQLTestOperation.PORT + 1, MySQLTestOperation.DATABASE_NAME, MySQLTestOperation.USER, MySQLTestOperation.PASSWORD);
         assertThrowsExactly(RuntimeException.class, dao::init);

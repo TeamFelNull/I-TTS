@@ -4,6 +4,7 @@ import dev.felnull.itts.core.savedata.MySQLTestOperation;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.sql.Connection;
 import java.util.List;
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RepositoryTest extends RepoBaseTest {
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "I_TTS_MYSQL_TEST", matches = "ENABLE")
     void testMySQL() throws Exception {
 
         DAO dao1 = MySQLTestOperation.createDAO();
@@ -24,7 +26,7 @@ public class RepositoryTest extends RepoBaseTest {
         }
         dao1.dispose();
 
-        DataRepository repo = DataRepository.create(MySQLTestOperation::createDAO);
+        DataRepository repo = DataRepository.create(MySQLTestOperation.createDAO());
         repo.init();
 
         ServerData serverData = repo.getServerData(114514);
