@@ -5,9 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
-import dev.felnull.itts.core.savedata.DictData;
-import dev.felnull.itts.core.savedata.DictUseDataOld;
-import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
+import dev.felnull.itts.core.savedata.legacy.LegacyDictUseData;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -162,7 +163,7 @@ public class DictCommand extends BaseCommand {
 
                 replayEmbedBuilder.setTitle("登録された単語と読み");
 
-                for (DictData dictData : ret) {
+                for (LegacyDictData dictData : ret) {
                     addDictWordAndReadingField(replayEmbedBuilder, dictData.getTarget(), dictData.getRead());
                 }
 
@@ -180,7 +181,8 @@ public class DictCommand extends BaseCommand {
 
         long guildId = guild.getIdLong();
 
-        if (getSaveDataManager().getAllServerDictData(guildId).isEmpty()) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        if (legacySaveDataLayer.getAllServerDictData(guildId).isEmpty()) {
             event.reply("辞書は空です").setEphemeral(true).queue();
             return;
         }
@@ -206,13 +208,15 @@ public class DictCommand extends BaseCommand {
         String word = Objects.requireNonNull(event.getOption("word", OptionMapping::getAsString));
 
         long guildId = guild.getIdLong();
-        DictData dictData = getSaveDataManager().getServerDictData(guildId, word);
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
+        LegacyDictData dictData = legacySaveDataLayer.getServerDictData(guildId, word);
         if (dictData == null) {
             event.reply("未登録の単語です").setEphemeral(true).queue();
             return;
         }
 
-        getSaveDataManager().removeServerDictData(guildId, word);
+        legacySaveDataLayer.removeServerDictData(guildId, word);
 
         EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
         replayEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
@@ -234,9 +238,11 @@ public class DictCommand extends BaseCommand {
         }
 
         long guildId = guild.getIdLong();
-        boolean overwrite = getSaveDataManager().getServerDictData(guildId, word) != null;
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
 
-        getSaveDataManager().addServerDictData(guildId, word, reading);
+        boolean overwrite = legacySaveDataLayer.getServerDictData(guildId, word) != null;
+
+        legacySaveDataLayer.addServerDictData(guildId, word, reading);
 
         EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
         replayEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
@@ -254,6 +260,8 @@ public class DictCommand extends BaseCommand {
     }
 
     private void toggleShow(SlashCommandInteractionEvent event) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
@@ -265,7 +273,7 @@ public class DictCommand extends BaseCommand {
         List<Dictionary> dicts = dictManager.getAllDictionaries(guildId);
 
         for (Dictionary dict : dicts) {
-            DictUseDataOld useData = getSaveDataManager().getDictUseData(guildId, dict.getId());
+            LegacyDictUseData useData = legacySaveDataLayer.getDictUseData(guildId, dict.getId());
             replayEmbedBuilder.addField(dict.getName(), dictManager.isEnable(dict, guildId) ? ("有効 (" + useData.getPriority() + ")") : "無効", false);
         }
 
@@ -273,6 +281,8 @@ public class DictCommand extends BaseCommand {
     }
 
     private void toggle(SlashCommandInteractionEvent event) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
         String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
 
         boolean enabled = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
@@ -281,7 +291,6 @@ public class DictCommand extends BaseCommand {
         String enStr = enabled ? "有効" : "無効";
         long guildId = guild.getIdLong();
         DictionaryManager dm = getDictionaryManager();
-        SaveDataManagerOld sm = getSaveDataManager();
         Dictionary dic = dm.getDictionary(dictId, guildId);
 
         if (dic == null) {
@@ -289,7 +298,7 @@ public class DictCommand extends BaseCommand {
             return;
         }
 
-        DictUseDataOld useData = sm.getDictUseData(guildId, dictId);
+        LegacyDictUseData useData = legacySaveDataLayer.getDictUseData(guildId, dictId);
         boolean preEnable = useData.getPriority() >= 0;
 
         if (preEnable == enabled) {
@@ -308,6 +317,7 @@ public class DictCommand extends BaseCommand {
 
     @Override
     public void autoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         Objects.requireNonNull(event.getGuild());
         CommandAutoCompleteInteraction interact = event.getInteraction();
         AutoCompleteQuery fcs = interact.getFocusedOption();
@@ -324,7 +334,7 @@ public class DictCommand extends BaseCommand {
 
         } else if ("remove".equals(interact.getSubcommandName()) && "word".equals(fcs.getName())) {
 
-            event.replyChoices(getSaveDataManager().getAllServerDictData(guildId).stream()
+            event.replyChoices(legacySaveDataLayer.getAllServerDictData(guildId).stream()
                     .sorted(Comparator.comparingInt(d -> -StringUtils.getComplementPoint(d.getTarget(), fcs.getValue())))
                     .limit(OptionData.MAX_CHOICES)
                     .map(it -> new Command.Choice(it.getTarget() + " -> " + it.getRead(), it.getTarget()))

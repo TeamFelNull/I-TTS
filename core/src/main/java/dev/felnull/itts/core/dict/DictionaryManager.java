@@ -4,9 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.savedata.DictData;
-import dev.felnull.itts.core.savedata.DictUseDataOld;
-import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
+import dev.felnull.itts.core.savedata.legacy.LegacyDictUseData;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -82,8 +83,8 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @return 辞書が有効かどうか
      */
     public boolean isEnable(@NotNull Dictionary dictionary, long guildId) {
-        SaveDataManagerOld sdm = getSaveDataManager();
-        DictUseDataOld dud = sdm.getDictUseData(guildId, dictionary.getId());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyDictUseData dud = legacySaveDataLayer.getDictUseData(guildId, dictionary.getId());
         return dud.getPriority() >= 0;
     }
 
@@ -118,9 +119,11 @@ public class DictionaryManager implements ITTSRuntimeUse {
      */
     @Unmodifiable
     @NotNull
-    public List<DictUseDataOld> getAllDictUseData(long guildId) {
+    public List<LegacyDictUseData> getAllDictUseData(long guildId) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
         return dictionaries.stream()
-                .map(it -> getSaveDataManager().getDictUseData(guildId, it.getId()))
+                .map(it -> legacySaveDataLayer.getDictUseData(guildId, it.getId()))
                 .toList();
     }
 
@@ -132,9 +135,9 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @return 適用済みテキスト
      */
     public String applyDict(String text, long guildId) {
-        Stream<DictUseDataOld> allDict = getAllDictUseData(guildId).stream()
+        Stream<LegacyDictUseData> allDict = getAllDictUseData(guildId).stream()
                 .filter(it -> it.getPriority() >= 0)
-                .sorted(Comparator.comparingInt(DictUseDataOld::getPriority));
+                .sorted(Comparator.comparingInt(LegacyDictUseData::getPriority));
         AtomicReference<String> retText = new AtomicReference<>(text);
 
         allDict.forEach(ud -> {
@@ -166,12 +169,13 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @param guildId サーバーID
      */
     public void serverDictSaveToJson(@NotNull JsonObject jo, long guildId) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         jo.addProperty("version", FILE_VERSION);
 
         JsonObject entry = new JsonObject();
 
-        List<DictData> allDict = getSaveDataManager().getAllServerDictData(guildId);
-        for (DictData dictData : allDict) {
+        List<LegacyDictData> allDict = legacySaveDataLayer.getAllServerDictData(guildId);
+        for (LegacyDictData dictData : allDict) {
             entry.addProperty(dictData.getTarget(), dictData.getRead());
         }
 
@@ -186,8 +190,8 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @param overwrite 上書きするかどうか
      * @return 辞書データのリスト
      */
-    public List<DictData> serverDictLoadFromJson(@NotNull JsonObject jo, long guildId, boolean overwrite) {
-        List<DictData> ret = new ArrayList<>();
+    public List<LegacyDictData> serverDictLoadFromJson(@NotNull JsonObject jo, long guildId, boolean overwrite) {
+        List<LegacyDictData> ret = new ArrayList<>();
 
         int version = JsonUtils.getInt(jo, "version", -1);
 
@@ -197,7 +201,7 @@ public class DictionaryManager implements ITTSRuntimeUse {
 
         if (jo.get("entry").isJsonObject()) {
             JsonObject entry = jo.getAsJsonObject("entry");
-            SaveDataManagerOld sdm = getSaveDataManager();
+            LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
 
             for (Map.Entry<String, JsonElement> en : entry.entrySet()) {
                 String target = en.getKey();
@@ -208,15 +212,15 @@ public class DictionaryManager implements ITTSRuntimeUse {
 
                 String read = en.getValue().getAsString();
 
-                DictData pre = sdm.getServerDictData(guildId, target);
+                LegacyDictData pre = legacySaveDataLayer.getServerDictData(guildId, target);
 
                 if (!overwrite && pre != null) {
                     continue;
                 }
 
-                sdm.addServerDictData(guildId, target, read);
+                legacySaveDataLayer.addServerDictData(guildId, target, read);
 
-                DictData ndata = Objects.requireNonNull(sdm.getServerDictData(guildId, target));
+                LegacyDictData ndata = Objects.requireNonNull(legacySaveDataLayer.getServerDictData(guildId, target));
 
                 if (!ndata.equals(pre)) {
                     ret.add(ndata);

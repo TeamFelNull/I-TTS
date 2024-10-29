@@ -1,4 +1,4 @@
-package dev.felnull.itts.core.savedata;
+package dev.felnull.itts.core.savedata.legacy;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -7,27 +7,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author MORIMORI0317
  */
-public interface ServerUserDataOld {
-
-    /**
-     * バージョン
-     */
-    int VERSION = 0;
-
-    /**
-     * 初期状態の音声タイプ
-     */
-    String INIT_VOICE_TYPE = null;
-
-    /**
-     * 初期状態で拒否されているかどうか
-     */
-    boolean INIT_DENY = false;
-
-    /**
-     * 初期状態のニックネーム
-     */
-    String INIT_NICK_NAME = null;
+public interface LegacyServerUserData {
 
     /**
      * 音声タイプを取得

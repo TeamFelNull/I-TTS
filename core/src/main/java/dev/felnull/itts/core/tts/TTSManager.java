@@ -1,9 +1,10 @@
 package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.savedata.BotStateDataOld;
-import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
-import dev.felnull.itts.core.savedata.ServerDataOld;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacyBotStateData;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerData;
 import dev.felnull.itts.core.tts.saidtext.FileUploadSaidText;
 import dev.felnull.itts.core.tts.saidtext.MessageSaidText;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
@@ -77,8 +78,9 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param textChannel テキストチャンネル
      */
     public void setReadAroundChannel(@NotNull Guild guild, @NotNull MessageChannel textChannel) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         long guildId = guild.getIdLong();
-        BotStateDataOld data = getSaveDataManager().getBotStateData(guildId);
+        LegacyBotStateData data = legacySaveDataLayer.getBotStateData(guildId);
         data.setReadAroundTextChannel(textChannel.getIdLong());
     }
 
@@ -89,6 +91,8 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param audioChannel 接続先オーディオチャンネル
      */
     public void connect(@NotNull Guild guild, @NotNull AudioChannel audioChannel) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
         long guildId = guild.getIdLong();
         long channelId = audioChannel.getIdLong();
 
@@ -101,8 +105,8 @@ public class TTSManager implements ITTSRuntimeUse {
             disconnect(guild);
         }
 
-        BotStateDataOld data = getSaveDataManager().getBotStateData(guildId);
-        ServerDataOld serverData = getSaveDataManager().getServerData(guildId);
+        LegacyBotStateData data = legacySaveDataLayer.getBotStateData(guildId);
+        LegacyServerData serverData = legacySaveDataLayer.getServerData(guildId);
         instances.put(guildId, new TTSInstance(guild, channelId, data.getReadAroundTextChannel(), serverData.isOverwriteAloud()));
         data.setConnectedAudioChannel(channelId);
     }
@@ -113,6 +117,8 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param guild サーバー
      */
     public void disconnect(@NotNull Guild guild) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
         long guildId = guild.getIdLong();
 
         TTSInstance instance = getTTSInstance(guildId);
@@ -123,7 +129,7 @@ public class TTSManager implements ITTSRuntimeUse {
         instance.dispose();
         instances.remove(guildId);
 
-        BotStateDataOld data = getSaveDataManager().getBotStateData(guildId);
+        LegacyBotStateData data = legacySaveDataLayer.getBotStateData(guildId);
         data.setConnectedAudioChannel(-1);
     }
 
@@ -168,8 +174,9 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param message        メッセージ
      */
     public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull Message message) {
-        SaveDataManagerOld sm = getSaveDataManager();
-        String ignoreRegex = sm.getServerData(guild.getIdLong()).getIgnoreRegex();
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
+        String ignoreRegex = legacySaveDataLayer.getServerData(guild.getIdLong()).getIgnoreRegex();
         if (ignoreRegex != null) {
             Pattern ignorePattern = Pattern.compile(ignoreRegex);
             if (ignorePattern.matcher(message.getContentDisplay()).matches()) {
@@ -206,6 +213,8 @@ public class TTSManager implements ITTSRuntimeUse {
      */
     public void sayGuildMemberText(@NotNull Guild guild, @NotNull MessageChannel messageChannel,
                                    @Nullable Member member, @NotNull Function<Voice, SaidText> saidTextFactory) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+
         if (!canSpeak(guild)) {
             return;
         }
@@ -229,8 +238,7 @@ public class TTSManager implements ITTSRuntimeUse {
             return;
         }
 
-        SaveDataManagerOld sm = getSaveDataManager();
-        if (sm.getServerData(guildId).isNeedJoin()) {
+        if (legacySaveDataLayer.getServerData(guildId).isNeedJoin()) {
             GuildVoiceState vs = member.getVoiceState();
             if (vs == null) {
                 return;
@@ -313,8 +321,8 @@ public class TTSManager implements ITTSRuntimeUse {
             return;
         }
 
-        SaveDataManagerOld sm = getSaveDataManager();
-        if (!sm.getServerData(guildId).isNotifyMove()) {
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        if (!legacySaveDataLayer.getServerData(guildId).isNotifyMove()) {
             return;
         }
 

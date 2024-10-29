@@ -1,7 +1,9 @@
 package dev.felnull.itts.core.dict;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.savedata.DictData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -34,8 +36,9 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTS
 
     @Override
     public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
-        return getSaveDataManager().getAllGlobalDictData().stream()
-                .collect(Collectors.toMap(DictData::getTarget, DictData::getRead));
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        return legacySaveDataLayer.getAllGlobalDictData().stream()
+                .collect(Collectors.toMap(LegacyDictData::getTarget, LegacyDictData::getRead));
     }
 
     @Override
@@ -45,7 +48,8 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTS
 
     @Override
     protected @NotNull Map<Pattern, Function<String, String>> getReplaces(long guildId) {
-        return getSaveDataManager().getAllGlobalDictData().stream()
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        return legacySaveDataLayer.getAllGlobalDictData().stream()
                 .map(n -> Pair.of(Pattern.compile(n.getTarget()), n.getRead()))
                 .collect(Collectors.toMap(Pair::getLeft, patternStringPair -> n -> patternStringPair.getRight()));
     }

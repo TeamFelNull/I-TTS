@@ -1,35 +1,36 @@
-package dev.felnull.itts.core.oldsavedata;
+package dev.felnull.itts.core.savedata.legacy;
 
-import dev.felnull.itts.core.savedata.*;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.impl.LegacySaveDataLayerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * セーブデータへのアクセス
- *
- * @author MORIMORI0317
+ * 以前のセーブデータシステムを利用するための互換レイヤー
  */
-public interface SaveDataAccess {
+public interface LegacySaveDataLayer {
 
     /**
-     * 初期化
+     * インスタンス作成
      *
-     * @return 初期化に成功したかどうか
+     * @param saveDataManager セーブデータマネージャー
+     * @return 作成されたインスタンス
      */
-    boolean init();
+    static LegacySaveDataLayer create(SaveDataManager saveDataManager) {
+        return new LegacySaveDataLayerImpl(saveDataManager);
+    }
 
     /**
-     * サーバーデータを取得
+     * 全てのサーバーデータを取得
      *
      * @param guildId サーバーID
      * @return サーバーデータ
      */
     @NotNull
-    ServerDataOld getServerData(long guildId);
+    LegacyServerData getServerData(long guildId);
 
     /**
      * サーバーごとのユーザデータを取得
@@ -39,7 +40,7 @@ public interface SaveDataAccess {
      * @return サーバーごとのユーザデータ
      */
     @NotNull
-    ServerUserDataOld getServerUserData(long guildId, long userId);
+    LegacyServerUserData getServerUserData(long guildId, long userId);
 
     /**
      * 辞書使用データを取得
@@ -49,25 +50,16 @@ public interface SaveDataAccess {
      * @return 辞書使用データ
      */
     @NotNull
-    DictUseDataOld getDictUseData(long guildId, @NotNull String dictId);
+    LegacyDictUseData getDictUseData(long guildId, @NotNull String dictId);
 
     /**
-     * ボットの状態データを取得
+     * BOT状態データを取得
      *
      * @param guildId サーバーID
-     * @return ボットの状態データ
+     * @return BOT状態データ
      */
     @NotNull
-    BotStateDataOld getBotStateData(long guildId);
-
-    /**
-     * 全てのBOT状態データを取得
-     *
-     * @return 全てのBOTクライアントIDと状態データを含むマップ
-     */
-    @NotNull
-    @Unmodifiable
-    Map<Long, BotStateDataOld> getAllBotStateData();
+    LegacyBotStateData getBotStateData(long guildId);
 
     /**
      * 全てのサーバー辞書データ
@@ -77,7 +69,7 @@ public interface SaveDataAccess {
      */
     @NotNull
     @Unmodifiable
-    List<DictData> getAllServerDictData(long guildId);
+    List<LegacyDictData> getAllServerDictData(long guildId);
 
     /**
      * サーバー辞書データを取得
@@ -87,7 +79,7 @@ public interface SaveDataAccess {
      * @return 辞書データ
      */
     @Nullable
-    DictData getServerDictData(long guildId, @NotNull String target);
+    LegacyDictData getServerDictData(long guildId, @NotNull String target);
 
     /**
      * サーバー辞書データを追加
@@ -113,31 +105,7 @@ public interface SaveDataAccess {
      */
     @NotNull
     @Unmodifiable
-    List<DictData> getAllGlobalDictData();
-
-    /**
-     * グローバル辞書データを取得
-     *
-     * @param target 対象の文字列
-     * @return グローバル辞書データ
-     */
-    @Nullable
-    DictData getGlobalDictData(@NotNull String target);
-
-    /**
-     * グローバル辞書データを追加
-     *
-     * @param target 対象の文字列
-     * @param read   読み
-     */
-    void addGlobalDictData(@NotNull String target, @NotNull String read);
-
-    /**
-     * グローバル辞書データを削除
-     *
-     * @param target 対象の文字列
-     */
-    void removeGlobalDictData(@NotNull String target);
+    List<LegacyDictData> getAllGlobalDictData();
 
     /**
      * 全ての読み上げ拒否ユーザを取得

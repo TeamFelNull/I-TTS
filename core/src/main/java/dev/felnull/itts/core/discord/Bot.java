@@ -3,25 +3,16 @@ package dev.felnull.itts.core.discord;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
-import dev.felnull.itts.core.savedata.BotStateDataOld;
-import dev.felnull.itts.core.tts.TTSInstance;
-import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
-import dev.felnull.itts.core.voice.VoiceType;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -73,11 +64,12 @@ public class Bot implements ITTSRuntimeUse {
     }
 
     private void reconnect() {
-        CompletableFuture.runAsync(() -> {
-            Map<Long, BotStateDataOld> allData = getSaveDataManager().getAllBotStateData();
+        /*CompletableFuture.runAsync(() -> {
+            long botId = ITTSRuntime.getInstance().getBot().getJDA().getSelfUser().getIdLong();
+            Map<Long, TTSChannelPair> connectedChannels = SaveDataManager.getInstance().getRepository().getAllConnectedChannel(botId);
             long selfId = getJDA().getSelfUser().getIdLong();
 
-            allData.forEach((guildId, data) -> {
+            connectedChannels.forEach((guildId, data) -> {
                 Guild guild = getJDA().getGuildById(guildId);
 
                 if (guild != null && data.getConnectedAudioChannel() >= 0 && data.getReadAroundTextChannel() >= 0) {
@@ -127,7 +119,7 @@ public class Bot implements ITTSRuntimeUse {
                 }
             });
 
-        }, getAsyncExecutor());
+        }, getAsyncExecutor());*/
     }
 
     private void registeringCommands() {

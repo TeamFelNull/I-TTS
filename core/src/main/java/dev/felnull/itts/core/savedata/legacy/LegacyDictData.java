@@ -1,4 +1,4 @@
-package dev.felnull.itts.core.savedata;
+package dev.felnull.itts.core.savedata.legacy;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -7,12 +7,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author MORIMORI0317
  */
-public interface DictData {
-    /**
-     * バージョン
-     */
-    int VERSION = 0;
-
+public interface LegacyDictData {
     /**
      * 置き換え対象の文字列の文字列を取得
      *

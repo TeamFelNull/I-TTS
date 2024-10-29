@@ -1,26 +1,11 @@
-package dev.felnull.itts.core.savedata;
+package dev.felnull.itts.core.savedata.legacy;
 
 /**
  * BOTの状態データ
  *
  * @author MORIMORI0317
  */
-public interface BotStateDataOld {
-
-    /**
-     * バージョン
-     */
-    int VERSION = 0;
-
-    /**
-     * 初期接続オーディオチャンネル
-     */
-    long INIT_CONNECTED_AUDIO_CHANNEL = -1;
-
-    /**
-     * 初期読み上げチャンネル
-     */
-    long INIT_READ_AROUND_TEXT_CHANNEL = -1;
+public interface LegacyBotStateData {
 
     /**
      * 接続しているオーディオチャンネルを取得
@@ -49,4 +34,5 @@ public interface BotStateDataOld {
      * @param readAroundTextChannel 読み上げチャンネルのサーバーID
      */
     void setReadAroundTextChannel(long readAroundTextChannel);
+
 }

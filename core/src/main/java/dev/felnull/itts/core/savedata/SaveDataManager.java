@@ -3,6 +3,7 @@ package dev.felnull.itts.core.savedata;
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.savedata.repository.RepoErrorListener;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,11 @@ public class SaveDataManager {
      * レポジトリの再作成を行うエラー量
      */
     private static final int REPO_REGEN_NUM_OF_ERROR = 5;
+
+    /**
+     * レガシーデータ互換レイヤー
+     */
+    private final LegacySaveDataLayer legacySaveDataLayer = LegacySaveDataLayer.create(this);
 
     /**
      * レポジトリ
@@ -89,6 +95,11 @@ public class SaveDataManager {
 
     private DAO createDAO() {
         return DAOFactory.getInstance().createSQLiteDAO(SQLITE_DB_FILE);
+    }
+
+
+    public LegacySaveDataLayer getLegacySaveDataLayer() {
+        return legacySaveDataLayer;
     }
 
     /**

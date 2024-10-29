@@ -1,8 +1,9 @@
 package dev.felnull.itts.core.voice;
 
 import dev.felnull.itts.core.ITTSBaseManager;
-import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
-import dev.felnull.itts.core.savedata.ServerUserDataOld;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +139,8 @@ public class VoiceManager implements ITTSBaseManager {
      */
     @Nullable
     public VoiceType getDefaultVoiceType(long guildId) {
-        String defaultVt = getSaveDataManager().getServerData(guildId).getDefaultVoiceType();
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        String defaultVt = legacySaveDataLayer.getServerData(guildId).getDefaultVoiceType();
 
         if (defaultVt == null) {
             return getDefaultVoiceType();
@@ -156,8 +158,8 @@ public class VoiceManager implements ITTSBaseManager {
      */
     @Nullable
     public VoiceType getVoiceType(long guildId, long userId) {
-        SaveDataManagerOld sdm = getSaveDataManager();
-        ServerUserDataOld serverUserData = sdm.getServerUserData(guildId, userId);
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerUserData serverUserData = legacySaveDataLayer.getServerUserData(guildId, userId);
         Optional<VoiceType> vt = getVoiceType(serverUserData.getVoiceType());
 
         return vt.orElseGet(() -> getDefaultVoiceType(guildId));

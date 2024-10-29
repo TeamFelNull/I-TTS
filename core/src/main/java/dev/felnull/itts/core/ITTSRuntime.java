@@ -6,7 +6,6 @@ import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
-import dev.felnull.itts.core.oldsavedata.SaveDataManagerOld;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
@@ -116,11 +115,6 @@ public class ITTSRuntime {
     private final CacheManager cacheManager;
 
     /**
-     * セーブデータマネージャー
-     */
-    private final SaveDataManagerOld saveDataManager;
-
-    /**
      * DiscordのBOT関係
      */
     private final Bot bot;
@@ -152,10 +146,9 @@ public class ITTSRuntime {
 
         this.bot = new Bot();
         this.configManager = new ConfigManager(runtimeContext.getConfigContext());
-        this.saveDataManager = new SaveDataManagerOld(runtimeContext.getSaveDataAccess());
         this.cacheManager = new CacheManager(runtimeContext.getGlobalCacheAccessFactory());
 
-        this.managers = ImmutableList.of(configManager, saveDataManager, voiceManager);
+        this.managers = ImmutableList.of(configManager, voiceManager);
     }
 
     /**
@@ -258,10 +251,6 @@ public class ITTSRuntime {
 
     public VoiceAudioManager getVoiceAudioManager() {
         return voiceAudioManager;
-    }
-
-    public SaveDataManagerOld getSaveDataManager() {
-        return saveDataManager;
     }
 
     public VoiceManager getVoiceManager() {

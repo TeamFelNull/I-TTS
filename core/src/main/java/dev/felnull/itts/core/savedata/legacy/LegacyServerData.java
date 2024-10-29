@@ -1,6 +1,5 @@
-package dev.felnull.itts.core.savedata;
+package dev.felnull.itts.core.savedata.legacy;
 
-import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -8,52 +7,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author MORIMORI0317
  */
-public interface ServerDataOld {
-
-    /**
-     * バージョン
-     */
-    int VERSION = 0;
-
-    /**
-     * 初期状態のデフォルト音声タイプ
-     */
-    String INIT_DEFAULT_VOICE_TYPE = null;
-
-    /**
-     * 初期状態で無視する正規表現
-     */
-    String INIT_IGNORE_REGEX = "(!|/|\\\\$|`).*";
-
-    /**
-     * 初期状態で参加時のみ読み上げを行うかどうか
-     */
-    boolean INIT_NEED_JOIN = false;
-
-    /**
-     * 初期状態で読み上げを上書きするか
-     */
-    boolean INIT_OVERWRITE_ALOUD = false;
-
-    /**
-     * 初期状態で参加時に読み上げるかどうか
-     */
-    boolean INIT_NOTIFY_MOVE = true;
-
-    /**
-     * 初期状態の読み上げ数
-     */
-    int INIT_READ_LIMIT = 200;
-
-    /**
-     * 初期状態の名前読み上げ数
-     */
-    int INIT_NAME_READ_LIMIT = 20;
-
-    /**
-     * 初期状態の自動切断モード
-     */
-    AutoDisconnectMode INIT_AUTO_DISCONNECT_MODE = AutoDisconnectMode.OFF;
+public interface LegacyServerData {
 
     /**
      * デフォルトの音声タイプを取得
@@ -154,19 +108,5 @@ public interface ServerDataOld {
      * @param nameReadLimit 名前の最大読み上げ数
      */
     void setNameReadLimit(int nameReadLimit);
-
-    /**
-     * 自動切断モードを取得
-     *
-     * @return 自動切断モード
-     */
-    AutoDisconnectMode getAutoDisconnectMode();
-
-    /**
-     * 自動切断モードを変更
-     *
-     * @param autoDisconnectMode 自動切断モード
-     */
-    void setAutoDisconnectMode(AutoDisconnectMode autoDisconnectMode);
 
 }
