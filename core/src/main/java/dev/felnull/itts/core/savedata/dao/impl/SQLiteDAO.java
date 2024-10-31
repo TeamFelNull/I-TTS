@@ -2053,6 +2053,105 @@ public class SQLiteDAO extends BaseDAO {
 
             return retBuilder.build();
         }
+
+        @Override
+        public OptionalInt selectSpeakAudioChannel(Connection connection, int recordId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select speak_audio_channel
+                     from bot_state_data
+                     where id = ?
+                     limit 1
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, recordId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        Integer channelKey = (Integer) rs.getObject("speak_audio_channel");
+                        return channelKey != null ? OptionalInt.of(channelKey) : OptionalInt.empty();
+                    }
+                }
+            }
+
+            throw new IllegalStateException("Record not found");
+        }
+
+        @Override
+        public void updateSpeakAudioChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    update bot_state_data
+                    set speak_audio_channel = ?
+                    where id = ?
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                if (channelKeyId != null) {
+                    statement.setLong(1, channelKeyId);
+                } else {
+                    statement.setNull(1, Types.INTEGER);
+                }
+
+                statement.setLong(2, recordId);
+
+                if (statement.executeUpdate() == 0) {
+                    throw new IllegalStateException("No record update");
+                }
+            }
+        }
+
+        @Override
+        public OptionalInt selectReadAroundTextChannel(Connection connection, int recordId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select read_text_channel
+                     from bot_state_data
+                     where id = ?
+                     limit 1
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, recordId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        Integer channelKey = (Integer) rs.getObject("read_text_channel");
+                        return channelKey != null ? OptionalInt.of(channelKey) : OptionalInt.empty();
+                    }
+                }
+            }
+
+            throw new IllegalStateException("Record not found");
+        }
+
+        @Override
+        public void updateReadAroundTextChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    update bot_state_data
+                    set read_text_channel = ?
+                    where id = ?
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                if (channelKeyId != null) {
+                    statement.setLong(1, channelKeyId);
+                } else {
+                    statement.setNull(1, Types.INTEGER);
+                }
+
+                statement.setLong(2, recordId);
+
+                if (statement.executeUpdate() == 0) {
+                    throw new IllegalStateException("No record update");
+                }
+            }
+        }
+
     }
 
     /**

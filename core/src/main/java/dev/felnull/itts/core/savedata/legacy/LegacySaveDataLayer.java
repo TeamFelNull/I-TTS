@@ -53,15 +53,6 @@ public interface LegacySaveDataLayer {
     LegacyDictUseData getDictUseData(long guildId, @NotNull String dictId);
 
     /**
-     * BOT状態データを取得
-     *
-     * @param guildId サーバーID
-     * @return BOT状態データ
-     */
-    @NotNull
-    LegacyBotStateData getBotStateData(long guildId);
-
-    /**
      * 全てのサーバー辞書データ
      *
      * @param guildId サーバーID

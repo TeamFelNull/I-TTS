@@ -1,7 +1,6 @@
 package dev.felnull.itts.core.savedata.legacy.impl;
 
 import com.google.common.collect.ImmutableList;
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.dict.CustomDictionaryEntry;
 import dev.felnull.itts.core.dict.ReplaceType;
 import dev.felnull.itts.core.savedata.SaveDataManager;
@@ -45,11 +44,6 @@ public final class LegacySaveDataLayerImpl implements LegacySaveDataLayer {
     @Override
     public @NotNull LegacyDictUseData getDictUseData(long guildId, @NotNull String dictId) {
         return new LegacyDictUseDataImpl(saveDataManager, guildId, dictId);
-    }
-
-    @Override
-    public @NotNull LegacyBotStateData getBotStateData(long guildId) {
-        return new LegacyBotStateDataImpl(saveDataManager, guildId, ITTSRuntime.getInstance().getBot().getJDA().getSelfUser().getIdLong());
     }
 
     @Override

@@ -614,7 +614,7 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
                 dao.botStateDataTable().insertRecordIfNotExists(connection, serverBotKey, initRecord);
 
                 Optional<IdRecordPair<BotStateDataRecord>> preIdAndRecord = dao.botStateDataTable().selectRecordByKey(connection, serverBotKey);
-                int tableId = preIdAndRecord.orElseThrow().getId();
+                int recordId = preIdAndRecord.orElseThrow().getId();
 
                 TestUtils.testForEach(botStateDataTableTestRecordData(connection), record -> {
                     // 単体でレコードの値を更新
@@ -630,8 +630,31 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
                         reconnectConnectedChannel = new TTSChannelKeyPair(record.reconnectSpeakAudioChannelKey(), record.reconnectReadTextChannelKey());
                     }
 
-                    dao.botStateDataTable().updateConnectedChannelKeyPair(connection, tableId, connectedChannel);
-                    dao.botStateDataTable().updateReconnectChannelKeyPair(connection, tableId, reconnectConnectedChannel);
+                    dao.botStateDataTable().updateConnectedChannelKeyPair(connection, recordId, connectedChannel);
+                    dao.botStateDataTable().updateReconnectChannelKeyPair(connection, recordId, reconnectConnectedChannel);
+
+                    botStateDataTableTestSelectCheck(connection, serverBotKey, record);
+
+                    // 単体で更新
+                    if (connectedChannel != null) {
+                        dao.botStateDataTable().updateConnectedChannelKeyPair(connection, recordId,
+                                new TTSChannelKeyPair(
+                                        insertAndSelectKeyId(connection, dao.channelKeyTable(), dao.channelKeyTable().selectKey(connection, connectedChannel.speakAudioChannelKey()).orElseThrow() + 1),
+                                        insertAndSelectKeyId(connection, dao.channelKeyTable(), dao.channelKeyTable().selectKey(connection, connectedChannel.readTextChannelKey()).orElseThrow() + 1)
+                                ));
+
+                        dao.botStateDataTable().updateSpeakAudioChannel(connection, recordId, connectedChannel.speakAudioChannelKey());
+                        dao.botStateDataTable().updateReadAroundTextChannel(connection, recordId, connectedChannel.readTextChannelKey());
+                    } else {
+                        dao.botStateDataTable().updateConnectedChannelKeyPair(connection, recordId,
+                                new TTSChannelKeyPair(
+                                        insertAndSelectKeyId(connection, dao.channelKeyTable(), 10L),
+                                        insertAndSelectKeyId(connection, dao.channelKeyTable(), 20L)
+                                ));
+
+                        dao.botStateDataTable().updateSpeakAudioChannel(connection, recordId, null);
+                        dao.botStateDataTable().updateReadAroundTextChannel(connection, recordId, null);
+                    }
 
                     botStateDataTableTestSelectCheck(connection, serverBotKey, record);
                 });
@@ -701,10 +724,10 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
         assertTrue(retIdAndRecord.isPresent());
         assertEquals(expectedRecord, retIdAndRecord.get().getRecord());
 
-        int tableId = retIdAndRecord.get().getId();
+        int recordId = retIdAndRecord.get().getId();
 
         // テーブルIDから取得して確認
-        Optional<BotStateDataRecord> retRecordById = dao.botStateDataTable().selectRecordById(connection, tableId);
+        Optional<BotStateDataRecord> retRecordById = dao.botStateDataTable().selectRecordById(connection, recordId);
         assertTrue(retRecordById.isPresent());
         assertEquals(expectedRecord, retRecordById.get());
 
@@ -721,8 +744,14 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
             reconnectConnectedChannel = new TTSChannelKeyPair(expectedRecord.reconnectSpeakAudioChannelKey(), expectedRecord.reconnectReadTextChannelKey());
         }
 
-        assertEquals(connectedChannel, dao.botStateDataTable().selectConnectedChannelKeyPair(connection, tableId).orElse(null));
-        assertEquals(reconnectConnectedChannel, dao.botStateDataTable().selectReconnectChannelKeyPair(connection, tableId).orElse(null));
+        assertEquals(connectedChannel, dao.botStateDataTable().selectConnectedChannelKeyPair(connection, recordId).orElse(null));
+        assertEquals(reconnectConnectedChannel, dao.botStateDataTable().selectReconnectChannelKeyPair(connection, recordId).orElse(null));
+
+        // 単体で取得
+        if (connectedChannel != null) {
+            assertEquals(connectedChannel.speakAudioChannelKey(), dao.botStateDataTable().selectSpeakAudioChannel(connection, recordId).orElseThrow());
+            assertEquals(connectedChannel.readTextChannelKey(), dao.botStateDataTable().selectReadAroundTextChannel(connection, recordId).orElseThrow());
+        }
     }
 
     @Test

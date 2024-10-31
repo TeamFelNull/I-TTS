@@ -8,8 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BotStateDataTest extends RepoBaseTest {
 
@@ -41,13 +40,33 @@ public class BotStateDataTest extends RepoBaseTest {
     }
 
     private void checkGetAndSet(BotStateData botStateData, TTSChannelPair connectedChannel, TTSChannelPair reconnectChannel) {
-        // データを変更
-        botStateData.setConnectedChannel(connectedChannel);
-        botStateData.setReconnectChannel(reconnectChannel);
+        // 単体
+        if (connectedChannel != null) {
+            botStateData.setSpeakAudioChannel(connectedChannel.speakAudioChannel());
+            botStateData.setReadAroundTextChannel(connectedChannel.readTextChannel());
 
-        // データを取得
-        assertEquals(connectedChannel, botStateData.getConnectedChannel());
-        assertEquals(reconnectChannel, botStateData.getReconnectChannel());
+            assertEquals(connectedChannel, botStateData.getConnectedChannelPair());
+            assertEquals(connectedChannel.speakAudioChannel(), botStateData.getSpeakAudioChannel());
+            assertEquals(connectedChannel.readTextChannel(), botStateData.getReadAroundTextChannel());
+
+            botStateData.setSpeakAudioChannel(connectedChannel.speakAudioChannel() + 1);
+            botStateData.setReadAroundTextChannel(connectedChannel.readTextChannel() + 1);
+        }
+
+        // ペア
+        botStateData.setConnectedChannelPair(connectedChannel);
+        botStateData.setReconnectChannelPair(reconnectChannel);
+
+        assertEquals(connectedChannel, botStateData.getConnectedChannelPair());
+        assertEquals(reconnectChannel, botStateData.getReconnectChannelPair());
+
+        if (connectedChannel != null) {
+            assertEquals(connectedChannel.speakAudioChannel(), botStateData.getSpeakAudioChannel());
+            assertEquals(connectedChannel.readTextChannel(), botStateData.getReadAroundTextChannel());
+        } else {
+            assertNull(botStateData.getSpeakAudioChannel());
+            assertNull(botStateData.getReadAroundTextChannel());
+        }
     }
 
     private static Stream<Arguments> botStateData() {

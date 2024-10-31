@@ -7,10 +7,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalInt;
+import java.util.*;
 
 /**
  * データベースアクセス用クラス
@@ -617,6 +614,46 @@ public interface DAO {
          * @throws SQLException エラー
          */
         Map<Long, TTSChannelPair> selectAllConnectedChannelPairByBotKeyId(Connection connection, int botKeyId) throws SQLException;
+
+        /**
+         * 接続中のオーディオチャンネルキーIDを取得
+         *
+         * @param connection コネクション
+         * @param recordId   レコードID
+         * @return チャンネルキーID
+         * @throws SQLException エラー
+         */
+        OptionalInt selectSpeakAudioChannel(Connection connection, int recordId) throws SQLException;
+
+        /**
+         * 接続中のオーディオチャンネルを更新
+         *
+         * @param connection   コネクション
+         * @param recordId     レコードID
+         * @param channelKeyId チャンネルキーID
+         * @throws SQLException エラー
+         */
+        void updateSpeakAudioChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException;
+
+        /**
+         * 読み上げるテキストチャンネルを取得
+         *
+         * @param connection コネクション
+         * @param recordId   レコードID
+         * @return チャンネルキーID
+         * @throws SQLException エラー
+         */
+        OptionalInt selectReadAroundTextChannel(Connection connection, int recordId) throws SQLException;
+
+        /**
+         * 読み上げるテキストチャンネルを更新
+         *
+         * @param connection   コネクション
+         * @param recordId     レコードID
+         * @param channelKeyId チャンネルキーID
+         * @throws SQLException エラー
+         */
+        void updateReadAroundTextChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException;
     }
 
     /**

@@ -2,9 +2,9 @@ package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.SaveDataManager;
-import dev.felnull.itts.core.savedata.legacy.LegacyBotStateData;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
-import dev.felnull.itts.core.savedata.legacy.LegacyServerData;
+import dev.felnull.itts.core.savedata.repository.BotStateData;
+import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.tts.saidtext.FileUploadSaidText;
 import dev.felnull.itts.core.tts.saidtext.MessageSaidText;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
@@ -78,10 +78,11 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param textChannel テキストチャンネル
      */
     public void setReadAroundChannel(@NotNull Guild guild, @NotNull MessageChannel textChannel) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         long guildId = guild.getIdLong();
-        LegacyBotStateData data = legacySaveDataLayer.getBotStateData(guildId);
-        data.setReadAroundTextChannel(textChannel.getIdLong());
+
+        DataRepository dataRepository = SaveDataManager.getInstance().getRepository();
+        BotStateData botStateData = dataRepository.getBotStateData(guildId, getBot().getBotId());
+        botStateData.setReadAroundTextChannel(textChannel.getIdLong());
     }
 
     /**
@@ -91,8 +92,6 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param audioChannel 接続先オーディオチャンネル
      */
     public void connect(@NotNull Guild guild, @NotNull AudioChannel audioChannel) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-
         long guildId = guild.getIdLong();
         long channelId = audioChannel.getIdLong();
 
@@ -105,10 +104,16 @@ public class TTSManager implements ITTSRuntimeUse {
             disconnect(guild);
         }
 
-        LegacyBotStateData data = legacySaveDataLayer.getBotStateData(guildId);
-        LegacyServerData serverData = legacySaveDataLayer.getServerData(guildId);
-        instances.put(guildId, new TTSInstance(guild, channelId, data.getReadAroundTextChannel(), serverData.isOverwriteAloud()));
-        data.setConnectedAudioChannel(channelId);
+        DataRepository dataRepository = SaveDataManager.getInstance().getRepository();
+        BotStateData botStateData = dataRepository.getBotStateData(guildId, getBot().getBotId());
+        Long readTextChannel = botStateData.getReadAroundTextChannel();
+        boolean overwriteAloud = dataRepository.getServerData(guildId).isOverwriteAloud();
+
+        if (readTextChannel != null) {
+            instances.put(guildId, new TTSInstance(guild, channelId, readTextChannel, overwriteAloud));
+        }
+
+        botStateData.setSpeakAudioChannel(channelId);
     }
 
     /**
@@ -117,8 +122,6 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param guild サーバー
      */
     public void disconnect(@NotNull Guild guild) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-
         long guildId = guild.getIdLong();
 
         TTSInstance instance = getTTSInstance(guildId);
@@ -129,8 +132,9 @@ public class TTSManager implements ITTSRuntimeUse {
         instance.dispose();
         instances.remove(guildId);
 
-        LegacyBotStateData data = legacySaveDataLayer.getBotStateData(guildId);
-        data.setConnectedAudioChannel(-1);
+        DataRepository dataRepository = SaveDataManager.getInstance().getRepository();
+        BotStateData botStateData = dataRepository.getBotStateData(guildId, getBot().getBotId());
+        botStateData.setSpeakAudioChannel(null);
     }
 
     /**

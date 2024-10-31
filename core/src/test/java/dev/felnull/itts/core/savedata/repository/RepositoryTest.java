@@ -52,10 +52,10 @@ public class RepositoryTest extends RepoBaseTest {
         BotStateData botStateData3 = repo.getBotStateData(114L, 810L);
         BotStateData botStateData4 = repo.getBotStateData(110L, 810L);
 
-        botStateData1.setConnectedChannel(new TTSChannelPair(10L, 20L));
-        botStateData2.setConnectedChannel(new TTSChannelPair(30L, 40L));
-        botStateData3.setConnectedChannel(new TTSChannelPair(50L, 60L));
-        botStateData4.setConnectedChannel(null);
+        botStateData1.setConnectedChannelPair(new TTSChannelPair(10L, 20L));
+        botStateData2.setConnectedChannelPair(new TTSChannelPair(30L, 40L));
+        botStateData3.setConnectedChannelPair(new TTSChannelPair(50L, 60L));
+        botStateData4.setConnectedChannelPair(null);
 
         Map<Long, TTSChannelPair> ret1 = repo.getAllConnectedChannel(514L);
         Map<Long, TTSChannelPair> ret2 = repo.getAllConnectedChannel(810L);

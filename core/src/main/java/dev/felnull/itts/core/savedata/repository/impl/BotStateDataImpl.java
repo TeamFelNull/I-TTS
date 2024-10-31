@@ -8,6 +8,7 @@ import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * BOTの状態データの実装
@@ -41,7 +42,7 @@ class BotStateDataImpl extends RecordData<ServerBotKey, BotStateDataRecord> impl
     }
 
     @Override
-    public @Nullable TTSChannelPair getConnectedChannel() {
+    public @Nullable TTSChannelPair getConnectedChannelPair() {
         return sqlProcReturnable(connection -> {
             Optional<TTSChannelKeyPair> connectedChannel = dao().botStateDataTable().selectConnectedChannelKeyPair(connection, recordId());
 
@@ -49,15 +50,19 @@ class BotStateDataImpl extends RecordData<ServerBotKey, BotStateDataRecord> impl
                 return null;
             }
 
-            long speakAudioChannel = repository.getChannelKeyData().getKey(connectedChannel.get().speakAudioChannelKey());
-            long readTextChannel = repository.getChannelKeyData().getKey(connectedChannel.get().readTextChannelKey());
+            Long speakAudioChannel = repository.getChannelKeyData().getKey(connectedChannel.get().speakAudioChannelKey());
+            Long readTextChannel = repository.getChannelKeyData().getKey(connectedChannel.get().readTextChannelKey());
 
-            return new TTSChannelPair(speakAudioChannel, readTextChannel);
+            if (speakAudioChannel != null && readTextChannel != null) {
+                return new TTSChannelPair(speakAudioChannel, readTextChannel);
+            }
+
+            return null;
         });
     }
 
     @Override
-    public void setConnectedChannel(@Nullable TTSChannelPair connectedChannel) {
+    public void setConnectedChannelPair(@Nullable TTSChannelPair connectedChannel) {
         sqlProc(connection -> {
             TTSChannelKeyPair ttsChannelKeyPair;
             if (connectedChannel != null) {
@@ -72,7 +77,7 @@ class BotStateDataImpl extends RecordData<ServerBotKey, BotStateDataRecord> impl
     }
 
     @Override
-    public @Nullable TTSChannelPair getReconnectChannel() {
+    public @Nullable TTSChannelPair getReconnectChannelPair() {
         return sqlProcReturnable(connection -> {
             Optional<TTSChannelKeyPair> reconnectChannel = dao().botStateDataTable().selectReconnectChannelKeyPair(connection, recordId());
 
@@ -80,15 +85,19 @@ class BotStateDataImpl extends RecordData<ServerBotKey, BotStateDataRecord> impl
                 return null;
             }
 
-            long speakAudioChannel = repository.getChannelKeyData().getKey(reconnectChannel.get().speakAudioChannelKey());
-            long readTextChannel = repository.getChannelKeyData().getKey(reconnectChannel.get().readTextChannelKey());
+            Long speakAudioChannel = repository.getChannelKeyData().getKey(reconnectChannel.get().speakAudioChannelKey());
+            Long readTextChannel = repository.getChannelKeyData().getKey(reconnectChannel.get().readTextChannelKey());
 
-            return new TTSChannelPair(speakAudioChannel, readTextChannel);
+            if (speakAudioChannel != null && readTextChannel != null) {
+                return new TTSChannelPair(speakAudioChannel, readTextChannel);
+            }
+
+            return null;
         });
     }
 
     @Override
-    public void setReconnectChannel(@Nullable TTSChannelPair reconnectChannel) {
+    public void setReconnectChannelPair(@Nullable TTSChannelPair reconnectChannel) {
         sqlProc(connection -> {
             TTSChannelKeyPair ttsChannelKeyPair;
             if (reconnectChannel != null) {
@@ -99,6 +108,46 @@ class BotStateDataImpl extends RecordData<ServerBotKey, BotStateDataRecord> impl
                 ttsChannelKeyPair = null;
             }
             dao().botStateDataTable().updateReconnectChannelKeyPair(connection, recordId(), ttsChannelKeyPair);
+        });
+    }
+
+    @Override
+    public @Nullable Long getSpeakAudioChannel() {
+        return sqlProcReturnable(connection -> {
+            OptionalInt channelKeyId = dao().botStateDataTable().selectSpeakAudioChannel(connection, recordId());
+            if (channelKeyId.isPresent()) {
+                return repository.getChannelKeyData().getKey(channelKeyId.getAsInt());
+            } else {
+                return null;
+            }
+        });
+    }
+
+    @Override
+    public void setSpeakAudioChannel(@Nullable Long channelId) {
+        sqlProc(connection -> {
+            OptionalInt channelKey = repository.getChannelKeyData().getIdNullable(channelId);
+            dao().botStateDataTable().updateSpeakAudioChannel(connection, recordId(), channelKey.isPresent() ? channelKey.getAsInt() : null);
+        });
+    }
+
+    @Override
+    public @Nullable Long getReadAroundTextChannel() {
+        return sqlProcReturnable(connection -> {
+            OptionalInt channelKeyId = dao().botStateDataTable().selectReadAroundTextChannel(connection, recordId());
+            if (channelKeyId.isPresent()) {
+                return repository.getChannelKeyData().getKey(channelKeyId.getAsInt());
+            } else {
+                return null;
+            }
+        });
+    }
+
+    @Override
+    public void setReadAroundTextChannel(@Nullable Long channelId) {
+        sqlProc(connection -> {
+            OptionalInt channelKey = repository.getChannelKeyData().getIdNullable(channelId);
+            dao().botStateDataTable().updateReadAroundTextChannel(connection, recordId(), channelKey.isPresent() ? channelKey.getAsInt() : null);
         });
     }
 }

@@ -70,7 +70,13 @@ final class KeyData<T> extends SaveDataBase {
         }
     }
 
+    @Nullable
     public T getKey(int keyId) {
+
+        if (keyId == 0) {
+            return null;
+        }
+
         return keyCache.getUnchecked(keyId);
     }
 

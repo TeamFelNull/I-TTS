@@ -14,14 +14,14 @@ public interface BotStateData {
      * @return 接続されているチャンネルのペア
      */
     @Nullable
-    TTSChannelPair getConnectedChannel();
+    TTSChannelPair getConnectedChannelPair();
 
     /**
      * 接続されているチャンネルを更新する
      *
      * @param connectedChannel 接続されているチャンネルのペア
      */
-    void setConnectedChannel(@Nullable TTSChannelPair connectedChannel);
+    void setConnectedChannelPair(@Nullable TTSChannelPair connectedChannel);
 
     /**
      * 再接続されるチェンネルを取得する
@@ -29,12 +29,44 @@ public interface BotStateData {
      * @return 再接続されるチャンネルのペア
      */
     @Nullable
-    TTSChannelPair getReconnectChannel();
+    TTSChannelPair getReconnectChannelPair();
 
     /**
      * 再接続されるチェンネルを更新する
      *
      * @param reconnectChannel 再接続されるチャンネルのペア
      */
-    void setReconnectChannel(@Nullable TTSChannelPair reconnectChannel);
+    void setReconnectChannelPair(@Nullable TTSChannelPair reconnectChannel);
+
+    /**
+     * 接続中のオーディオチャンネルを取得
+     *
+     * @return チャンネルID
+     */
+    @Nullable
+    Long getSpeakAudioChannel();
+
+    /**
+     * 接続中のオーディオチャンネルを設定
+     *
+     * @param channelId チャンネルID
+     */
+    void setSpeakAudioChannel(@Nullable Long channelId);
+
+
+    /**
+     * 読み上げるテキストチャンネルを取得
+     *
+     * @return チャンネルID
+     */
+    @Nullable
+    Long getReadAroundTextChannel();
+
+    /**
+     * 読み上げるテキストチャンネルを設定
+     *
+     * @param channelId チャンネルID
+     */
+    void setReadAroundTextChannel(@Nullable Long channelId);
+
 }

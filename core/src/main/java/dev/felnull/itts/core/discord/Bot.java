@@ -170,4 +170,8 @@ public class Bot implements ITTSRuntimeUse {
     public JDA getJDA() {
         return jda;
     }
+
+    public long getBotId() {
+        return jda.getSelfUser().getIdLong();
+    }
 }
