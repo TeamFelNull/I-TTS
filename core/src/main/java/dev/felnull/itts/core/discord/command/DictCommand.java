@@ -7,7 +7,6 @@ import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
-import dev.felnull.itts.core.savedata.legacy.LegacyDictUseData;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -260,8 +259,6 @@ public class DictCommand extends BaseCommand {
     }
 
     private void toggleShow(SlashCommandInteractionEvent event) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         EmbedBuilder replayEmbedBuilder = new EmbedBuilder();
@@ -270,19 +267,18 @@ public class DictCommand extends BaseCommand {
 
         long guildId = guild.getIdLong();
         DictionaryManager dictManager = getDictionaryManager();
-        List<Dictionary> dicts = dictManager.getAllDictionaries(guildId);
+        List<Dictionary> allDictList = dictManager.getAllDictionaries(guildId);
+        List<Dictionary> orderEnableDictList = dictManager.getAllPriorityOrderEnableDictionaries(guildId);
 
-        for (Dictionary dict : dicts) {
-            LegacyDictUseData useData = legacySaveDataLayer.getDictUseData(guildId, dict.getId());
-            replayEmbedBuilder.addField(dict.getName(), dictManager.isEnable(dict, guildId) ? ("有効 (" + useData.getPriority() + ")") : "無効", false);
-        }
+        allDictList.forEach(dict -> {
+            int priority = orderEnableDictList.indexOf(dict);
+            replayEmbedBuilder.addField(dict.getName(), priority >= 0 ? ("有効 (" + (priority + 1) + ")") : "無効", false);
+        });
 
         event.replyEmbeds(replayEmbedBuilder.build()).setEphemeral(true).queue();
     }
 
     private void toggle(SlashCommandInteractionEvent event) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-
         String dictId = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
 
         boolean enabled = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
@@ -298,19 +294,14 @@ public class DictCommand extends BaseCommand {
             return;
         }
 
-        LegacyDictUseData useData = legacySaveDataLayer.getDictUseData(guildId, dictId);
-        boolean preEnable = useData.getPriority() >= 0;
+        boolean preEnable = dm.isEnable(guildId, dictId);
 
         if (preEnable == enabled) {
             event.reply(dic.getName() + "は既に" + enStr + "です。").setEphemeral(true).queue();
             return;
         }
 
-        if (enabled) {
-            useData.setPriority(dic.getDefaultPriority());
-        } else {
-            useData.setPriority(-1);
-        }
+        dm.setEnable(guildId, dictId, enabled);
 
         event.reply(dic.getName() + "を" + enStr + "にしました。").queue();
     }

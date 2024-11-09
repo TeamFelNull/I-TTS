@@ -25,6 +25,10 @@ public class RepoErrorListenerTest extends RepoBaseTest {
         Mockito.doThrow(new IllegalStateException("ｱｲｷ")).when(serverUserDataTable).selectAllDenyUser(Mockito.any(), Mockito.anyInt());
         Mockito.when(spyDao.serverUserDataTable()).thenReturn(serverUserDataTable);
 
+        DAO.DictionaryUseDataTable dictionaryUseDataTable = Mockito.spy(spyDao.dictionaryUseDataTable());
+        Mockito.doThrow(new IllegalStateException("ｱｲｷ")).when(dictionaryUseDataTable).selectAll(Mockito.any(), Mockito.anyInt());
+        Mockito.when(spyDao.dictionaryUseDataTable()).thenReturn(dictionaryUseDataTable);
+
         DataRepository repository = DataRepository.create(spyDao);
         repository.init();
         repository.addErrorListener(errorListener);
@@ -35,6 +39,10 @@ public class RepoErrorListenerTest extends RepoBaseTest {
 
         assertFalse(errorCheck.get());
         assertThrows(RuntimeException.class, () -> repository.getAllDenyUser(514L));
+        assertTrue(errorCheck.getAndSet(false));
+
+        assertFalse(errorCheck.get());
+        assertThrows(RuntimeException.class, () -> repository.getAllDictionaryUseData(514L));
         assertTrue(errorCheck.getAndSet(false));
 
         repository.removeErrorListener(errorListener);

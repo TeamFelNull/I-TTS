@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.savedata.dao;
 
+import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -557,6 +558,15 @@ public interface DAO {
          * @throws SQLException エラー
          */
         void updatePriority(Connection connection, int recordId, @Nullable Integer priority) throws SQLException;
+
+        /**
+         * 指定されたサーバーの有効もしくはデフォルト状態の辞書をすべて取得する
+         *
+         * @param connection  コネクション
+         * @param serverKeyId サーバーキーのID
+         * @return 辞書使用エントリのリスト
+         */
+        List<DictionaryUseEntry> selectAll(Connection connection, int serverKeyId) throws SQLException;
     }
 
     /**

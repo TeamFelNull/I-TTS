@@ -6,17 +6,15 @@ import com.google.gson.JsonObject;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
-import dev.felnull.itts.core.savedata.legacy.LegacyDictUseData;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.util.JsonUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * 辞書管理
@@ -61,6 +59,16 @@ public class DictionaryManager implements ITTSRuntimeUse {
     private final List<Dictionary> dictionaries = ImmutableList.of(globalDictionary, serverDictionary, abbreviationDictionary, unitDictionary, romajiDictionary);
 
     /**
+     * デフォルトで有効な辞書
+     */
+    private final List<Dictionary> defaultEnableDictionaries = ImmutableList.of(
+            globalDictionary,
+            serverDictionary,
+            abbreviationDictionary,
+            romajiDictionary
+    );
+
+    /**
      * 辞書を取得
      *
      * @param id      辞書ID
@@ -76,19 +84,6 @@ public class DictionaryManager implements ITTSRuntimeUse {
     }
 
     /**
-     * 辞書が有効かどうか
-     *
-     * @param dictionary 辞書
-     * @param guildId    サーバーID
-     * @return 辞書が有効かどうか
-     */
-    public boolean isEnable(@NotNull Dictionary dictionary, long guildId) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-        LegacyDictUseData dud = legacySaveDataLayer.getDictUseData(guildId, dictionary.getId());
-        return dud.getPriority() >= 0;
-    }
-
-    /**
      * 全辞書を取得
      *
      * @param guildId サーバーID
@@ -97,34 +92,115 @@ public class DictionaryManager implements ITTSRuntimeUse {
     @Unmodifiable
     @NotNull
     public List<Dictionary> getAllDictionaries(long guildId) {
-        return getAllDictionaries();
-    }
-
-    /**
-     * 全辞書を取得
-     *
-     * @return 全辞書のリスト
-     */
-    @Unmodifiable
-    @NotNull
-    public List<Dictionary> getAllDictionaries() {
         return dictionaries;
     }
 
     /**
-     * 全辞書の使用データを取得
+     * 指定されたサーバーで有効な辞書を優先度順に並べたリストを取得
      *
      * @param guildId サーバーID
-     * @return 使用データのリスト
+     * @return 優先度昇順に並んだ辞書リスト
      */
-    @Unmodifiable
-    @NotNull
-    public List<LegacyDictUseData> getAllDictUseData(long guildId) {
-        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+    public List<Dictionary> getAllPriorityOrderEnableDictionaries(long guildId) {
+        SaveDataManager saveDataManager = SaveDataManager.getInstance();
+        List<DictionaryUseEntry> savedDictionaryUseEntries = saveDataManager.getRepository().getAllDictionaryUseData(guildId);
 
-        return dictionaries.stream()
-                .map(it -> legacySaveDataLayer.getDictUseData(guildId, it.getId()))
+        // 保存されている有効な辞書使用データ
+        Map<String, Integer> savedEnableDictAndPriority = savedDictionaryUseEntries.stream()
+                .filter(it -> Boolean.TRUE.equals(it.enable()))
+                .collect(Collectors.toMap(DictionaryUseEntry::dictionaryId, it -> {
+                    int priority;
+                    if (it.priority() != null) {
+                        priority = it.priority();
+                    } else {
+                        Dictionary dict = getDictionary(it.dictionaryId(), guildId);
+                        priority = dict != null ? dict.getDefaultPriority() : 0;
+                    }
+                    return priority;
+                }));
+
+        // 保存されているデフォルト定義で有効な辞書使用データ
+        Map<String, Integer> savedDefaultEnableDictAndPriority = savedDictionaryUseEntries.stream()
+                .filter(it -> {
+                    if (it.enable() == null) {
+                        return defaultEnableDictionaries.contains(getDictionary(it.dictionaryId(), guildId));
+                    }
+                    return false;
+                })
+                .collect(Collectors.toMap(DictionaryUseEntry::dictionaryId, it -> {
+                    int priority;
+                    if (it.priority() != null) {
+                        priority = it.priority();
+                    } else {
+                        Dictionary dict = getDictionary(it.dictionaryId(), guildId);
+                        priority = dict != null ? dict.getDefaultPriority() : 0;
+                    }
+                    return priority;
+                }));
+
+        // 保存されていないデフォルト定義で有効になっている辞書使用データ
+        Map<String, Integer> defaultEnableDictAndPriority = defaultEnableDictionaries.stream()
+                .filter(it -> savedDictionaryUseEntries.stream().noneMatch(data -> data.dictionaryId().equals(it.getId())))
+                .collect(Collectors.toMap(Dictionary::getId, Dictionary::getDefaultPriority));
+
+        Map<Dictionary, Integer> retDictAndPriority = new HashMap<>();
+
+        savedEnableDictAndPriority.forEach((dictId, priority) -> {
+            Dictionary dictionary = getDictionary(dictId, guildId);
+            if (dictionary != null) {
+                retDictAndPriority.put(dictionary, priority);
+            }
+        });
+
+        savedDefaultEnableDictAndPriority.forEach((dictId, priority) -> {
+            Dictionary dictionary = getDictionary(dictId, guildId);
+            if (dictionary != null) {
+                retDictAndPriority.put(dictionary, priority);
+            }
+        });
+
+        defaultEnableDictAndPriority.forEach((dictId, priority) -> {
+            Dictionary dictionary = getDictionary(dictId, guildId);
+            if (dictionary != null) {
+                retDictAndPriority.put(dictionary, priority);
+            }
+        });
+
+        return retDictAndPriority.entrySet().stream()
+                .sorted(Comparator.comparingInt(Map.Entry::getValue))
+                .map(Map.Entry::getKey)
                 .toList();
+    }
+
+    /**
+     * 指定した辞書が有効かどうかを取得
+     *
+     * @param guildId サーバーID
+     * @param dictId  辞書ID
+     * @return 有効であればtrue
+     */
+    public boolean isEnable(long guildId, String dictId) {
+        SaveDataManager saveDataManager = SaveDataManager.getInstance();
+        Boolean savedEnable = saveDataManager.getRepository().getDictionaryUseData(guildId, dictId).isEnable();
+
+        if (savedEnable != null) {
+            return savedEnable;
+        } else {
+            Dictionary dict = getDictionary(dictId, guildId);
+            return defaultEnableDictionaries.contains(dict);
+        }
+    }
+
+    /**
+     * 指定した辞書が有効どうかを設定する
+     *
+     * @param guildId サーバーID
+     * @param dictId  辞書ID
+     * @param enable  有効であればtrue
+     */
+    public void setEnable(long guildId, String dictId, boolean enable) {
+        SaveDataManager saveDataManager = SaveDataManager.getInstance();
+        saveDataManager.getRepository().getDictionaryUseData(guildId, dictId).setEnable(enable);
     }
 
     /**
@@ -135,32 +211,14 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * @return 適用済みテキスト
      */
     public String applyDict(String text, long guildId) {
-        Stream<LegacyDictUseData> allDict = getAllDictUseData(guildId).stream()
-                .filter(it -> it.getPriority() >= 0)
-                .sorted(Comparator.comparingInt(LegacyDictUseData::getPriority));
         AtomicReference<String> retText = new AtomicReference<>(text);
 
-        allDict.forEach(ud -> {
-            Dictionary dict = getDictionary(ud.getDictId(), guildId);
-
-            if (dict != null) {
-                retText.set(dict.apply(retText.get(), guildId));
-            }
-        });
+        getAllPriorityOrderEnableDictionaries(guildId)
+                .forEach(dict -> retText.set(dict.apply(retText.get(), guildId)));
 
         return retText.get();
     }
 
-    @NotNull
-    @Unmodifiable
-    public List<Pair<String, Integer>> getDefault() {
-        return ImmutableList.of(
-                Pair.of(globalDictionary.getId(), globalDictionary.getDefaultPriority()),
-                Pair.of(serverDictionary.getId(), serverDictionary.getDefaultPriority()),
-                Pair.of(abbreviationDictionary.getId(), abbreviationDictionary.getDefaultPriority()),
-                Pair.of(romajiDictionary.getId(), romajiDictionary.getDefaultPriority())
-        );
-    }
 
     /**
      * サーバー辞書をJsonに保存する

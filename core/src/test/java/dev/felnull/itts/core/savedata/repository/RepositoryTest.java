@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.savedata.repository;
 
+import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.savedata.MySQLTestOperation;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.tts.TTSChannelPair;
@@ -91,4 +92,35 @@ public class RepositoryTest extends RepoBaseTest {
 
         repo.dispose();
     }
+
+    @Test
+    void testGetAllDictionaryUseData() {
+        DataRepository repo = createRepository();
+
+        DictionaryUseData dictionaryUseData1 = repo.getDictionaryUseData(114L, "abbreviation");
+        DictionaryUseData dictionaryUseData2 = repo.getDictionaryUseData(514L, "global");
+        DictionaryUseData dictionaryUseData3 = repo.getDictionaryUseData(114L, "romaji");
+        DictionaryUseData dictionaryUseData4 = repo.getDictionaryUseData(114L, "server");
+
+        dictionaryUseData1.setEnable(true);
+        dictionaryUseData1.setPriority(5);
+
+        dictionaryUseData2.setEnable(true);
+        dictionaryUseData2.setPriority(2);
+
+        dictionaryUseData3.setEnable(false);
+        dictionaryUseData3.setPriority(6);
+
+        dictionaryUseData4.setEnable(null);
+        dictionaryUseData4.setPriority(null);
+
+        List<DictionaryUseEntry> ret = repo.getAllDictionaryUseData(114L);
+        assertEquals(3, ret.size());
+        assertTrue(ret.contains(new DictionaryUseEntry("abbreviation", true, 5)));
+        assertTrue(ret.contains(new DictionaryUseEntry("romaji", false, 6)));
+        assertTrue(ret.contains(new DictionaryUseEntry("server", null, null)));
+
+        repo.dispose();
+    }
+
 }

@@ -42,11 +42,6 @@ public final class LegacySaveDataLayerImpl implements LegacySaveDataLayer {
     }
 
     @Override
-    public @NotNull LegacyDictUseData getDictUseData(long guildId, @NotNull String dictId) {
-        return new LegacyDictUseDataImpl(saveDataManager, guildId, dictId);
-    }
-
-    @Override
     public @NotNull @Unmodifiable List<LegacyDictData> getAllServerDictData(long guildId) {
         List<LegacyDictData> allDictData = saveDataManager.getRepository().getServerCustomDictionaryData(guildId).getAll()
                 .stream().map(IdCustomDictionaryEntryPair::entry)

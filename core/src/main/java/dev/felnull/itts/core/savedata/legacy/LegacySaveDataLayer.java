@@ -43,16 +43,6 @@ public interface LegacySaveDataLayer {
     LegacyServerUserData getServerUserData(long guildId, long userId);
 
     /**
-     * 辞書使用データを取得
-     *
-     * @param guildId サーバーID
-     * @param dictId  辞書ID
-     * @return 辞書使用データ
-     */
-    @NotNull
-    LegacyDictUseData getDictUseData(long guildId, @NotNull String dictId);
-
-    /**
      * 全てのサーバー辞書データ
      *
      * @param guildId サーバーID

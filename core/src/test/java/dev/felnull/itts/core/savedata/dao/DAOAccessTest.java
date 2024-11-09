@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.savedata.dao;
 
+import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.dict.ReplaceType;
 import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import dev.felnull.itts.core.savedata.AbstractSaveDataTest;
@@ -568,6 +569,74 @@ public abstract class DAOAccessTest extends AbstractSaveDataTest {
         // レコードの値を単体で取得して確認
         assertEquals(expectedRecord.enable(), dao.dictionaryUseDataTable().selectEnable(connection, tableId).orElse(null));
         assertEquals(TestUtils.getOptionalIntByInteger(expectedRecord.priority()), dao.dictionaryUseDataTable().selectPriority(connection, tableId));
+    }
+
+    @Test
+    void testDictionaryUseDataSelectAllEntry() throws Exception {
+        try (Connection connection = dao.getConnection()) {
+            dictionaryUseDataTableTestCreateTable(connection);
+
+            assertTrue(dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 114L)).isEmpty());
+            assertTrue(dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 514L)).isEmpty());
+            assertTrue(dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L)).isEmpty());
+            assertTrue(dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 364L)).isEmpty());
+            assertTrue(dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 110L)).isEmpty());
+
+            TestUtils.testForEach(dictionaryIdsData(), dictId -> dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 114L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), dictId)),
+                    new DictionaryUseDataRecord(false, 0)));
+
+            TestUtils.forEachIndexed(dictionaryIdsData(), (idx, dictId) -> dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 514L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), dictId)),
+                    new DictionaryUseDataRecord(true, idx)));
+
+            dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), "abbreviation")),
+                    new DictionaryUseDataRecord(null, -5));
+            dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), "global")),
+                    new DictionaryUseDataRecord(false, 3));
+            dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), "romaji")),
+                    new DictionaryUseDataRecord(true, 0));
+            dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), "server")),
+                    new DictionaryUseDataRecord(null, 1));
+            dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), "unit")),
+                    new DictionaryUseDataRecord(true, null));
+
+            TestUtils.forEachIndexed(dictionaryIdsData(), (idx, dictId) -> dao.dictionaryUseDataTable().insertRecordIfNotExists(connection,
+                    new ServerDictionaryKey(insertAndSelectKeyId(connection, dao.serverKeyTable(), 110L), insertAndSelectKeyId(connection, dao.dictionaryKeyTable(), dictId)),
+                    new DictionaryUseDataRecord(null, null)));
+
+            List<DictionaryUseEntry> ret1 = dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 114L));
+            List<DictionaryUseEntry> ret2 = dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 514L));
+            List<DictionaryUseEntry> ret3 = dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 810L));
+            List<DictionaryUseEntry> ret4 = dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 364L));
+            List<DictionaryUseEntry> ret5 = dao.dictionaryUseDataTable().selectAll(connection, insertAndSelectKeyId(connection, dao.serverKeyTable(), 110L));
+
+            List<DictionaryUseEntry> expectedRet1 = new ArrayList<>();
+            TestUtils.forEachIndexed(dictionaryIdsData(), (idx, dictId) -> expectedRet1.add(new DictionaryUseEntry(dictId, false, 0)));
+            assertTrue(!ret1.isEmpty() && CollectionUtils.isEqualCollection(expectedRet1, ret1));
+
+            List<DictionaryUseEntry> expectedRet2 = new ArrayList<>();
+            TestUtils.forEachIndexed(dictionaryIdsData(), (idx, dictId) -> expectedRet2.add(new DictionaryUseEntry(dictId, true, idx)));
+            assertTrue(!ret2.isEmpty() && CollectionUtils.isEqualCollection(expectedRet2, ret2));
+
+            assertEquals(5, ret3.size());
+            assertTrue(ret3.contains(new DictionaryUseEntry("abbreviation", null, -5)));
+            assertTrue(ret3.contains(new DictionaryUseEntry("global", false, 3)));
+            assertTrue(ret3.contains(new DictionaryUseEntry("romaji", true, 0)));
+            assertTrue(ret3.contains(new DictionaryUseEntry("server", null, 1)));
+            assertTrue(ret3.contains(new DictionaryUseEntry("unit", true, null)));
+
+            assertTrue(ret4.isEmpty());
+
+            List<DictionaryUseEntry> expectedRet5 = new ArrayList<>();
+            TestUtils.forEachIndexed(dictionaryIdsData(), (idx, dictId) -> expectedRet5.add(new DictionaryUseEntry(dictId, null, null)));
+            assertTrue(!ret5.isEmpty() && CollectionUtils.isEqualCollection(expectedRet5, ret5));
+        }
     }
 
     // BotStateData

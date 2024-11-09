@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.savedata.repository;
 
+import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.repository.impl.DataRepositoryImpl;
 import dev.felnull.itts.core.tts.TTSChannelPair;
@@ -126,4 +127,14 @@ public interface DataRepository {
     @NotNull
     @Unmodifiable
     List<Long> getAllDenyUser(long serverId);
+
+    /**
+     * 指定されたサーバーの辞書使用データをすべて取得する
+     *
+     * @param serverId サーバーID
+     * @return 辞書使用エントリのリスト
+     */
+    @NotNull
+    @Unmodifiable
+    List<DictionaryUseEntry> getAllDictionaryUseData(long serverId);
 }

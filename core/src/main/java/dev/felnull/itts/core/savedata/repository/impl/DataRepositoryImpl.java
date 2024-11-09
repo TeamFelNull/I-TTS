@@ -3,6 +3,7 @@ package dev.felnull.itts.core.savedata.repository.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.repository.*;
 import dev.felnull.itts.core.tts.TTSChannelPair;
@@ -321,6 +322,19 @@ public final class DataRepositoryImpl implements DataRepository {
     public @NotNull @Unmodifiable List<Long> getAllDenyUser(long serverId) {
         try (Connection connection = dao.getConnection()) {
             return dao.serverUserDataTable().selectAllDenyUser(connection, serverKeyData.getId(serverId));
+        } catch (Exception e) {
+            fireErrorEvent();
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent();
+            throw throwable;
+        }
+    }
+
+    @Override
+    public @NotNull @Unmodifiable List<DictionaryUseEntry> getAllDictionaryUseData(long serverId) {
+        try (Connection connection = dao.getConnection()) {
+            return dao.dictionaryUseDataTable().selectAll(connection, serverKeyData.getId(serverId));
         } catch (Exception e) {
             fireErrorEvent();
             throw new RuntimeException(e);

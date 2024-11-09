@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.savedata.dao.*;
 import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.intellij.lang.annotations.Language;
@@ -1755,9 +1756,8 @@ class MySQLDAO extends BaseDAO {
         }
 
         private DictionaryUseDataRecord createRecord(ResultSet resultSet) throws SQLException {
-            Object enableRet = resultSet.getObject("enable");
             return new DictionaryUseDataRecord(
-                    (Boolean) enableRet,
+                    (Boolean) resultSet.getObject("enable"),
                     (Integer) resultSet.getObject("priority")
             );
         }
@@ -1779,6 +1779,35 @@ class MySQLDAO extends BaseDAO {
                     """;
 
             execute(connection, sql);
+        }
+
+        @Override
+        public List<DictionaryUseEntry> selectAll(Connection connection, int serverKeyId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select dictionary_key.name as dictionary_name,
+                           enable,
+                           priority
+                    from dictionary_use_data
+                        inner join dictionary_key on dictionary_id = dictionary_key.id
+                    where server_id = ?
+                    """;
+
+            List<DictionaryUseEntry> ret = new ArrayList<>();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, serverKeyId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        ret.add(new DictionaryUseEntry(rs.getString("dictionary_name"),
+                                (Boolean) rs.getObject("enable"),
+                                (Integer) rs.getObject("priority")));
+                    }
+                }
+            }
+
+            return ret;
         }
     }
 
