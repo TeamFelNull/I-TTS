@@ -88,7 +88,7 @@ public class Bot implements ITTSRuntimeUse {
                             return;
                         }
 
-                        MessageChannel chatChannel = guild.getChannelById(MessageChannel.class, data.getReadAroundTextChannel());
+                        MessageChannel chatChannel = guild.getTextChannelById(data.getReadAroundTextChannel());
 
                         if (chatChannel == null) {
                             data.setReadAroundTextChannel(-1);
