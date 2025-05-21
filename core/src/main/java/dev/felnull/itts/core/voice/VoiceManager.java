@@ -4,6 +4,7 @@ import dev.felnull.itts.core.ITTSBaseManager;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
+import dev.felnull.itts.core.voice.coeiroink.CoeiroinkManager;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,8 @@ public class VoiceManager implements ITTSBaseManager {
     /**
      * COEIROINKの管理
      */
-    private final VoicevoxManager coeiroinkManager =
-            new VoicevoxManager("coeiroink", () ->
+    private final CoeiroinkManager coeiroinkManager =
+            new CoeiroinkManager("coeiroink", () ->
                     getConfigManager().getConfig().getCoeirolnkConfig().getApiUrls(), () -> getConfigManager().getConfig().getCoeirolnkConfig());
 
     /**
@@ -81,9 +82,7 @@ public class VoiceManager implements ITTSBaseManager {
         return voicevoxManager;
     }
 
-    public VoicevoxManager getCoeiroinkManager() {
-        return coeiroinkManager;
-    }
+    public CoeiroinkManager getCoeiroinkManager() {return coeiroinkManager;}
 
     public VoicevoxManager getSharevoxManager() {
         return sharevoxManager;
