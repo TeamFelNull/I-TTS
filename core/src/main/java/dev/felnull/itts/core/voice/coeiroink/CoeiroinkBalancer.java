@@ -6,10 +6,7 @@ import dev.felnull.itts.core.ImmortalityTimer;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -17,14 +14,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
- * VOICEVOX系エンジンの使用バランスを調整
+ * Coeiroink系エンジンの使用バランスを調整
  *
  * @author MORIMORI0317
  */
 public class CoeiroinkBalancer implements ITTSRuntimeUse {
 
     /**
-     * VOICEVOXマネージャー
+     * Coeiroinkマネージャー
      */
     private final CoeiroinkManager manager;
 
@@ -75,11 +72,7 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
      */
     protected List<CoeiroinkSpeaker> getAvailableSpeakers() {
         synchronized (checkLock) {
-            if (availableSpeakers == null) {
-                return ImmutableList.of();
-            }
-
-            return availableSpeakers;
+            return Objects.requireNonNullElseGet(availableSpeakers, ImmutableList::of);
         }
     }
 
@@ -107,6 +100,13 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
         }, manager.getConfig().getCheckTime());
     }
 
+    /**
+     * CoeiroinkエンジンのURLの可用性をチェックし、スピーカー情報を取得する
+     *
+     * @return ペアオブジェクトで、第一要素に可用なCIURLのリスト、第二要素にCoeiroinkSpeakerのリストを含む
+     * スピーカー情報は最初の成功したリクエストから取得されたもの
+     * @throws RuntimeException IOエラーまたは中断が発生した場合にスローされる
+     */
     private Pair<List<CIURL>, List<CoeiroinkSpeaker>> checkAndGet() {
         List<Pair<CIURL, CompletableFuture<List<CoeiroinkSpeaker>>>> urls = enginUrls.get().stream()
                 .map(CIURL::new)
@@ -149,6 +149,13 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
         return Pair.of(rurls, rspeakers);
     }
 
+    /**
+     * エンジンが利用可能かどうかをチェックする
+     * 
+     * @return エンジンが利用可能であればtrue、それ以外はfalse
+     * 
+     * @see #enginUrls
+     */
     public boolean isAvailable() {
         return enginUrls != null && !enginUrls.get().isEmpty();
     }

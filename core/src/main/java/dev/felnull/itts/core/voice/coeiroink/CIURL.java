@@ -5,7 +5,7 @@ import java.net.URI;
 import java.net.URL;
 
 /**
- * VOICEVOXのエンジンURL
+ * CoeiroinkのエンジンURL
  *
  * @param url URL
  * @author MORIMORI0317
@@ -50,7 +50,7 @@ public record CIURL(String url) {
             ur += "/";
         }
 
-        System.out.println(ur + "v1/" + path);
+        // TODO : v1/の挿入方法を改善する
         return URI.create(ur + "v1/" + path);
     }
 }
