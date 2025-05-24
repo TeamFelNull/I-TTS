@@ -34,12 +34,12 @@ public class CoeiroinkVoiceType implements VoiceType {
 
     @Override
     public String getName() {
-        return this.coeiroinkSpeaker.name();
+        return this.coeiroinkSpeaker.speakerName();
     }
 
     @Override
     public String getId() {
-        return manager.getName() + "-" + this.coeiroinkSpeaker.uuid().toString();
+        return manager.getName() + "-" + this.coeiroinkSpeaker.speakerUuid().toString();
     }
 
     @Override

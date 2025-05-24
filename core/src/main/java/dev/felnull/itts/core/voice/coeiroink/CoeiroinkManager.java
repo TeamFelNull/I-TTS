@@ -154,12 +154,11 @@ public class CoeiroinkManager {
      * 読み上げ音声データのストリームを開く
      *
      * @param text      読み上げるテキスト
-     * @param speakerId 話者ID
+     * @param styleId スタイルID
      * @return 音声データのストリーム
      */
-    protected InputStream openVoiceStream(String text, int speakerId) {
-        JsonObject qry = createSynthesisParam(text, speakerId);
-        System.out.println(GSON.toJson(qry));
+    protected InputStream openVoiceStream(String text, int styleId, String speakerUuid) {
+        JsonObject qry = createSynthesisParam(text, styleId, speakerUuid);
         try (var urlUse = balancer.getUseURL()) {
             HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
             HttpRequest request = HttpRequest.newBuilder(urlUse.getCIURL().createURI("synthesis"))
@@ -195,7 +194,7 @@ public class CoeiroinkManager {
      * @param speakerUuid
      * @return
      */
-    private JsonObject createSynthesisParam(String text, int speakerUuid) {
+    private JsonObject createSynthesisParam(String text, int styleId, String speakerUuid) {
 
         JsonObject param = new JsonObject();
 
@@ -216,8 +215,8 @@ public class CoeiroinkManager {
         param.addProperty("speedScale", 1.0);
 
         // 文字列型のパラメータ
-        param.addProperty("speakerUuid", "e0882aa2-0019-11f0-b92b-0242ac1c000c"); // TODO : 引数から取るようにする
-        param.addProperty("styleId", 565979760); // TODO : 引数から取るようにする
+        param.addProperty("speakerUuid", speakerUuid);
+        param.addProperty("styleId", styleId);
         param.addProperty("text", text);
 
         param.addProperty("processingAlgorithm", "default:orig_sr=44100,target_sr=24000");

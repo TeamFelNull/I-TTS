@@ -37,11 +37,13 @@ public class CoeiroinkVoice extends CachedVoice {
 
     @Override
     protected InputStream openVoiceStream(String text) throws IOException, InterruptedException {
-        return this.manager.openVoiceStream(text, speaker.styles().get(0).id());
+        System.out.println("STYLE: " + speaker.styles().get(0).styleId());
+        System.out.println("UUID: " + speaker.speakerUuid());
+        return this.manager.openVoiceStream(text, speaker.styles().get(0).styleId(), speaker.speakerUuid().toString());
     }
 
     @Override
     protected String createHashCodeChars() {
-        return this.speaker.uuid().toString();
+        return this.speaker.speakerUuid().toString();
     }
 }

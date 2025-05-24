@@ -5,11 +5,11 @@ import com.google.gson.JsonObject;
 /**
  * Coeiroinkの話者スタイル
  *
- * @param name 名前
- * @param id   ID
+ * @param styleName 名前
+ * @param styleId   ID
  * @author MORIMORI0317
  */
-public record CoeiroinkStyle(String name, int id) {
+public record CoeiroinkStyle(String styleName, int styleId) {
     /**
      * Jsonから話者スタイルを取得
      *

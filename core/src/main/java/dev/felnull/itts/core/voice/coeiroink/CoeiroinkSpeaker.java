@@ -11,12 +11,12 @@ import java.util.UUID;
 /**
  * Coeiroinkの話者
  *
- * @param name   名前
- * @param uuid   UUID
+ * @param speakerName   名前
+ * @param speakerUuid   UUID
  * @param styles スタイル
  * @author MORIMORI0317
  */
-public record CoeiroinkSpeaker(String name, UUID uuid, List<CoeiroinkStyle> styles) {
+public record CoeiroinkSpeaker(String speakerName, UUID speakerUuid, List<CoeiroinkStyle> styles) {
 
     /**
      * Jsonから話者を取得
