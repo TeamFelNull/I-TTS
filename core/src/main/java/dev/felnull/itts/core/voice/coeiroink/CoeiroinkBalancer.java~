@@ -62,11 +62,12 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
     }
 
     /**
-     * CoeiroInkの使用カウンタを取得
-     * このメソッドは、指定されたCIURLに対する使用回数をカウントするためのAtomicIntegerを返す
-     * 初めて指定されたURLの場合、新しいAtomicIntegerが作成され、既存のURLの場合、既存のカウンタが返される
+     * CoEiroInkの使用カウンタを取得。
      * 
-     * @param ciurl CoeiroInkのURLを表すCIURLオブジェクト
+     * このメソッドは、指定されたCIURLに対する使用回数をカウントするためのAtomicIntegerを返す。
+     * 初めて指定されたURLの場合、新しいAtomicIntegerが作成され、既存のURLの場合、既存のカウンタが返される。
+     * 
+     * @param ciurl CoEiroInkのURLを表すCIURLオブジェクト
      * @return 指定されたURLの使用回数をカウントするAtomicInteger
      */
     private AtomicInteger getUseCounter(CIURL ciurl) {

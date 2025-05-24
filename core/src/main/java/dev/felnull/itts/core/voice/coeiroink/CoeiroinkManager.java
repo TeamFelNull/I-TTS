@@ -10,7 +10,6 @@ import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.voice.VoiceType;
 
 import java.io.*;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -131,25 +130,6 @@ public class CoeiroinkManager {
         return speakerBuilder.build();
     }
 
-    private JsonObject getQuery(String text, int speakerId) {
-        text = URLEncoder.encode(text, StandardCharsets.UTF_8);
-
-        try (var urlUse = balancer.getUseURL()) {
-            HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-            HttpRequest req = HttpRequest.newBuilder(urlUse.getCIURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .timeout(Duration.of(10, ChronoUnit.SECONDS))
-                    .build();
-            HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
-
-            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-                return GSON.fromJson(reader, JsonObject.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * 読み上げ音声データのストリームを開く
      *
@@ -188,11 +168,14 @@ public class CoeiroinkManager {
     }
 
     /**
-     * synthesis用のパラメータを作成
-     *
-     * @param text
-     * @param speakerUuid
-     * @return
+     * 音声合成用のパラメータを作成する
+     * このメソッドは、Coeiroink音声合成エンジンに渡すための設定値を含むJSONオブジェクトを生成する
+     * 
+     * @param text 合成したいテキスト
+     * @param styleId スタイルID（発話スタイルを指定）
+     * @param speakerUuid スピーカーのUUID
+     * @return 音声合成用のパラメータを含むJSONオブジェクト
+     * @see dev.felnull.itts.core.voice.coeiroink.CoeiroinkManager
      */
     private JsonObject createSynthesisParam(String text, int styleId, String speakerUuid) {
 

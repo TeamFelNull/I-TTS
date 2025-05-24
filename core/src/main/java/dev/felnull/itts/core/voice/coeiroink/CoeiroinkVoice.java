@@ -37,8 +37,6 @@ public class CoeiroinkVoice extends CachedVoice {
 
     @Override
     protected InputStream openVoiceStream(String text) throws IOException, InterruptedException {
-        System.out.println("STYLE: " + speaker.styles().get(0).styleId());
-        System.out.println("UUID: " + speaker.speakerUuid());
         return this.manager.openVoiceStream(text, speaker.styles().get(0).styleId(), speaker.speakerUuid().toString());
     }
 
