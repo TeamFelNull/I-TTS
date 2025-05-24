@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
- * Coeiroink系エンジンの管理
+ * Coeiroinkエンジンの管理
  *
  * @author MORIMORI0317
  */
@@ -34,7 +34,7 @@ public class CoeiroinkManager {
     private static final Gson GSON = new Gson();
 
     /**
-     * Coeiroink系の声カテゴリ
+     * Coeiroinkの声カテゴリ
      */
     private final CoeiroinkVoiceCategory category = new CoeiroinkVoiceCategory(this);
 
@@ -49,7 +49,7 @@ public class CoeiroinkManager {
     private final String name;
 
     /**
-     * Coeiroink系エンジンのコンフィグ
+     * Coeiroinkエンジンのコンフィグ
      */
     private final Supplier<VoicevoxConfig> configSupplier;
 
@@ -182,7 +182,6 @@ public class CoeiroinkManager {
         JsonObject param = new JsonObject();
 
         // TODO : 全部のKeyが必須かを検証する
-        // 数値型のパラメータ
         param.addProperty("volumeScale", 1.0);
         param.addProperty("pitchScale", 0);
         param.addProperty("intonationScale", 1.0);
@@ -197,7 +196,6 @@ public class CoeiroinkManager {
         param.addProperty("pauseEndTrimBuffer", 0.0);
         param.addProperty("speedScale", 1.0);
 
-        // 文字列型のパラメータ
         param.addProperty("speakerUuid", speakerUuid);
         param.addProperty("styleId", styleId);
         param.addProperty("text", text);

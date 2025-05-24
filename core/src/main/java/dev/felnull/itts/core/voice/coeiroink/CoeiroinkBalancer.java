@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
- * Coeiroink系エンジンの使用バランスを調整
+ * Coeiroinkエンジンの使用バランスを調整
  *
  * @author MORIMORI0317
  */
