@@ -1,6 +1,8 @@
 package dev.felnull.itts.core.savedata;
 
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.migration.MigrationService;
+import dev.felnull.itts.core.migration.impl.MigrationServiceImpl;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
@@ -91,6 +93,35 @@ public class SaveDataManager {
         repo.init();
         repo.addErrorListener(errorListener);
         repository.set(repo);
+
+        // 移行処理を実行
+        performMigrationIfNeeded();
+    }
+
+    /**
+     * 必要に応じてJSONからSQLへの移行を実行
+     */
+    private void performMigrationIfNeeded() {
+        try {
+            MigrationService migrationService = new MigrationServiceImpl(this);
+            
+            if (migrationService.isMigrationNeeded()) {
+                LOGGER.info("JSON data migration is needed. Starting migration...");
+                
+                boolean migrationSuccess = migrationService.performMigration();
+                
+                if (migrationSuccess) {
+                    LOGGER.info("JSON data migration completed successfully");
+                    migrationService.cleanupAfterMigration();
+                } else {
+                    LOGGER.error("JSON data migration failed");
+                }
+            } else {
+                LOGGER.debug("No JSON data migration needed");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error during migration process", e);
+        }
     }
 
     private DAO createDAO() {
