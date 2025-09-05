@@ -10,6 +10,10 @@ import dev.felnull.itts.core.migration.data.LegacyJsonDictData;
 import dev.felnull.itts.core.migration.data.LegacyJsonServerData;
 import dev.felnull.itts.core.migration.data.LegacyJsonUserData;
 import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.repository.CustomDictionaryData;
+import dev.felnull.itts.core.savedata.repository.DataRepository;
+import dev.felnull.itts.core.savedata.repository.ServerData;
+import dev.felnull.itts.core.savedata.repository.ServerUserData;
 import dev.felnull.itts.core.util.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,8 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,23 +33,66 @@ import java.util.Map;
  */
 public class MigrationServiceImpl implements MigrationService {
 
+    /**
+     * ロガー
+     */
     private static final Logger LOGGER = LogManager.getLogger(MigrationServiceImpl.class);
+
+    /**
+     * Gson インスタンス
+     */
     private static final Gson GSON = new Gson();
 
-    // 古いJSONファイルのパス
+    /**
+     * 古いJSONファイルのパス - サーバーデータ
+     */
     private final File serverDataFile;
+
+    /**
+     * 古いJSONファイルのパス - ユーザーデータ
+     */
     private final File userDataFile;
+
+    /**
+     * 古いJSONファイルのパス - 辞書データ
+     */
     private final File dictDataFile;
+
+    /**
+     * 古いJSONファイルのパス - グローバル辞書データ
+     */
     private final File globalDictDataFile;
+
+    /**
+     * 移行完了マーカーファイル
+     */
     private final File migrationCompletedMarker;
+
+    /**
+     * バックアップディレクトリ
+     */
     private final File backupDir;
 
+    /**
+     * セーブデータマネージャー
+     */
     private final SaveDataManager saveDataManager;
 
+    /**
+     * コンストラクタ
+     *
+     * @param saveDataManager セーブデータマネージャー
+     */
     public MigrationServiceImpl(SaveDataManager saveDataManager) {
         this(saveDataManager, new File("."));
     }
 
+    /**
+     * コンストラクタ
+     *
+     * @param saveDataManager セーブデータマネージャー
+     * @param baseDirectory   ベースディレクトリ
+     */
     public MigrationServiceImpl(SaveDataManager saveDataManager, File baseDirectory) {
         this.saveDataManager = saveDataManager;
         this.serverDataFile = new File(baseDirectory, "server_data.json");
@@ -66,10 +111,10 @@ public class MigrationServiceImpl implements MigrationService {
         }
 
         // いずれかのJSONファイルが存在する場合は移行が必要
-        return serverDataFile.exists() || 
-               userDataFile.exists() || 
-               dictDataFile.exists() || 
-               globalDictDataFile.exists();
+        return serverDataFile.exists()
+                || userDataFile.exists()
+                || dictDataFile.exists()
+                || globalDictDataFile.exists();
     }
 
     @Override
@@ -163,8 +208,8 @@ public class MigrationServiceImpl implements MigrationService {
                     );
 
                     // SQLに保存
-                    var repository = saveDataManager.getRepository();
-                    var sqlServerData = repository.getServerData(serverId);
+                    DataRepository repository = saveDataManager.getRepository();
+                    ServerData sqlServerData = repository.getServerData(serverId);
                     
                     sqlServerData.setDefaultVoiceType(serverData.defaultVoiceType());
                     sqlServerData.setIgnoreRegex(serverData.ignoreRegex());
@@ -214,8 +259,8 @@ public class MigrationServiceImpl implements MigrationService {
                             );
 
                             // SQLに保存
-                            var repository = saveDataManager.getRepository();
-                            var sqlUserData = repository.getServerUserData(serverId, userId);
+                            DataRepository repository = saveDataManager.getRepository();
+                            ServerUserData sqlUserData = repository.getServerUserData(serverId, userId);
                             
                             sqlUserData.setVoiceType(userData.voiceType());
                             sqlUserData.setDeny(userData.deny());
@@ -256,8 +301,8 @@ public class MigrationServiceImpl implements MigrationService {
                     long serverId = Long.parseLong(serverEntry.getKey());
                     JsonObject dictObject = serverEntry.getValue().getAsJsonObject();
 
-                    var repository = saveDataManager.getRepository();
-                    var serverDictData = repository.getServerCustomDictionaryData(serverId);
+                    DataRepository repository = saveDataManager.getRepository();
+                    CustomDictionaryData serverDictData = repository.getServerCustomDictionaryData(serverId);
 
                     for (Map.Entry<String, com.google.gson.JsonElement> dictEntry : dictObject.entrySet()) {
                         try {
@@ -302,8 +347,8 @@ public class MigrationServiceImpl implements MigrationService {
         try (FileReader reader = new FileReader(globalDictDataFile)) {
             JsonObject dictObject = GSON.fromJson(reader, JsonObject.class);
 
-            var repository = saveDataManager.getRepository();
-            var globalDictData = repository.getGlobalCustomDictionaryData();
+            DataRepository repository = saveDataManager.getRepository();
+            CustomDictionaryData globalDictData = repository.getGlobalCustomDictionaryData();
 
             for (Map.Entry<String, com.google.gson.JsonElement> dictEntry : dictObject.entrySet()) {
                 try {
