@@ -29,8 +29,8 @@ configurations {
 dependencies {
     shadowIn(project(":core", "default"))
 
-    shadowIn("blue.endless:jankson:1.2.1")
-    shadowIn("redis.clients:jedis:4.4.0-m1")
+    shadowIn("blue.endless:jankson:1.2.3")
+    // shadowIn("redis.clients:jedis:4.4.0-m1")
 }
 
 tasks.getByName<Test>("test") {
