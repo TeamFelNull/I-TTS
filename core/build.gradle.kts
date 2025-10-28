@@ -24,9 +24,8 @@ dependencies {
 
     api("org.jetbrains:annotations:26.0.2-1")
 
-    api("org.slf4j:slf4j-api:2.1.0-alpha1")
-    api("org.apache.logging.log4j:log4j-core:3.0.0-beta2")
-    api("org.apache.logging.log4j:log4j-slf4j2-impl:3.0.0-beta2") // runtimeOnly
+    // api("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
+    api("org.apache.logging.log4j:log4j-core:2.25.2")
 }
 
 tasks.getByName<Test>("test") {
