@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
+import dev.felnull.itts.core.dict.ServerDictionary;
 import dev.felnull.itts.core.savedata.DictData;
 import dev.felnull.itts.core.savedata.DictUseData;
 import dev.felnull.itts.core.savedata.SaveDataManager;
@@ -12,6 +13,7 @@ import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -41,6 +43,16 @@ import java.util.concurrent.CompletableFuture;
  * @author MORIMORI0317
  */
 public class DictCommand extends BaseCommand {
+
+    /**
+     * 最大文字数
+     */
+    private static final int MAX_TEXT_LENGTH = 1000;
+
+    /**
+     * フィールドに表示可能な最大文字数
+     */
+    private static final int MAX_FIELD_TEXT_LENGTH = 125;
 
     /**
      * GSOUN
@@ -121,13 +133,31 @@ public class DictCommand extends BaseCommand {
         Map<String, String> show = dic.getShowInfo(guildId);
 
         if (show.isEmpty()) {
-            replayEmbedBuilder.addField("登録なし", "", false);
+            replayEmbedBuilder.setDescription("登録なし");
         } else {
-            show.forEach((k, v) -> addDictWordAndReadingField(replayEmbedBuilder, k, v));
-        }
+            show.entrySet().stream()
+                    .limit(MessageEmbed.MAX_FIELD_AMOUNT)
+                    .forEach(entry -> {
+                        addDictWordAndReadingField(replayEmbedBuilder, entry.getKey(), entry.getValue());
+                    });
 
-        if (show.size() >= 2) {
-            replayEmbedBuilder.setFooter("計" + show.size() + "個");
+            if (show.size() >= 2) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("計%d個", show.size()));
+
+                int omit = show.size() - MessageEmbed.MAX_FIELD_AMOUNT;
+                if (omit > 0) {
+                    sb.append(String.format(" (%d個省略)", omit));
+
+                    if (dic instanceof ServerDictionary) {
+                        // TODO downloadコマンドの実行権限が無い場合は表示しないようにする。
+                        sb.append("\n");
+                        sb.append("全てのエントリを確認するには「/dict download」を実行してください。");
+                    }
+                }
+
+                replayEmbedBuilder.setFooter(sb.toString());
+            }
         }
 
         event.replyEmbeds(replayEmbedBuilder.build()).setEphemeral(true).queue();
@@ -229,8 +259,8 @@ public class DictCommand extends BaseCommand {
         String word = Objects.requireNonNull(event.getOption("word", OptionMapping::getAsString));
         String reading = Objects.requireNonNull(event.getOption("reading", OptionMapping::getAsString));
 
-        if (word.length() > 1000 || reading.length() > 1000) {
-            event.reply("登録可能な最大文字数は1000文字です").queue();
+        if (word.length() > MAX_TEXT_LENGTH || reading.length() > MAX_TEXT_LENGTH) {
+            event.reply(String.format("登録可能な最大文字数は%d文字です", MAX_TEXT_LENGTH)).queue();
             return;
         }
 
@@ -249,8 +279,21 @@ public class DictCommand extends BaseCommand {
     }
 
     private void addDictWordAndReadingField(EmbedBuilder builder, String word, String reading) {
-        String w = "` " + word.replace("\n", "\\n") + " `";
-        String r = "```" + reading.replace("```", "\\```") + "```";
+        String w;
+        String r;
+
+        if (word.length() < MAX_FIELD_TEXT_LENGTH) {
+            w = "` " + word.replace("\n", "\\n") + " `";
+        } else {
+            w = "` " + word.substring(MAX_FIELD_TEXT_LENGTH).replace("\n", "\\n") + "... `";
+        }
+
+        if (reading.length() < MAX_FIELD_TEXT_LENGTH) {
+            r = "```" + reading.replace("```", "\\```") + "```";
+        } else {
+            r = "```" + reading.substring(MAX_FIELD_TEXT_LENGTH).replace("```", "\\```") + "... ```";
+        }
+
         builder.addField(w, r, false);
     }
 

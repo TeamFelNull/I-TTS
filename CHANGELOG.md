@@ -14,7 +14,7 @@
 ### Removed
 
 ### Fixed
-
+- 「/dict show」が応答しない問題を修正
 ### Security
 
 ## [2.0.0-alpha.13] - 2025-10-28
