@@ -4,6 +4,7 @@ import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyMigrator;
 import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.savedata.repository.RepoErrorListener;
 import org.apache.logging.log4j.LogManager;
@@ -87,6 +88,9 @@ public class SaveDataManager {
      * 必ずコンフィグが読み込まれた後に呼び出してください。
      */
     public void init() {
+        // 移行処理
+        LegacyMigrator.checkAndExecution(this::createDAO);
+
         DataRepository repo = DataRepository.create(createDAO());
         repo.init();
         repo.addErrorListener(errorListener);
@@ -119,7 +123,7 @@ public class SaveDataManager {
         return repo;
     }
 
-    private void onRepoError() {
+    private void onRepoError(Throwable throwable) {
         if (errorCounter.incrementAndGet() >= REPO_REGEN_NUM_OF_ERROR) {
             tryRepRecreate();
         }

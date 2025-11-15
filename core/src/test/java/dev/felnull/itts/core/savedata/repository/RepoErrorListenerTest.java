@@ -13,7 +13,7 @@ public class RepoErrorListenerTest extends RepoBaseTest {
     @Test
     void testRepoGetDataAndAddRemove() throws Exception {
         AtomicBoolean errorCheck = new AtomicBoolean();
-        RepoErrorListener errorListener = () -> errorCheck.set(true);
+        RepoErrorListener errorListener = (e) -> errorCheck.set(true);
 
         DAO spyDao = Mockito.spy(createDAO());
 
@@ -57,7 +57,7 @@ public class RepoErrorListenerTest extends RepoBaseTest {
     @Test
     void testRecordDataInit() throws Exception {
         AtomicBoolean errorCheck = new AtomicBoolean();
-        RepoErrorListener errorListener = () -> errorCheck.set(true);
+        RepoErrorListener errorListener = (e) -> errorCheck.set(true);
 
         DAO spyDao = Mockito.spy(createDAO());
 
@@ -79,7 +79,7 @@ public class RepoErrorListenerTest extends RepoBaseTest {
     @Test
     void testAfterDispose() {
         AtomicBoolean errorCheck = new AtomicBoolean();
-        RepoErrorListener errorListener = () -> errorCheck.set(true);
+        RepoErrorListener errorListener = (e) -> errorCheck.set(true);
 
         DataRepository repository = createRepository();
         repository.addErrorListener(errorListener);
@@ -94,7 +94,7 @@ public class RepoErrorListenerTest extends RepoBaseTest {
     @Test
     void testSaveDataBaseProc() throws Exception {
         AtomicBoolean errorCheck = new AtomicBoolean();
-        RepoErrorListener errorListener = () -> errorCheck.set(true);
+        RepoErrorListener errorListener = (e) -> errorCheck.set(true);
 
         DAO spyDao = Mockito.spy(createDAO());
 

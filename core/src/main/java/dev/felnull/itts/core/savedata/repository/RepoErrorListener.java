@@ -8,5 +8,5 @@ public interface RepoErrorListener {
     /**
      * エラー発生したときに呼び出し
      */
-    void onError();
+    void onError(Throwable throwable);
 }

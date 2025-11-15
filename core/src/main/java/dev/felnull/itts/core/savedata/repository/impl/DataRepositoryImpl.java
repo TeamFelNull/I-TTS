@@ -229,13 +229,13 @@ public final class DataRepositoryImpl implements DataRepository {
     /**
      * エラーイベントを発火させる
      */
-    void fireErrorEvent() {
+    void fireErrorEvent(Throwable throwable) {
         if (destroyed.get()) {
             return;
         }
 
         for (RepoErrorListener errorListener : this.errorListeners) {
-            errorListener.onError();
+            errorListener.onError(throwable);
         }
     }
 
@@ -310,10 +310,10 @@ public final class DataRepositoryImpl implements DataRepository {
         try (Connection connection = dao.getConnection()) {
             return dao.botStateDataTable().selectAllConnectedChannelPairByBotKeyId(connection, botKeyData.getId(botId));
         } catch (Exception e) {
-            fireErrorEvent();
+            fireErrorEvent(e);
             throw new RuntimeException(e);
         } catch (Throwable throwable) {
-            fireErrorEvent();
+            fireErrorEvent(throwable);
             throw throwable;
         }
     }
@@ -323,10 +323,10 @@ public final class DataRepositoryImpl implements DataRepository {
         try (Connection connection = dao.getConnection()) {
             return dao.serverUserDataTable().selectAllDenyUser(connection, serverKeyData.getId(serverId));
         } catch (Exception e) {
-            fireErrorEvent();
+            fireErrorEvent(e);
             throw new RuntimeException(e);
         } catch (Throwable throwable) {
-            fireErrorEvent();
+            fireErrorEvent(throwable);
             throw throwable;
         }
     }
@@ -336,10 +336,10 @@ public final class DataRepositoryImpl implements DataRepository {
         try (Connection connection = dao.getConnection()) {
             return dao.dictionaryUseDataTable().selectAll(connection, serverKeyData.getId(serverId));
         } catch (Exception e) {
-            fireErrorEvent();
+            fireErrorEvent(e);
             throw new RuntimeException(e);
         } catch (Throwable throwable) {
-            fireErrorEvent();
+            fireErrorEvent(throwable);
             throw throwable;
         }
     }
