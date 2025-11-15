@@ -36,7 +36,7 @@ public class RomajiDictionary implements Dictionary {
 
     @Override
     public @NotNull @Unmodifiable Map<String, String> getShowInfo(long guildId) {
-        return ImmutableMap.of("ローマ字を平仮名へ変換", "Ikisugi -> いきすぎ");
+        return ImmutableMap.of("ローマ字を平仮名へ変換", "Katyou -> かちょう");
     }
 
     @Override

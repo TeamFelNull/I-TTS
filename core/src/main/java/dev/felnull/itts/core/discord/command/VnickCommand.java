@@ -5,6 +5,7 @@ import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -34,7 +35,7 @@ public class VnickCommand extends BaseCommand {
         return Commands.slash("vnick", "自分の読み上げユーザ名を変更")
                 .addOptions(new OptionData(OptionType.STRING, "name", "名前")
                         .setRequired(true))
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS);
     }
 
