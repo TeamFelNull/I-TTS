@@ -14,8 +14,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -313,14 +314,9 @@ public class LegacyMigrator {
         repo.dispose();
 
         // 旧データを退避
-        Calendar calender = Calendar.getInstance();
-        int buildYear = calender.get(Calendar.YEAR);
-        int buildMonth = calender.get(Calendar.MONTH) + 1;
-        int buildDay = calender.get(Calendar.DAY_OF_MONTH);
-        int buildHour = calender.get(Calendar.HOUR_OF_DAY);
-        int buildMinute = calender.get(Calendar.MINUTE);
-        int buildSecond = calender.get(Calendar.SECOND);
-        File moveDir = new File(String.format("./old_save_data-%s%s%s%s%s%s", buildYear, buildMonth, buildDay, buildHour, buildMinute, buildSecond));
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
+        String timeText = LocalDateTime.now().format(timeFormatter);
+        File moveDir = new File("old_save_data-" + timeText);
 
         try {
             if (JSON_SAVE_DIR.exists()) {

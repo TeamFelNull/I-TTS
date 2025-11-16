@@ -2271,8 +2271,8 @@ class MySQLDAO extends BaseDAO {
                     create table if not exists server_custom_dictionary(
                         id integer not null primary key auto_increment, -- ID
                         server_id integer not null, -- サーバーID
-                        target_word nvarchar(100) not null, -- 置き換え対象の文字
-                        read_word nvarchar(100) not null, -- 実際に読み上げる文字
+                        target_word nvarchar(1000) not null, -- 置き換え対象の文字
+                        read_word nvarchar(1000) not null, -- 実際に読み上げる文字
                         replace_type integer not null, -- 置き換え方法
                     
                         foreign key (server_id) references server_key(id),
@@ -2381,8 +2381,8 @@ class MySQLDAO extends BaseDAO {
             String sql = """
                     create table if not exists global_custom_dictionary(
                         id integer not null primary key auto_increment, -- ID
-                        target_word nvarchar(100) not null, -- 置き換え対象の文字
-                        read_word nvarchar(100) not null, -- 実際に読み上げる文字
+                        target_word nvarchar(1000) not null, -- 置き換え対象の文字
+                        read_word nvarchar(1000) not null, -- 実際に読み上げる文字
                         replace_type integer not null, -- 置き換え方法
                     
                         foreign key (replace_type) references dictionary_replace_type_key(id)

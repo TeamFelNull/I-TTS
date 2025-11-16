@@ -34,6 +34,7 @@ public class VnickCommand extends BaseCommand {
     public SlashCommandData createSlashCommand() {
         return Commands.slash("vnick", "自分の読み上げユーザ名を変更")
                 .addOptions(new OptionData(OptionType.STRING, "name", "名前")
+                        .setMaxLength(100)
                         .setRequired(true))
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS);

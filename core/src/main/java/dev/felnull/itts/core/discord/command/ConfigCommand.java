@@ -64,6 +64,7 @@ public class ConfigCommand extends BaseCommand {
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("read-ignore", "読み上げない文字")
                         .addOptions(new OptionData(OptionType.STRING, "regex", "正規表現")
+                                .setMaxLength(100)
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("default-voice", "デフォルトの読み上げタイプ")
                         .addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声タイプのカテゴリ")

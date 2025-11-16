@@ -79,10 +79,14 @@ public class DictCommand extends BaseCommand {
                 .addSubcommands(new SubcommandData("show", "サーバー読み上げ辞書の内容を表示")
                         .addOption(OptionType.STRING, "name", "表示する辞書", true, true))
                 .addSubcommands(new SubcommandData("add", "サーバー読み上げ辞書に単語を登録")
-                        .addOption(OptionType.STRING, "word", "対象の単語", true)
-                        .addOption(OptionType.STRING, "reading", "対象の読み", true))
+                        .addOptions(new OptionData(OptionType.STRING, "word", "対象の単語", true)
+                                .setMaxLength(1000))
+                        .addOptions(new OptionData(OptionType.STRING, "reading", "対象の読み", true)
+                                .setMaxLength(1000))
+                )
                 .addSubcommands(new SubcommandData("remove", "サーバー読み上げ辞書から単語を削除")
-                        .addOption(OptionType.STRING, "word", "対象の単語", true, true))
+                        .addOptions(new OptionData(OptionType.STRING, "word", "対象の単語", true, true)
+                                .setMaxLength(1000)))
                 .addSubcommands(new SubcommandData("download", "現在の読み上げ辞書をダウンロード"))
                 .addSubcommands(new SubcommandData("upload", "読み上げ辞書をアップロード")
                         .addOption(OptionType.ATTACHMENT, "file", "辞書ファイル", true)
@@ -290,15 +294,14 @@ public class DictCommand extends BaseCommand {
         if (word.length() < MAX_FIELD_TEXT_LENGTH) {
             w = "` " + word.replace("\n", "\\n") + " `";
         } else {
-            w = "` " + word.substring(MAX_FIELD_TEXT_LENGTH).replace("\n", "\\n") + "... `";
+            w = "` " + word.substring(0, MAX_FIELD_TEXT_LENGTH).replace("\n", "\\n") + "... `";
         }
 
         if (reading.length() < MAX_FIELD_TEXT_LENGTH) {
             r = "```" + reading.replace("```", "\\```") + "```";
         } else {
-            r = "```" + reading.substring(MAX_FIELD_TEXT_LENGTH).replace("```", "\\```") + "... ```";
+            r = "```" + reading.substring(0, MAX_FIELD_TEXT_LENGTH).replace("```", "\\```") + "... ```";
         }
-
         builder.addField(w, r, false);
     }
 
