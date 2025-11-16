@@ -780,7 +780,7 @@ public class SQLiteDAO extends BaseDAO {
             String sql = """
                     create table if not exists voice_type_key(
                         id integer not null primary key autoincrement, -- ID
-                        name varchar(30) not null unique -- 参照名
+                        name varchar(75) not null unique -- 参照名
                     );
                     """;
 

@@ -12,11 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public interface Config {
 
     /**
-     * コンフィグのバージョン
-     */
-    int VERSION = 0;
-
-    /**
      * デフォルトのBOTトークン
      */
     String DEFAULT_BOT_TOKEN = "";
@@ -80,4 +75,11 @@ public interface Config {
      * @return SHAREVOXのコンフィグ
      */
     VoicevoxConfig getSharevoxConfig();
+
+    /**
+     * DBコンフィグ
+     *
+     * @return DB関係のコンフィグ
+     */
+    DataBaseConfig getDataBaseConfig();
 }

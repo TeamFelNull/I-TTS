@@ -1,10 +1,11 @@
 package dev.felnull.itts.core.savedata;
 
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.config.DataBaseConfig;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
-import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyMigrator;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.savedata.repository.RepoErrorListener;
 import org.apache.logging.log4j.LogManager;
@@ -98,7 +99,22 @@ public class SaveDataManager {
     }
 
     private DAO createDAO() {
-        return DAOFactory.getInstance().createSQLiteDAO(SQLITE_DB_FILE);
+        DataBaseConfig dataBaseConfig = ITTSRuntime.getInstance().getConfigManager().getConfig().getDataBaseConfig();
+
+        DAO dao;
+        switch (dataBaseConfig.getType()) {
+            case SQLITE -> dao = DAOFactory.getInstance().createSQLiteDAO(SQLITE_DB_FILE);
+            case MYSQL -> dao = DAOFactory.getInstance().createMysqlDAO(
+                    dataBaseConfig.getHost(),
+                    dataBaseConfig.getPort(),
+                    dataBaseConfig.getDatabaseName(),
+                    dataBaseConfig.getUser(),
+                    dataBaseConfig.getPassword()
+            );
+            default -> throw new IllegalStateException("Unsupported type: " + dataBaseConfig.getType());
+        }
+
+        return dao;
     }
 
 

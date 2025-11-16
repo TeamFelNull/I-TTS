@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.config;
 
+import dev.felnull.itts.core.util.NameSerializableEnum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
@@ -89,7 +90,7 @@ public interface DataBaseConfig {
     /**
      * SQLの種類
      */
-    enum DataBaseType {
+    enum DataBaseType implements NameSerializableEnum {
         SQLITE("sqlite"),
         MYSQL("mysql");
 
@@ -102,6 +103,7 @@ public interface DataBaseConfig {
             this.name = name;
         }
 
+        @Override
         public String getName() {
             return name;
         }
