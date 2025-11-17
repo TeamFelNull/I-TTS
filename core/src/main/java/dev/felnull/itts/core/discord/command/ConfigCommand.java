@@ -77,7 +77,7 @@ public class ConfigCommand extends BaseCommand {
                         .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
                                 .setAutoComplete(true)
                                 .setRequired(true)))
-                .addSubcommands(new SubcommandData(AUTO_DISCONNECT_MODE_NAME, "自動退出")
+                .addSubcommands(new SubcommandData(AUTO_DISCONNECT_MODE_NAME, "自動切断")
                         .addOptions(new OptionData(OptionType.STRING, "mode", "モード")
                                 .addChoice("無効", "off")
                                 .addChoice("有効", "on")
@@ -294,9 +294,9 @@ public class ConfigCommand extends BaseCommand {
 
         if (mode != preModel) {
             serverData.setAutoDisconnectMode(mode);
-            event.reply("自動退出を" + name + "にしました。").queue();
+            event.reply("自動切断を" + name + "にしました。").queue();
         } else {
-            event.reply("既に自動退出は" + name + "です。").queue();
+            event.reply("既に自動切断は" + name + "です。").queue();
         }
     }
 
