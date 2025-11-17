@@ -1,7 +1,8 @@
 package dev.felnull.itts.core.discord.command;
 
+import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import dev.felnull.itts.core.discord.ConnectControl;
-import dev.felnull.itts.core.savedata.KariAutoDisconnectData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
@@ -10,6 +11,7 @@ import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -40,7 +42,7 @@ public class JoinCommand extends BaseCommand {
         return Commands.slash("join", "読み上げBOTをVCに呼び出す")
                 .addOptions(new OptionData(OptionType.CHANNEL, "channel", "チャンネル指定")
                         .setChannelTypes(ChannelType.VOICE, ChannelType.STAGE))
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS);
     }
 
@@ -89,8 +91,10 @@ public class JoinCommand extends BaseCommand {
 
         boolean autoDisFlg = false;
 
-        KariAutoDisconnectData.Mode autoDisMode = KariAutoDisconnectData.getMode(guild.getIdLong());
-        if (autoDisMode.isEnable() && ConnectControl.isNoUser(joinTargetChannel)) {
+        AutoDisconnectMode autoDisMode = SaveDataManager.getInstance().getRepository()
+                .getServerData(guild.getIdLong())
+                .getAutoDisconnectMode();
+        if (autoDisMode.isOn() && ConnectControl.isNoUser(joinTargetChannel)) {
             autoDisFlg = true;
         }
 

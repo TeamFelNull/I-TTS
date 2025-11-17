@@ -3,6 +3,7 @@ package dev.felnull.itts.core.discord.command;
 import dev.felnull.itts.core.tts.TTSInstance;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ public class SkipCommand extends BaseCommand {
     @Override
     public @NotNull SlashCommandData createSlashCommand() {
         return Commands.slash("skip", "現在の読み上げキューを飛ばす")
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(OWNERS_PERMISSIONS);
     }
 

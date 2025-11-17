@@ -2,9 +2,10 @@ package dev.felnull.itts.core.discord;
 
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ImmortalityTimer;
-import dev.felnull.itts.core.savedata.BotStateData;
-import dev.felnull.itts.core.savedata.KariAutoDisconnectData;
 import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.repository.BotStateData;
+import dev.felnull.itts.core.savedata.repository.DataRepository;
+import dev.felnull.itts.core.tts.TTSChannelPair;
 import dev.felnull.itts.core.tts.TTSInstance;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.tts.saidtext.StartupSaidText;
@@ -101,15 +102,17 @@ public class ConnectControl {
         long audioCh = -1;
         long textCh = -1;
 
-        KariAutoDisconnectData.Mode autoDisMode = KariAutoDisconnectData.getMode(guildId);
+        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        AutoDisconnectMode autoDisMode = repo.getServerData(guildId).getAutoDisconnectMode();
+        TTSChannelPair connectedChannelPair = data.getConnectedChannelPair();
 
-        if (data.getConnectedAudioChannel() >= 0 && data.getReadAroundTextChannel() >= 0) {
+        if (connectedChannelPair != null) {
             // 最終起動時に接続している場合
             boolean conFlg = false;
 
-            if (autoDisMode.isEnable()) {
+            if (autoDisMode.isOn()) {
                 // 自動切断オンの場合
-                AudioChannel audioChannel = guild.getVoiceChannelById(data.getConnectedAudioChannel());
+                AudioChannel audioChannel = guild.getVoiceChannelById(connectedChannelPair.speakAudioChannel());
 
                 if (audioChannel != null) {
                     if (!isNoUser(audioChannel)) {
@@ -117,8 +120,7 @@ public class ConnectControl {
                         conFlg = true;
                     } else if (autoDisMode.isReconnect()) {
                         // 起動時の再接続はしないが、人が来たら再接続
-                        KariAutoDisconnectData.setReconnectChannel(guildId,
-                                new KariAutoDisconnectData.TTSChannelPair(data.getConnectedAudioChannel(), data.getReadAroundTextChannel()));
+                        data.setReconnectChannelPair(connectedChannelPair);
                     }
                 }
 
@@ -128,19 +130,21 @@ public class ConnectControl {
             }
 
             if (conFlg) {
-                audioCh = data.getConnectedAudioChannel();
-                textCh = data.getReadAroundTextChannel();
+                audioCh = connectedChannelPair.speakAudioChannel();
+                textCh = connectedChannelPair.readTextChannel();
             }
 
-        } else if (KariAutoDisconnectData.getMode(guildId).isReconnect()) {
+        } else if (repo.getServerData(guildId).getAutoDisconnectMode().isReconnect()) {
             // 最終起動時に接続していなかったが、再接続予定で人がいれば接続
-            KariAutoDisconnectData.TTSChannelPair reconnectChannel = KariAutoDisconnectData.getReconnectChannel(guildId);
-            AudioChannel audioChannel = guild.getVoiceChannelById(reconnectChannel.speakAudioChannel());
+            TTSChannelPair reconnectChannel = repo.getBotStateData(guildId, ITTSRuntime.getInstance().getBot().getBotId()).getReconnectChannelPair();
+            if (reconnectChannel != null) {
+                AudioChannel audioChannel = guild.getVoiceChannelById(reconnectChannel.speakAudioChannel());
 
-            if (audioChannel != null && !isNoUser(audioChannel)
-                    && reconnectChannel.speakAudioChannel() != -1 && reconnectChannel.readAroundTextChannel() != -1) {
-                audioCh = reconnectChannel.speakAudioChannel();
-                textCh = reconnectChannel.readAroundTextChannel();
+                if (audioChannel != null && !isNoUser(audioChannel)
+                        && reconnectChannel.speakAudioChannel() != -1 && reconnectChannel.readTextChannel() != -1) {
+                    audioCh = reconnectChannel.speakAudioChannel();
+                    textCh = reconnectChannel.readTextChannel();
+                }
             }
         }
 
@@ -158,8 +162,7 @@ public class ConnectControl {
 
             // オーディオチャンネルが存在しない場合
             if (audioChannel == null) {
-                data.setReadAroundTextChannel(-1);
-                data.setConnectedAudioChannel(-1);
+                data.setConnectedChannelPair(null);
                 logger.info("Failed to reconnect (Audio channel does not exist): {}", guild.getName());
                 return;
             }
@@ -168,8 +171,7 @@ public class ConnectControl {
 
             // テキストチャンネルが存在しない場合
             if (chatChannel == null) {
-                data.setReadAroundTextChannel(-1);
-                data.setConnectedAudioChannel(-1);
+                data.setConnectedChannelPair(null);
                 logger.info("Failed to reconnect (Message channel does not exist): {}", guild.getName());
                 return;
             }
@@ -180,7 +182,7 @@ public class ConnectControl {
             try {
                 guild.getAudioManager().openAudioConnection(audioChannel);
             } catch (InsufficientPermissionException ex) {
-                data.setConnectedAudioChannel(-1);
+                data.setConnectedChannelPair(null);
                 logger.info("Failed to reconnect (No permission): {}", guild.getName());
                 return;
             }
@@ -204,9 +206,9 @@ public class ConnectControl {
     /**
      * ユーザーがチャンネルに参加したときの再接続
      */
-    private void joinReconnect(KariAutoDisconnectData.TTSChannelPair ttsChannel, Guild guild, AudioChannelUnion channelUnion, AudioManager audioManager) {
+    private void joinReconnect(TTSChannelPair ttsChannel, Guild guild, AudioChannelUnion channelUnion, AudioManager audioManager) {
         TTSManager ttsManager = ITTSRuntime.getInstance().getTTSManager();
-        TextChannel channel = guild.getTextChannelById(ttsChannel.readAroundTextChannel());
+        TextChannel channel = guild.getTextChannelById(ttsChannel.readTextChannel());
 
         if (channel == null) {
             // 再接続を行う予定の読み上げテキストチャンネルが存在しない
@@ -255,7 +257,8 @@ public class ConnectControl {
             JDA jda = event.getJDA();
             Guild guild = Objects.requireNonNull(event.getGuild());
             long guildId = guild.getIdLong();
-            KariAutoDisconnectData.Mode autoDisMode = KariAutoDisconnectData.getMode(guildId);
+            DataRepository repo = SaveDataManager.getInstance().getRepository();
+            AutoDisconnectMode autoDisMode = repo.getServerData(guildId).getAutoDisconnectMode();
 
             if (member.getUser().getIdLong() == jda.getSelfUser().getIdLong()) {
                 // このBOTがVCから切断、もしくは接続された時に、自動切断の処理を停止
@@ -265,10 +268,11 @@ public class ConnectControl {
                 if (joinCh != null) {
 
                     // 再接続を無効化
-                    KariAutoDisconnectData.setReconnectChannel(guildId, new KariAutoDisconnectData.TTSChannelPair(-1, -1));
+                    repo.getBotStateData(guildId, ITTSRuntime.getInstance().getBot().getBotId())
+                            .setReconnectChannelPair(null);
 
                     // 誰もいない場合
-                    if (autoDisMode.isEnable() && isNoUser(joinCh)) {
+                    if (autoDisMode.isOn() && isNoUser(joinCh)) {
                         startAutoDisconnecter(guildId);
                     }
                 }
@@ -286,15 +290,17 @@ public class ConnectControl {
 
             // ユーザーが参加してきたときの再接続
             if (autoDisMode.isReconnect() && joinCh != null && selfCh == null) {
-                KariAutoDisconnectData.TTSChannelPair reconnectChannel = KariAutoDisconnectData.getReconnectChannel(guildId);
-                if (reconnectChannel != null && reconnectChannel.readAroundTextChannel() != -1 && reconnectChannel.speakAudioChannel() != -1
+                TTSChannelPair reconnectChannel = repo
+                        .getBotStateData(guildId, ITTSRuntime.getInstance().getBot().getBotId())
+                        .getReconnectChannelPair();
+                if (reconnectChannel != null && reconnectChannel.readTextChannel() != -1 && reconnectChannel.speakAudioChannel() != -1
                         && reconnectChannel.speakAudioChannel() == joinCh.getIdLong()) {
                     joinReconnect(reconnectChannel, guild, joinCh, audioManager);
                 }
             }
 
             // 自動切断
-            if (autoDisMode.isEnable() && selfCh != null) {
+            if (autoDisMode.isOn() && selfCh != null) {
                 long selfChId = selfCh.getIdLong();
 
                 // ユーザーがこのBOTと同じチャンネルから抜けた時
@@ -321,8 +327,8 @@ public class ConnectControl {
         public void onReady(@NotNull ReadyEvent event) {
             // 起動後の再接続処理
             CompletableFuture.runAsync(() -> {
-                SaveDataManager saveDataManager = ITTSRuntime.getInstance().getSaveDataManager();
-                Map<Long, BotStateData> allData = saveDataManager.getAllBotStateData();
+                long botId = ITTSRuntime.getInstance().getBot().getBotId();
+                Map<Long, BotStateData> allData = SaveDataManager.getInstance().getRepository().getAllBotStateData(botId);
 
                 allData.forEach((guildId, data) -> {
                     try {
@@ -406,15 +412,16 @@ public class ConnectControl {
                 return;
             }
 
-            KariAutoDisconnectData.Mode autoDisMode = KariAutoDisconnectData.getMode(guildId);
-            KariAutoDisconnectData.TTSChannelPair ttsChannel = null;
+            DataRepository repo = SaveDataManager.getInstance().getRepository();
+            AutoDisconnectMode autoDisMode = repo.getServerData(guildId).getAutoDisconnectMode();
+            TTSChannelPair ttsChannel = null;
 
             // 再接続用のTTSチャンネルペアを取得
             if (autoDisMode.isReconnect()) {
                 TTSManager ttsManager = ITTSRuntime.getInstance().getTTSManager();
                 TTSInstance ttsInstance = ttsManager.getTTSInstance(guildId);
                 if (ttsInstance != null) {
-                    ttsChannel = new KariAutoDisconnectData.TTSChannelPair(ttsInstance.getAudioChannel(), ttsInstance.getTextChannel());
+                    ttsChannel = new TTSChannelPair(ttsInstance.getAudioChannel(), ttsInstance.getTextChannel());
                 }
             }
 
@@ -428,7 +435,8 @@ public class ConnectControl {
 
             // 再接続先を設定
             if (autoDisMode.isReconnect() && ttsChannel != null) {
-                KariAutoDisconnectData.setReconnectChannel(guildId, ttsChannel);
+                repo.getBotStateData(guildId, ITTSRuntime.getInstance().getBot().getBotId())
+                        .setReconnectChannelPair(ttsChannel);
             }
 
             synchronized (autoDisconnecters) {

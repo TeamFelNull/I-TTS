@@ -2,12 +2,16 @@ package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.itts.core.tts.TTSManager;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -40,7 +44,7 @@ public class InfoCommand extends BaseCommand {
     @Override
     public SlashCommandData createSlashCommand() {
         return Commands.slash("info", "情報を表示")
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS)
                 .addSubcommands(new SubcommandData("about", "BOT情報を表示"))
                 .addSubcommands(new SubcommandData("oss", "OSS情報を表示"))
@@ -66,7 +70,13 @@ public class InfoCommand extends BaseCommand {
         aboutEmbedBuilder.addField("License", "GNU LGPLv3", false);
         aboutEmbedBuilder.setFooter("Developed by FelNull", "https://avatars.githubusercontent.com/u/59995376?s=200&v=4");
 
-        e.replyEmbeds(aboutEmbedBuilder.build()).addActionRow(Button.of(ButtonStyle.LINK, SOURCE_URL, "Source")).setEphemeral(true).queue();
+        try (MessageCreateData messageCreateData = new MessageCreateBuilder()
+                .setEmbeds(aboutEmbedBuilder.build())
+                .addComponents(ActionRow.of(Button.of(ButtonStyle.LINK, SOURCE_URL, "Source")))
+                .build()) {
+
+            e.reply(messageCreateData).setEphemeral(true).queue();
+        }
     }
 
     private void oss(SlashCommandInteractionEvent e) {

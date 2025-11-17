@@ -1,11 +1,14 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.*;
@@ -31,7 +34,7 @@ public class AdminCommand extends BaseCommand {
     @Override
     public SlashCommandData createSlashCommand() {
         return Commands.slash("admin", "管理者専用")
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(OWNERS_PERMISSIONS)
                 .addSubcommands(new SubcommandData("vnick", "他人の読み上げユーザ名を変更")
                         .addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")
@@ -70,7 +73,8 @@ public class AdminCommand extends BaseCommand {
         User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
         String name = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
         Guild guild = Objects.requireNonNull(event.getGuild());
-        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
 
         if ("reset".equals(name)) {
             sud.setNickName(null);

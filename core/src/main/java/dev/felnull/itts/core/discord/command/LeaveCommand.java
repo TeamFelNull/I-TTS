@@ -1,10 +1,14 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.KariAutoDisconnectData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.repository.BotStateData;
+import dev.felnull.itts.core.savedata.repository.DataRepository;
+import dev.felnull.itts.core.tts.TTSChannelPair;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.managers.AudioManager;
@@ -30,7 +34,7 @@ public class LeaveCommand extends BaseCommand {
     @Override
     public SlashCommandData createSlashCommand() {
         return Commands.slash("leave", "読み上げBOTをVCから切断")
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS);
     }
 
@@ -52,12 +56,15 @@ public class LeaveCommand extends BaseCommand {
         } else {
             boolean reconnectFlg = false;
 
-            KariAutoDisconnectData.TTSChannelPair ttsChannelPair = KariAutoDisconnectData.getReconnectChannel(guild.getIdLong());
-            if (ttsChannelPair != null && ttsChannelPair.speakAudioChannel() != -1 && ttsChannelPair.readAroundTextChannel() != -1) {
-                AudioChannel audioChannel = event.getJDA().getVoiceChannelById(ttsChannelPair.speakAudioChannel());
+            DataRepository repo = SaveDataManager.getInstance().getRepository();
+            BotStateData botStateData = repo.getBotStateData(guild.getIdLong(), getBot().getBotId());
+            TTSChannelPair reconnectChannelPair = botStateData.getReconnectChannelPair();
+
+            if (reconnectChannelPair != null) {
+                AudioChannel audioChannel = event.getJDA().getVoiceChannelById(reconnectChannelPair.speakAudioChannel());
                 if (audioChannel != null) {
                     event.reply(audioChannel.getAsMention() + "から切断します。").queue();
-                    KariAutoDisconnectData.setReconnectChannel(guild.getIdLong(), new KariAutoDisconnectData.TTSChannelPair(-1, -1));
+                    botStateData.setReconnectChannelPair(null);
                     reconnectFlg = true;
                 }
             }

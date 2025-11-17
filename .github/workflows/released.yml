@@ -13,18 +13,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup JDK #JDKセットアップ
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
           java-version: '17'
 
       - name: Setup Gradle #Gradleセットアップ
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           gradle-home-cache-cleanup: true
 
@@ -71,13 +71,13 @@ jobs:
           directory_path: "${{ github.workspace }}/release"
 
       - name: Upload Artifact #アーティファクトをアップロード
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: releases
           path: release/*
 
       - name: GitHub Releases #GiHubにリリース
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body_path: LATEST_CHANGELOG.md
           files: release/*
@@ -89,18 +89,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup JDK #JDKセットアップ
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
           java-version: '17'
 
       - name: Setup Gradle #Gradleセットアップ
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           gradle-home-cache-cleanup: true
 

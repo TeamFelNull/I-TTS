@@ -1,8 +1,11 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -31,8 +34,9 @@ public class VnickCommand extends BaseCommand {
     public SlashCommandData createSlashCommand() {
         return Commands.slash("vnick", "自分の読み上げユーザ名を変更")
                 .addOptions(new OptionData(OptionType.STRING, "name", "名前")
+                        .setMaxLength(100)
                         .setRequired(true))
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS);
     }
 
@@ -41,7 +45,8 @@ public class VnickCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
         String name = event.getOption("name", OptionMapping::getAsString);
 
-        ServerUserData sud = getSaveDataManager().getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
 
         if ("reset".equals(name)) {
             sud.setNickName(null);

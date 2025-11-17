@@ -17,6 +17,22 @@
 
 ### Security
 
+## [2.0.0-alpha.14] - 2025-11-07
+
+### Fixed
+- 「/dict show」が応答しない問題を修正
+
+## [2.0.0-alpha.13] - 2025-10-28
+
+### Fixed
+- 起動できない問題を修正
+
+## [2.0.0-alpha.12] - 2025-10-28
+
+### Changed
+- ライブラリを更新
+- ログ出力を改善
+
 ## [2.0.0-alpha.10] - 2024-04-14
 
 ### Fixed
@@ -67,14 +83,17 @@
 ### Added
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.10...HEAD
-[2.0.0-alpha.9]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.8...v2.0.0-alpha.9
-[2.0.0-alpha.1]: https://github.com/TeamFelnull/I-TTS/commits/v2.0.0-alpha.1
-[2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
-[2.0.0-alpha.3]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
-[2.0.0-alpha.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
-[2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
-[2.0.0-alpha.6]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.5...v2.0.0-alpha.6
-[2.0.0-alpha.7]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.6...v2.0.0-alpha.7
-[2.0.0-alpha.8]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.7...v2.0.0-alpha.8
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.14...HEAD
+[2.0.0-alpha.13]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.12...v2.0.0-alpha.13
 [2.0.0-alpha.10]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.9...v2.0.0-alpha.10
+[2.0.0-alpha.8]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.7...v2.0.0-alpha.8
+[2.0.0-alpha.7]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.6...v2.0.0-alpha.7
+[2.0.0-alpha.6]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.5...v2.0.0-alpha.6
+[2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
+[2.0.0-alpha.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
+[2.0.0-alpha.3]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
+[2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
+[2.0.0-alpha.1]: https://github.com/TeamFelnull/I-TTS/commits/v2.0.0-alpha.1
+[2.0.0-alpha.9]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.8...v2.0.0-alpha.9
+[2.0.0-alpha.12]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.10...v2.0.0-alpha.12
+[2.0.0-alpha.14]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.13...v2.0.0-alpha.14

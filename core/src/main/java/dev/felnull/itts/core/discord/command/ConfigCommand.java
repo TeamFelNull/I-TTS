@@ -1,6 +1,8 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.ServerData;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerData;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceManager;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -8,6 +10,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -38,7 +41,7 @@ public class ConfigCommand extends BaseCommand {
     @Override
     public SlashCommandData createSlashCommand() {
         return Commands.slash("config", "設定")
-                .setGuildOnly(true)
+                .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(OWNERS_PERMISSIONS)
                 .addSubcommands(new SubcommandData("notify-move", "VCの入退室時にユーザー名を読み上げ")
                         .addOptions(new OptionData(OptionType.BOOLEAN, "enable", "True: 有効、False: 無効")
@@ -61,6 +64,7 @@ public class ConfigCommand extends BaseCommand {
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("read-ignore", "読み上げない文字")
                         .addOptions(new OptionData(OptionType.STRING, "regex", "正規表現")
+                                .setMaxLength(100)
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("default-voice", "デフォルトの読み上げタイプ")
                         .addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声タイプのカテゴリ")
@@ -95,7 +99,8 @@ public class ConfigCommand extends BaseCommand {
         showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         showEmbedBuilder.setTitle("現在のコンフィグ");
 
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
         VoiceManager vm = getVoiceManager();
         VoiceType dv = vm.getDefaultVoiceType(guild.getIdLong());
 
@@ -117,7 +122,8 @@ public class ConfigCommand extends BaseCommand {
         String odVc = event.getOption("voice_category", OptionMapping::getAsString);
         String odVt = event.getOption("voice_type", OptionMapping::getAsString);
 
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
         VoiceManager vm = getVoiceManager();
         Optional<VoiceCategory> cat = vm.getVoiceCategory(odVc);
 
@@ -148,7 +154,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         String op = Objects.requireNonNull(event.getOption("regex", OptionMapping::getAsString));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         String pre = sd.getIgnoreRegex();
         if (!op.equals(pre)) {
@@ -164,7 +171,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         boolean pre = sd.isOverwriteAloud();
         String enStr = op ? "有効" : "無効";
@@ -182,7 +190,8 @@ public class ConfigCommand extends BaseCommand {
     private void needJoin(SlashCommandInteractionEvent event) {
         Guild guild = Objects.requireNonNull(event.getGuild());
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         boolean pre = sd.isNeedJoin();
         String enStr = op ? "有効" : "無効";
@@ -199,7 +208,8 @@ public class ConfigCommand extends BaseCommand {
     private void nameReadLimit(SlashCommandInteractionEvent event) {
         Guild guild = Objects.requireNonNull(event.getGuild());
         int op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         int pre = sd.getNameReadLimit();
         if (op != pre) {
@@ -215,7 +225,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         int op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         int pre = sd.getReadLimit();
         if (op != pre) {
@@ -232,7 +243,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         OptionMapping op = Objects.requireNonNull(event.getOption("enable"));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         boolean pre = sd.isNotifyMove();
         String enStr = op.getAsBoolean() ? "有効" : "無効";

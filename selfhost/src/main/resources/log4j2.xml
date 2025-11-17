@@ -3,34 +3,65 @@
 <Configuration status="off">
 
     <Properties>
-        <Property name="format1">%d{yyyy-MM-dd HH:mm:ss,SSS} %-3p-[%t] %m%n</Property>
-        <Property name="logfile">./log/log.log</Property>
+        <Property name="console-format">[%d{HH:mm:ss}] [%p/%t] [%c{2.}]: %m%n</Property>
+        <Property name="fileout-format">[%d{yyyy-MM-dd HH:mm:ss,SSS}] [%p/%t] [%c]: %m%n</Property>
+        <Property name="logfile">./log/latest.log</Property>
         <Property name="logfile-archive">./log/log_%d{yyyy-MM-dd}-%i.gz</Property>
+        <Property name="debug-logfile">./log/debug.log</Property>
+        <Property name="debug-logfile-archive">./log/debug_%d{yyyy-MM-dd}-%i.gz</Property>
     </Properties>
 
     <Appenders>
+
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout>
-                <pattern>${format1}</pattern>
+                <pattern>${console-format}</pattern>
             </PatternLayout>
+
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
         </Console>
 
-        <RollingFile name="logfile001" append="true" fileName="${logfile}"
-                     filePattern="${logfile-archive}">
+        <RollingFile name="FileOut" fileName="${logfile}" filePattern="${logfile-archive}">
             <PatternLayout>
-                <pattern>${format1}</pattern>
+                <pattern>${fileout-format}</pattern>
             </PatternLayout>
             <Policies>
-                <SizeBasedTriggeringPolicy size="1KB"/>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+                <TimeBasedTriggeringPolicy/>
             </Policies>
-            <DefaultRolloverStrategy max="3"/>
+            <DefaultRolloverStrategy fileIndex="max" min="1" max="10"/>
+
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
         </RollingFile>
+
+        <RollingFile name="DebugFileOut" fileName="${debug-logfile}" filePattern="${debug-logfile-archive}">
+            <PatternLayout>
+                <pattern>${fileout-format}</pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="1GB"/>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="max" min="1" max="1"/>
+        </RollingFile>
+
     </Appenders>
 
     <Loggers>
-        <Root level="trace">
+        <Root level="debug">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="logfile001"/>
+            <AppenderRef ref="FileOut"/>
+            <AppenderRef ref="DebugFileOut"/>
         </Root>
     </Loggers>
 </Configuration>
