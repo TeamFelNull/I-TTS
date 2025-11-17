@@ -16,6 +16,17 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ *
+ * @param botToken        BOTトークン
+ * @param themeColor      テーマカラー
+ * @param cacheTime       キャッシュを保持する期間
+ * @param voiceTextConfig VOICETEXT コンフィグ
+ * @param voicevoxConfig  VOICEVOX コンフィグ
+ * @param coeirolnkConfig COEIROLNK コンフィグ
+ * @param sharevoxConfig  SHAREVOX コンフィグ
+ * @param dataBaseConfig  データベースコンフィグ
+ */
 public record ConfigImpl(
         String botToken,
         int themeColor,
@@ -27,7 +38,10 @@ public record ConfigImpl(
         DataBaseConfig dataBaseConfig
 ) implements Config {
 
-    public static ConfigLoader<ConfigImpl> LOADER = new ConfigLoader<>() {
+    /**
+     * コンフィグローダー
+     */
+    public static final ConfigLoader<ConfigImpl> LOADER = new ConfigLoader<>() {
         @Override
         public ConfigImpl load(JsonObject json5) {
             String botToken = Json5Utils.getStringOrElse(json5, "bot_token", DEFAULT_BOT_TOKEN);
@@ -68,6 +82,11 @@ public record ConfigImpl(
         }
     };
 
+    /**
+     * 初期化コンフィグ作成
+     *
+     * @return 初期コンフィグ
+     */
     public static ConfigImpl createInitialConfig() {
         return new ConfigImpl(
                 DEFAULT_BOT_TOKEN,
@@ -135,6 +154,12 @@ public record ConfigImpl(
         return dataBaseConfig;
     }
 
+    /**
+     * VOICETEXTコンフィグの実装
+     *
+     * @param enable 有効かどうか
+     * @param apiKey APIキー
+     */
     private record VoiceTextConfigImpl(boolean enable, String apiKey) implements VoiceTextConfig {
 
         private VoiceTextConfigImpl() {
@@ -165,6 +190,13 @@ public record ConfigImpl(
         }
     }
 
+    /**
+     * VOICEVOXコンフィグの実装
+     *
+     * @param enable    有効かどうか
+     * @param apiUrls   APIのURLリスト
+     * @param checkTime APIが利用可能かどうか確認する間隔(ms)
+     */
     private record VoicevoxConfigImpl(boolean enable, List<String> apiUrls, long checkTime) implements VoicevoxConfig {
 
         private VoicevoxConfigImpl() {
@@ -205,6 +237,16 @@ public record ConfigImpl(
         }
     }
 
+    /**
+     * データベースコンフィグの実装
+     *
+     * @param type         データベースの種類
+     * @param host         ホスト名
+     * @param port         ポート番号
+     * @param databaseName データベース名
+     * @param user         ユーザー名
+     * @param password     パスワード
+     */
     private record DataBaseConfigImpl(
             DataBaseType type,
             String host,

@@ -8,6 +8,17 @@ import dev.felnull.itts.utils.Json5Utils;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 旧バージョンのコンフィグ
+ *
+ * @param botToken        BOTトークン
+ * @param themeColor      テーマカラー
+ * @param cacheTime       キャッシュを保持する期間
+ * @param voiceTextConfig VOICETEXT コンフィグ
+ * @param voicevoxConfig  VOICEVOX コンフィグ
+ * @param coeirolnkConfig COEIROLNK コンフィグ
+ * @param sharevoxConfig  SHAREVOX コンフィグ
+ */
 public record ConfigV0(
         String botToken,
         int themeColor,
@@ -18,7 +29,10 @@ public record ConfigV0(
         VoicevoxConfigV0 sharevoxConfig
 ) {
 
-    public static ConfigLoader<ConfigV0> LOADER = new ConfigLoader<>() {
+    /**
+     * コンフィグローダー
+     */
+    public static final ConfigLoader<ConfigV0> LOADER = new ConfigLoader<>() {
         @Override
         public ConfigV0 load(JsonObject json5) {
             String botToken = Json5Utils.getStringOrElse(json5, "bot_token", "");
@@ -46,8 +60,20 @@ public record ConfigV0(
         }
     };
 
+    /**
+     * VOICETEXTのコンフィグ
+     *
+     * @param enable 有効かどうか
+     * @param apiKey APIキー
+     */
     public record VoiceTextConfigV0(boolean enable, String apiKey) {
 
+        /**
+         * JSONを読み込んでコンフィグを作成
+         *
+         * @param jo JSONオブジェクト
+         * @return コンフィグ
+         */
         public static VoiceTextConfigV0 fromJson(JsonObject jo) {
             boolean enable = jo.getBoolean("enable", true);
             String apiKey = Json5Utils.getStringOrElse(jo, "api_key", "");
@@ -55,8 +81,20 @@ public record ConfigV0(
         }
     }
 
+    /**
+     * VOICEVOX系のコンフィグ
+     *
+     * @param enable    有効かどうか
+     * @param apiUrls   APIのURLリスト
+     * @param checkTime 接続確認の間隔
+     */
     public record VoicevoxConfigV0(boolean enable, List<String> apiUrls, long checkTime) {
-
+        /**
+         * JSONを読み込んでコンフィグを作成
+         *
+         * @param jo JSONオブジェクト
+         * @return コンフィグ
+         */
         public static VoicevoxConfigV0 fromJson(JsonObject jo) {
             boolean enable = jo.getBoolean("enable", true);
 

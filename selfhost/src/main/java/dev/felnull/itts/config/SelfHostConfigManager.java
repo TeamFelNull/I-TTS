@@ -24,6 +24,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+/**
+ * SelfHost用コンフィグマネージャー
+ */
 public class SelfHostConfigManager implements ConfigContext {
 
     /**
@@ -51,11 +54,19 @@ public class SelfHostConfigManager implements ConfigContext {
      */
     private static final File OLD_CONFIG_FOLDER = new File("./old_config");
 
+    /**
+     * コンフィグローダー
+     */
     private final Map<Integer, ConfigLoader<?>> configLoaders = ImmutableMap.of(
             0, ConfigV0.LOADER,
             1, ConfigImpl.LOADER
     );
 
+    /**
+     * インスタンス取得
+     *
+     * @return シングルトンインスタンス
+     */
     public static SelfHostConfigManager getInstance() {
         return INSTANCE;
     }
