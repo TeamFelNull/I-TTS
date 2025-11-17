@@ -32,6 +32,9 @@ import java.util.Optional;
  */
 public class ConfigCommand extends BaseCommand {
 
+    /**
+     * 自動切断コマンド
+     */
     private static final String AUTO_DISCONNECT_MODE_NAME = "auto-disconnect-mode";
 
     /**
@@ -290,6 +293,8 @@ public class ConfigCommand extends BaseCommand {
             case OFF -> name = "無効";
             case ON -> name = "有効";
             case ON_RECONNECT -> name = "有効 (再接続)";
+            default -> {
+            }
         }
 
         if (mode != preModel) {
