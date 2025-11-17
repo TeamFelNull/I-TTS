@@ -99,4 +99,21 @@ public class Json5Utils {
         }
         return ja;
     }
+
+    /**
+     * Json5からintを取得
+     *
+     * @param json5 Json
+     * @param key   キー
+     * @return 値
+     */
+    public static int getInt(JsonObject json5, String key) {
+        JsonPrimitive prim = (JsonPrimitive) json5.get(key);
+
+        if (prim != null && prim.getValue() instanceof Number) {
+            return prim.asInt(0);
+        }
+
+        throw new IllegalStateException("Not Integer");
+    }
 }

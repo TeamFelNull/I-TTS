@@ -3,7 +3,8 @@ package dev.felnull.itts.core.discord.command;
 import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.savedata.SaveDataManager;
-import dev.felnull.itts.core.savedata.ServerUserData;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import dev.felnull.itts.core.util.DiscordUtils;
 import dev.felnull.itts.core.util.StringUtils;
 import dev.felnull.itts.core.voice.VoiceCategory;
@@ -118,9 +119,9 @@ public class VoiceCommand extends BaseCommand {
             user = event.getUser();
         }
 
-        SaveDataManager sdm = ITTSRuntime.getInstance().getSaveDataManager();
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
 
-        ServerUserData serverUserData = sdm.getServerUserData(guild.getIdLong(), user.getIdLong());
+        LegacyServerUserData serverUserData = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
         OptionMapping odVc = Objects.requireNonNull(event.getOption("voice_category"));
         OptionMapping odVt = Objects.requireNonNull(event.getOption("voice_type"));
 
@@ -164,7 +165,8 @@ public class VoiceCommand extends BaseCommand {
             user = event.getUser();
         }
 
-        ServerUserData serverUserData = ITTSRuntime.getInstance().getSaveDataManager().getServerUserData(guild.getIdLong(), user.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerUserData serverUserData = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
         VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
         Optional<VoiceType> vt = vm.getVoiceType(serverUserData.getVoiceType());
 
