@@ -294,6 +294,11 @@ public class LegacyMigrator {
         return jo;
     }
 
+    /**
+     * 移行すべきか確認を行い、必要であれば移行処理を実施する
+     *
+     * @param daoProvider DAOプロバイダ
+     */
     public static void checkAndExecution(Supplier<DAO> daoProvider) {
         // 移行が必要かどうか確認
         if (!(JSON_SAVE_DIR.exists() || GLOBAL_DICT_DIR.exists())) {
