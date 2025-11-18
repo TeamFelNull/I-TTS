@@ -55,7 +55,7 @@ public interface DataRepository {
     /**
      * サーバーデータを取得
      *
-     * @param serverId 　サーバーID
+     * @param serverId サーバーID
      * @return サーバーデータのインスタンス
      */
     @NotNull
@@ -137,4 +137,14 @@ public interface DataRepository {
     @NotNull
     @Unmodifiable
     List<DictionaryUseEntry> getAllDictionaryUseData(long serverId);
+
+    /**
+     * 全サーバーのBOT状態データを取得する
+     *
+     * @param botId BOTのID
+     * @return 全サーバーのBOT状態データ
+     */
+    @NotNull
+    @Unmodifiable
+    Map<Long, BotStateData> getAllBotStateData(long botId);
 }

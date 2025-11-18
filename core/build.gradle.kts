@@ -29,6 +29,7 @@ dependencies {
     api("com.zaxxer:HikariCP:5.1.0")
     api("mysql:mysql-connector-java:8.0.32")
     api("org.xerial:sqlite-jdbc:3.46.0.1")
+    api("it.unimi.dsi:fastutil:8.5.18")
 
     api("org.jetbrains:annotations:26.0.2-1")
 

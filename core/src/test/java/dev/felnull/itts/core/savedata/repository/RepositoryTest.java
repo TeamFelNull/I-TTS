@@ -123,4 +123,42 @@ public class RepositoryTest extends RepoBaseTest {
         repo.dispose();
     }
 
+    @Test
+    void testGetAllBotStateData() {
+        DataRepository repo = createRepository();
+        long botId1 = 364;
+        long botId2 = 114;
+
+        assertTrue(repo.getAllBotStateData(botId1).isEmpty());
+        assertTrue(repo.getAllBotStateData(botId2).isEmpty());
+
+        long server1 = 13;
+        long server2 = 24;
+
+        repo.getBotStateData(server1, botId1).setConnectedChannelPair(new TTSChannelPair(10L, 20L));
+
+        assertEquals(1, repo.getAllBotStateData(botId1).size());
+        Map.Entry<Long, BotStateData> ret1 = repo.getAllBotStateData(botId1).entrySet().stream().findFirst().orElseThrow();
+        assertEquals(server1, ret1.getKey());
+        assertEquals(new TTSChannelPair(10L, 20L), ret1.getValue().getConnectedChannelPair());
+        assertTrue(repo.getAllBotStateData(botId2).isEmpty());
+
+        repo.getBotStateData(server2, botId1).setReconnectChannelPair(new TTSChannelPair(20L, 30L));
+        repo.getBotStateData(server2, botId2).setConnectedChannelPair(new TTSChannelPair(40L, 50L));
+
+        assertEquals(2, repo.getAllBotStateData(botId1).size());
+        assertEquals(1, repo.getAllBotStateData(botId2).size());
+        Map<Long, BotStateData> ret2 = repo.getAllBotStateData(botId1);
+        Map.Entry<Long, BotStateData> ret3 = repo.getAllBotStateData(botId2).entrySet().stream().findFirst().orElseThrow();
+
+        assertTrue(ret2.containsKey(server1));
+        assertTrue(ret2.containsKey(server2));
+        assertEquals(new TTSChannelPair(10L, 20L), ret2.get(server1).getConnectedChannelPair());
+        assertEquals(new TTSChannelPair(20L, 30L), ret2.get(server2).getReconnectChannelPair());
+
+        assertEquals(server2, ret3.getKey());
+        assertEquals(new TTSChannelPair(40L, 50L), ret3.getValue().getConnectedChannelPair());
+
+        repo.dispose();
+    }
 }

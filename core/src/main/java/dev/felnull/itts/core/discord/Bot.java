@@ -27,6 +27,11 @@ public class Bot implements ITTSRuntimeUse {
     protected final List<BaseCommand> baseCommands = new ArrayList<>();
 
     /**
+     * 接続制御
+     */
+    private final ConnectControl connectControl = new ConnectControl();
+
+    /**
      * JDA
      */
     private JDA jda;
@@ -40,7 +45,7 @@ public class Bot implements ITTSRuntimeUse {
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_PRESENCES)
                 .enableCache(CacheFlag.ACTIVITY)
-                .addEventListeners(new DCEventListener(this))
+                .addEventListeners(new DCEventListener(this), this.connectControl.getAdaptor())
                 .build();
 
         updateCommands(this.jda);
@@ -54,72 +59,6 @@ public class Bot implements ITTSRuntimeUse {
                 updateActivityAsync();
             }
         }, 0, 1000 * 10);
-
-        try {
-            this.jda.awaitReady();
-            reconnect();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void reconnect() {
-        /*CompletableFuture.runAsync(() -> {
-            long botId = ITTSRuntime.getInstance().getBot().getJDA().getSelfUser().getIdLong();
-            Map<Long, TTSChannelPair> connectedChannels = SaveDataManager.getInstance().getRepository().getAllConnectedChannel(botId);
-            long selfId = getJDA().getSelfUser().getIdLong();
-
-            connectedChannels.forEach((guildId, data) -> {
-                Guild guild = getJDA().getGuildById(guildId);
-
-                if (guild != null && data.getConnectedAudioChannel() >= 0 && data.getReadAroundTextChannel() >= 0) {
-                    try {
-                        AudioChannel audioChannel = guild.getChannelById(AudioChannel.class, data.getConnectedAudioChannel());
-
-                        if (audioChannel == null) {
-                            data.setConnectedAudioChannel(-1);
-                            getITTSLogger().info("Failed to reconnect (Audio channel does not exist): {}", guild.getName());
-                            return;
-                        }
-
-                        MessageChannel chatChannel = guild.getTextChannelById(data.getReadAroundTextChannel());
-
-                        if (chatChannel == null) {
-                            data.setReadAroundTextChannel(-1);
-                            data.setConnectedAudioChannel(-1);
-                            getITTSLogger().info("Failed to reconnect (Message channel does not exist): {}", guild.getName());
-                            return;
-                        }
-
-                        getTTSManager().setReadAroundChannel(guild, chatChannel);
-
-                        try {
-                            guild.getAudioManager().openAudioConnection(audioChannel);
-                        } catch (InsufficientPermissionException ex) {
-                            data.setConnectedAudioChannel(-1);
-                            getITTSLogger().info("Failed to reconnect (No permission): {}", guild.getName());
-                            return;
-                        }
-
-                        getTTSManager().connect(guild, audioChannel);
-
-                        TTSInstance ti = getTTSManager().getTTSInstance(guildId);
-                        VoiceType vt = getVoiceManager().getVoiceType(guildId, selfId);
-
-                        if (ti != null && vt != null) {
-                            if (getTTSManager().canSpeak(guild)) {
-                                ti.sayText(new StartupSaidText(vt.createVoice(guildId, selfId)));
-                            }
-                        }
-
-                        getITTSLogger().info("Reconnected: {}", guild.getName());
-                    } catch (Exception ex) {
-                        getITTSLogger().error("Failed to reconnect: {}", guild.getName(), ex);
-                    }
-                }
-            });
-
-        }, getAsyncExecutor());*/
     }
 
     private void registeringCommands() {

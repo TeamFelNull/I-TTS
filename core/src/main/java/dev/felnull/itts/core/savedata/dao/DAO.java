@@ -8,7 +8,10 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * データベースアクセス用クラス
@@ -664,6 +667,15 @@ public interface DAO {
          * @throws SQLException エラー
          */
         void updateReadAroundTextChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException;
+
+        /**
+         * 指定されたBOTの全状態データを取得する
+         *
+         * @param connection  コネクション
+         * @param botKeyId サーバーキーのID
+         * @return 辞書使用エントリのリスト
+         */
+        List<Long> selectAll(Connection connection, int botKeyId) throws SQLException;
     }
 
     /**

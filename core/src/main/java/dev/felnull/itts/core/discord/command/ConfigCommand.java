@@ -1,8 +1,10 @@
 package dev.felnull.itts.core.discord.command;
 
+import dev.felnull.itts.core.discord.AutoDisconnectMode;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyServerData;
+import dev.felnull.itts.core.savedata.repository.ServerData;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceManager;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -29,6 +31,11 @@ import java.util.Optional;
  * @author MORIMORI0317
  */
 public class ConfigCommand extends BaseCommand {
+
+    /**
+     * 自動切断コマンド
+     */
+    private static final String AUTO_DISCONNECT_MODE_NAME = "auto-disconnect-mode";
 
     /**
      * コンストラクタ
@@ -73,6 +80,12 @@ public class ConfigCommand extends BaseCommand {
                         .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
                                 .setAutoComplete(true)
                                 .setRequired(true)))
+                .addSubcommands(new SubcommandData(AUTO_DISCONNECT_MODE_NAME, "自動切断")
+                        .addOptions(new OptionData(OptionType.STRING, "mode", "モード")
+                                .addChoice("無効", "off")
+                                .addChoice("有効", "on")
+                                .addChoice("有効 (再接続)", "on_reconnect")
+                                .setRequired(true)))
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
     }
 
@@ -87,6 +100,7 @@ public class ConfigCommand extends BaseCommand {
             case "read-ignore" -> readIgnore(event);
             case "default-voice" -> defaultVoice(event);
             case "show" -> show(event);
+            case AUTO_DISCONNECT_MODE_NAME -> autoDisconnectMode(event);
             default -> {
             }
         }
@@ -255,6 +269,39 @@ public class ConfigCommand extends BaseCommand {
             event.reply("VCの入退室時にユーザー名を読み上げを" + enStr + "にしました。").queue();
         } else {
             event.reply("既にVCの入退室時にユーザー名を読み上げは" + enStr + "です。").queue();
+        }
+    }
+
+    private void autoDisconnectMode(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        OptionMapping op = Objects.requireNonNull(event.getOption("mode"));
+        AutoDisconnectMode mode;
+
+        switch (op.getAsString()) {
+            case "off" -> mode = AutoDisconnectMode.OFF;
+            case "on" -> mode = AutoDisconnectMode.ON;
+            case "on_reconnect" -> mode = AutoDisconnectMode.ON_RECONNECT;
+            default -> throw new IllegalStateException("Unexpected value: " + op.getAsString());
+        }
+
+        ServerData serverData = SaveDataManager.getInstance().getRepository().getServerData(guild.getIdLong());
+        AutoDisconnectMode preModel = serverData.getAutoDisconnectMode();
+
+        String name = null;
+        switch (mode) {
+            case OFF -> name = "無効";
+            case ON -> name = "有効";
+            case ON_RECONNECT -> name = "有効 (再接続)";
+            default -> {
+            }
+        }
+
+        if (mode != preModel) {
+            serverData.setAutoDisconnectMode(mode);
+            event.reply("自動切断を" + name + "にしました。").queue();
+        } else {
+            event.reply("既に自動切断は" + name + "です。").queue();
         }
     }
 

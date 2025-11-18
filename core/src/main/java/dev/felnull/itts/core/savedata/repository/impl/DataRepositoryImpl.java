@@ -7,6 +7,7 @@ import dev.felnull.itts.core.dict.DictionaryUseEntry;
 import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.repository.*;
 import dev.felnull.itts.core.tts.TTSChannelPair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * データレポジトリの実装
@@ -335,6 +337,21 @@ public final class DataRepositoryImpl implements DataRepository {
     public @NotNull @Unmodifiable List<DictionaryUseEntry> getAllDictionaryUseData(long serverId) {
         try (Connection connection = dao.getConnection()) {
             return dao.dictionaryUseDataTable().selectAll(connection, serverKeyData.getId(serverId));
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public @NotNull @Unmodifiable Map<Long, BotStateData> getAllBotStateData(long botId) {
+        try (Connection connection = dao.getConnection()) {
+            List<Long> allServerIdList = dao.botStateDataTable().selectAll(connection, botKeyData.getId(botId));
+            return allServerIdList.stream().map(it -> Pair.of(it, getBotStateData(it, botId)))
+                    .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
         } catch (Exception e) {
             fireErrorEvent(e);
             throw new RuntimeException(e);

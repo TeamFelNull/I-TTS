@@ -1783,7 +1783,7 @@ class MySQLDAO extends BaseDAO {
 
         @Override
         public List<DictionaryUseEntry> selectAll(Connection connection, int serverKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select dictionary_key.name as dictionary_name,
                            enable,
@@ -2101,7 +2101,7 @@ class MySQLDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectSpeakAudioChannel(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select speak_audio_channel
                      from bot_state_data
@@ -2125,7 +2125,7 @@ class MySQLDAO extends BaseDAO {
 
         @Override
         public void updateSpeakAudioChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update bot_state_data
                     set speak_audio_channel = ?
@@ -2150,7 +2150,7 @@ class MySQLDAO extends BaseDAO {
 
         @Override
         public OptionalInt selectReadAroundTextChannel(Connection connection, int recordId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     select read_text_channel
                      from bot_state_data
@@ -2174,7 +2174,7 @@ class MySQLDAO extends BaseDAO {
 
         @Override
         public void updateReadAroundTextChannel(Connection connection, int recordId, Integer channelKeyId) throws SQLException {
-            @Language("SQLite")
+            @Language("MySQL")
             String sql = """
                     update bot_state_data
                     set read_text_channel = ?
@@ -2197,6 +2197,32 @@ class MySQLDAO extends BaseDAO {
             }
         }
 
+        @Override
+        public List<Long> selectAll(Connection connection, int botKeyId) throws SQLException {
+            @Language("MySQL")
+            String sql = """
+                    select server_key.discord_id as server_discord_id
+                     from bot_state_data
+                        inner join server_key on server_id = server_key.id
+                     where bot_id = ?
+                    """;
+
+            ImmutableList.Builder<@NotNull Long> retBuilder = ImmutableList.builder();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, botKeyId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (rs.getObject("server_discord_id") != null) {
+                            retBuilder.add(rs.getLong("server_discord_id"));
+                        }
+                    }
+                }
+            }
+
+            return retBuilder.build();
+        }
     }
 
     /**

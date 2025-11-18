@@ -2183,6 +2183,32 @@ public class SQLiteDAO extends BaseDAO {
             }
         }
 
+        @Override
+        public List<Long> selectAll(Connection connection, int botKeyId) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select server_key.discord_id as server_discord_id
+                     from bot_state_data
+                        inner join server_key on server_id = server_key.id
+                     where bot_id = ?
+                    """;
+
+            ImmutableList.Builder<@NotNull Long> retBuilder = ImmutableList.builder();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, botKeyId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (rs.getObject("server_discord_id") != null) {
+                            retBuilder.add(rs.getLong("server_discord_id"));
+                        }
+                    }
+                }
+            }
+
+            return retBuilder.build();
+        }
     }
 
     /**

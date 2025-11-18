@@ -35,4 +35,23 @@ public enum AutoDisconnectMode implements NameSerializableEnum {
     public String getName() {
         return name;
     }
+
+    /**
+     * 自動切断は有効かどうか
+     *
+     * @return 有効であればtrue
+     */
+    public boolean isOn() {
+        return this == ON || this == ON_RECONNECT;
+    }
+
+
+    /**
+     * 再接続を行うかどうか
+     *
+     * @return 再接続を行う場合はtrue
+     */
+    public boolean isReconnect() {
+        return this == ON_RECONNECT;
+    }
 }

@@ -1,5 +1,8 @@
 package dev.felnull.itts.core.discord.command;
 
+import dev.felnull.itts.core.discord.AutoDisconnectMode;
+import dev.felnull.itts.core.discord.ConnectControl;
+import dev.felnull.itts.core.savedata.SaveDataManager;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
@@ -86,6 +89,22 @@ public class JoinCommand extends BaseCommand {
             return;
         }
 
-        event.reply(joinTargetChannel.getAsMention() + "に接続しました。").queue();
+        boolean autoDisFlg = false;
+
+        AutoDisconnectMode autoDisMode = SaveDataManager.getInstance().getRepository()
+                .getServerData(guild.getIdLong())
+                .getAutoDisconnectMode();
+        if (autoDisMode.isOn() && ConnectControl.isNoUser(joinTargetChannel)) {
+            autoDisFlg = true;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(joinTargetChannel.getAsMention()).append("に接続しました。\n");
+
+        if (autoDisFlg) {
+            sb.append("誰もチャンネルに参加しない場合は自動的に切断します。");
+        }
+
+        event.reply(sb.toString()).queue();
     }
 }
