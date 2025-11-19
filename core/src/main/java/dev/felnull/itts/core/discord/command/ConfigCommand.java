@@ -35,7 +35,7 @@ public class ConfigCommand extends BaseCommand {
     /**
      * 自動切断コマンド
      */
-    private static final String AUTO_DISCONNECT_MODE_NAME = "auto-disconnect-mode";
+    private static final String AUTO_DISCONNECT_NAME = "auto-disconnect";
 
     /**
      * コンストラクタ
@@ -80,11 +80,11 @@ public class ConfigCommand extends BaseCommand {
                         .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
                                 .setAutoComplete(true)
                                 .setRequired(true)))
-                .addSubcommands(new SubcommandData(AUTO_DISCONNECT_MODE_NAME, "自動切断")
+                .addSubcommands(new SubcommandData(AUTO_DISCONNECT_NAME, "自動切断")
                         .addOptions(new OptionData(OptionType.STRING, "mode", "モード")
-                                .addChoice("無効", "off")
-                                .addChoice("有効", "on")
-                                .addChoice("有効 (再接続)", "on_reconnect")
+                                .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.OFF), "off")
+                                .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.ON), "on")
+                                .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.ON_RECONNECT), "on_reconnect")
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
     }
@@ -100,7 +100,7 @@ public class ConfigCommand extends BaseCommand {
             case "read-ignore" -> readIgnore(event);
             case "default-voice" -> defaultVoice(event);
             case "show" -> show(event);
-            case AUTO_DISCONNECT_MODE_NAME -> autoDisconnectMode(event);
+            case AUTO_DISCONNECT_NAME -> autoDisconnectMode(event);
             default -> {
             }
         }
@@ -118,6 +118,8 @@ public class ConfigCommand extends BaseCommand {
         VoiceManager vm = getVoiceManager();
         VoiceType dv = vm.getDefaultVoiceType(guild.getIdLong());
 
+        ServerData serverData = SaveDataManager.getInstance().getRepository().getServerData(event.getGuild().getIdLong());
+
         final boolean inline = true;
         showEmbedBuilder.addField("VCの入退室時にユーザー名を読み上げ", sd.isNotifyMove() ? "有効" : "無効", inline);
         showEmbedBuilder.addField("読み上げ文字数上限", sd.getReadLimit() + "文字", inline);
@@ -126,6 +128,7 @@ public class ConfigCommand extends BaseCommand {
         showEmbedBuilder.addField("読み上げの上書き", sd.isOverwriteAloud() ? "有効" : "無効", inline);
         showEmbedBuilder.addField("読み上げない文字(正規表現)", sd.getIgnoreRegex() == null ? "無し" : ("``" + sd.getIgnoreRegex() + "``"), inline);
         showEmbedBuilder.addField("デフォルトの読み上げタイプ", dv == null ? "無し" : dv.getName(), inline);
+        showEmbedBuilder.addField("自動切断", getAutoDisconnectModeName(serverData.getAutoDisconnectMode()), inline);
 
         event.replyEmbeds(showEmbedBuilder.build()).queue();
     }
@@ -287,15 +290,7 @@ public class ConfigCommand extends BaseCommand {
 
         ServerData serverData = SaveDataManager.getInstance().getRepository().getServerData(guild.getIdLong());
         AutoDisconnectMode preModel = serverData.getAutoDisconnectMode();
-
-        String name = null;
-        switch (mode) {
-            case OFF -> name = "無効";
-            case ON -> name = "有効";
-            case ON_RECONNECT -> name = "有効 (再接続)";
-            default -> {
-            }
-        }
+        String name = getAutoDisconnectModeName(mode);
 
         if (mode != preModel) {
             serverData.setAutoDisconnectMode(mode);
@@ -303,6 +298,17 @@ public class ConfigCommand extends BaseCommand {
         } else {
             event.reply("既に自動切断は" + name + "です。").queue();
         }
+    }
+
+    private static String getAutoDisconnectModeName(AutoDisconnectMode autoDisconnectMode) {
+        String name;
+        switch (autoDisconnectMode) {
+            case OFF -> name = "無効";
+            case ON -> name = "有効";
+            case ON_RECONNECT -> name = "有効 (再接続)";
+            default -> throw new IllegalStateException("Unexpected value: " + autoDisconnectMode);
+        }
+        return name;
     }
 
     @Override
