@@ -294,6 +294,10 @@ public class ConfigCommand extends BaseCommand {
 
         if (mode != preModel) {
             serverData.setAutoDisconnectMode(mode);
+
+            // TODO DB変更リスナーで呼び出すようにする
+            getBot().getConnectControl().updateAutoDisconnectMode(guild.getIdLong());
+
             event.reply("自動切断を" + name + "にしました。").queue();
         } else {
             event.reply("既に自動切断は" + name + "です。").queue();

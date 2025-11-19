@@ -236,6 +236,35 @@ public class ConnectControl {
     }
 
     /**
+     * 自動切断モードが更新された時に呼び出す
+     *
+     * @param serverId サーバーID
+     */
+    public void updateAutoDisconnectMode(long serverId) {
+        Guild guild = ITTSRuntime.getInstance().getBot().getJDA().getGuildById(serverId);
+        if (guild == null) {
+            return;
+        }
+
+        AudioManager audioManager = guild.getAudioManager();
+        AudioChannelUnion connectChannel = audioManager.getConnectedChannel();
+        if (connectChannel == null) {
+            return;
+        }
+
+        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        AutoDisconnectMode autoDisMode = repo.getServerData(serverId).getAutoDisconnectMode();
+
+        if (autoDisMode.isOn()) {
+            if (isNoUser(connectChannel)) {
+                startAutoDisconnecter(serverId);
+            }
+        } else {
+            stopAutoDisconnecter(serverId);
+        }
+    }
+
+    /**
      * Discordのイベントを受ける取るアダプタ
      *
      * @author MORIMORI0317

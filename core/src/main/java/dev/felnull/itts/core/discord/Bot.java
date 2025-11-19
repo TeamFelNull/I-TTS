@@ -113,4 +113,8 @@ public class Bot implements ITTSRuntimeUse {
     public long getBotId() {
         return jda.getSelfUser().getIdLong();
     }
+
+    public ConnectControl getConnectControl() {
+        return connectControl;
+    }
 }
