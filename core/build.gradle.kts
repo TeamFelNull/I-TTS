@@ -9,9 +9,14 @@ base {
 
 checkstyle {
     toolVersion = "10.12.2"
+    sourceSets = listOf(project.sourceSets.getByName("main"))
 }
 
 dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
+
     api("net.dv8tion:JDA:6.1.0")
     api("org.apache.commons:commons-lang3:3.19.0")
     api("com.google.code.gson:gson:2.13.2")
@@ -21,6 +26,10 @@ dependencies {
     api("commons-io:commons-io:2.20.0")
     api("com.ibm.icu:icu4j:77.1")
     api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+    api("com.zaxxer:HikariCP:5.1.0")
+    api("mysql:mysql-connector-java:8.0.32")
+    api("org.xerial:sqlite-jdbc:3.46.0.1")
+    api("it.unimi.dsi:fastutil:8.5.18")
 
     api("org.jetbrains:annotations:26.0.2-1")
 

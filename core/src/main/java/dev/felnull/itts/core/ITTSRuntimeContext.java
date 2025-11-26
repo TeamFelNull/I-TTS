@@ -3,7 +3,6 @@ package dev.felnull.itts.core;
 import dev.felnull.itts.core.cache.GlobalCacheAccess;
 import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.core.log.LogContext;
-import dev.felnull.itts.core.savedata.SaveDataAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,14 +22,6 @@ public interface ITTSRuntimeContext {
      */
     @NotNull
     ConfigContext getConfigContext();
-
-    /**
-     * セーブデータコンテキストを取得
-     *
-     * @return セーブデータコンテキスト
-     */
-    @NotNull
-    SaveDataAccess getSaveDataAccess();
 
     /**
      * グローバルキャッシュアクセスのサプライヤーを取得

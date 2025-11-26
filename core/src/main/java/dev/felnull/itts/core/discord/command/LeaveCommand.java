@@ -1,6 +1,11 @@
 package dev.felnull.itts.core.discord.command;
 
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.repository.BotStateData;
+import dev.felnull.itts.core.savedata.repository.DataRepository;
+import dev.felnull.itts.core.tts.TTSChannelPair;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
@@ -39,12 +44,34 @@ public class LeaveCommand extends BaseCommand {
         AudioManager audioManager = guild.getAudioManager();
 
         if (audioManager.isConnected()) {
-            AudioChannelUnion connectedChannel = Objects.requireNonNull(audioManager.getConnectedChannel());
-            event.reply(connectedChannel.getAsMention() + "から切断します。").queue();
+            AudioChannelUnion connectedChannel = audioManager.getConnectedChannel();
 
-            audioManager.closeAudioConnection();
+            if (connectedChannel != null) {
+                event.reply(connectedChannel.getAsMention() + "から切断します。").queue();
+                audioManager.closeAudioConnection();
+            } else {
+                event.reply("切断できませんでした。").queue();
+            }
+
         } else {
-            event.reply("現在VCに接続していません。").setEphemeral(true).queue();
+            boolean reconnectFlg = false;
+
+            DataRepository repo = SaveDataManager.getInstance().getRepository();
+            BotStateData botStateData = repo.getBotStateData(guild.getIdLong(), getBot().getBotId());
+            TTSChannelPair reconnectChannelPair = botStateData.getReconnectChannelPair();
+
+            if (reconnectChannelPair != null) {
+                AudioChannel audioChannel = event.getJDA().getVoiceChannelById(reconnectChannelPair.speakAudioChannel());
+                if (audioChannel != null) {
+                    event.reply(audioChannel.getAsMention() + "から切断します。").queue();
+                    botStateData.setReconnectChannelPair(null);
+                    reconnectFlg = true;
+                }
+            }
+
+            if (!reconnectFlg) {
+                event.reply("現在VCに接続していません。").setEphemeral(true).queue();
+            }
         }
     }
 }

@@ -1,12 +1,10 @@
 package dev.felnull.itts;
 
-import dev.felnull.itts.config.SelfHostConfigManager;
 import dev.felnull.itts.core.ITTSRuntimeContext;
 import dev.felnull.itts.core.cache.GlobalCacheAccess;
 import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.core.log.LogContext;
-import dev.felnull.itts.core.savedata.SaveDataAccess;
-import dev.felnull.itts.savedata.SelfHostSaveDataManager;
+import dev.felnull.itts.config.SelfHostConfigManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +26,6 @@ public class SelfHostITTSRuntimeContext implements ITTSRuntimeContext {
     @Override
     public @NotNull ConfigContext getConfigContext() {
         return SelfHostConfigManager.getInstance();
-    }
-
-    @Override
-    public @NotNull SaveDataAccess getSaveDataAccess() {
-        return SelfHostSaveDataManager.getInstance();
     }
 
     @Override

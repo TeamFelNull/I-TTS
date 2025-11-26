@@ -1,6 +1,10 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.ServerData;
+import dev.felnull.itts.core.discord.AutoDisconnectMode;
+import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.savedata.legacy.LegacyServerData;
+import dev.felnull.itts.core.savedata.repository.ServerData;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceManager;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -27,6 +31,11 @@ import java.util.Optional;
  * @author MORIMORI0317
  */
 public class ConfigCommand extends BaseCommand {
+
+    /**
+     * 自動切断コマンド
+     */
+    private static final String AUTO_DISCONNECT_NAME = "auto-disconnect";
 
     /**
      * コンストラクタ
@@ -62,6 +71,7 @@ public class ConfigCommand extends BaseCommand {
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("read-ignore", "読み上げない文字")
                         .addOptions(new OptionData(OptionType.STRING, "regex", "正規表現")
+                                .setMaxLength(100)
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("default-voice", "デフォルトの読み上げタイプ")
                         .addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声タイプのカテゴリ")
@@ -69,6 +79,12 @@ public class ConfigCommand extends BaseCommand {
                                 .setRequired(true))
                         .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
                                 .setAutoComplete(true)
+                                .setRequired(true)))
+                .addSubcommands(new SubcommandData(AUTO_DISCONNECT_NAME, "自動切断")
+                        .addOptions(new OptionData(OptionType.STRING, "mode", "モード")
+                                .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.OFF), "off")
+                                .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.ON), "on")
+                                .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.ON_RECONNECT), "on_reconnect")
                                 .setRequired(true)))
                 .addSubcommands(new SubcommandData("show", "現在のコンフィグを表示"));
     }
@@ -84,6 +100,7 @@ public class ConfigCommand extends BaseCommand {
             case "read-ignore" -> readIgnore(event);
             case "default-voice" -> defaultVoice(event);
             case "show" -> show(event);
+            case AUTO_DISCONNECT_NAME -> autoDisconnectMode(event);
             default -> {
             }
         }
@@ -96,9 +113,12 @@ public class ConfigCommand extends BaseCommand {
         showEmbedBuilder.setColor(getConfigManager().getConfig().getThemeColor());
         showEmbedBuilder.setTitle("現在のコンフィグ");
 
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
         VoiceManager vm = getVoiceManager();
         VoiceType dv = vm.getDefaultVoiceType(guild.getIdLong());
+
+        ServerData serverData = SaveDataManager.getInstance().getRepository().getServerData(event.getGuild().getIdLong());
 
         final boolean inline = true;
         showEmbedBuilder.addField("VCの入退室時にユーザー名を読み上げ", sd.isNotifyMove() ? "有効" : "無効", inline);
@@ -108,6 +128,7 @@ public class ConfigCommand extends BaseCommand {
         showEmbedBuilder.addField("読み上げの上書き", sd.isOverwriteAloud() ? "有効" : "無効", inline);
         showEmbedBuilder.addField("読み上げない文字(正規表現)", sd.getIgnoreRegex() == null ? "無し" : ("``" + sd.getIgnoreRegex() + "``"), inline);
         showEmbedBuilder.addField("デフォルトの読み上げタイプ", dv == null ? "無し" : dv.getName(), inline);
+        showEmbedBuilder.addField("自動切断", getAutoDisconnectModeName(serverData.getAutoDisconnectMode()), inline);
 
         event.replyEmbeds(showEmbedBuilder.build()).queue();
     }
@@ -118,7 +139,8 @@ public class ConfigCommand extends BaseCommand {
         String odVc = event.getOption("voice_category", OptionMapping::getAsString);
         String odVt = event.getOption("voice_type", OptionMapping::getAsString);
 
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
         VoiceManager vm = getVoiceManager();
         Optional<VoiceCategory> cat = vm.getVoiceCategory(odVc);
 
@@ -149,7 +171,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         String op = Objects.requireNonNull(event.getOption("regex", OptionMapping::getAsString));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         String pre = sd.getIgnoreRegex();
         if (!op.equals(pre)) {
@@ -165,7 +188,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         boolean pre = sd.isOverwriteAloud();
         String enStr = op ? "有効" : "無効";
@@ -183,7 +207,8 @@ public class ConfigCommand extends BaseCommand {
     private void needJoin(SlashCommandInteractionEvent event) {
         Guild guild = Objects.requireNonNull(event.getGuild());
         boolean op = Boolean.TRUE.equals(event.getOption("enable", OptionMapping::getAsBoolean));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         boolean pre = sd.isNeedJoin();
         String enStr = op ? "有効" : "無効";
@@ -200,7 +225,8 @@ public class ConfigCommand extends BaseCommand {
     private void nameReadLimit(SlashCommandInteractionEvent event) {
         Guild guild = Objects.requireNonNull(event.getGuild());
         int op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         int pre = sd.getNameReadLimit();
         if (op != pre) {
@@ -216,7 +242,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         int op = Objects.requireNonNullElse(event.getOption("max-count", OptionMapping::getAsInt), 0);
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         int pre = sd.getReadLimit();
         if (op != pre) {
@@ -233,7 +260,8 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         OptionMapping op = Objects.requireNonNull(event.getOption("enable"));
-        ServerData sd = getSaveDataManager().getServerData(guild.getIdLong());
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
         boolean pre = sd.isNotifyMove();
         String enStr = op.getAsBoolean() ? "有効" : "無効";
@@ -245,6 +273,46 @@ public class ConfigCommand extends BaseCommand {
         } else {
             event.reply("既にVCの入退室時にユーザー名を読み上げは" + enStr + "です。").queue();
         }
+    }
+
+    private void autoDisconnectMode(SlashCommandInteractionEvent event) {
+        Guild guild = Objects.requireNonNull(event.getGuild());
+
+        OptionMapping op = Objects.requireNonNull(event.getOption("mode"));
+        AutoDisconnectMode mode;
+
+        switch (op.getAsString()) {
+            case "off" -> mode = AutoDisconnectMode.OFF;
+            case "on" -> mode = AutoDisconnectMode.ON;
+            case "on_reconnect" -> mode = AutoDisconnectMode.ON_RECONNECT;
+            default -> throw new IllegalStateException("Unexpected value: " + op.getAsString());
+        }
+
+        ServerData serverData = SaveDataManager.getInstance().getRepository().getServerData(guild.getIdLong());
+        AutoDisconnectMode preModel = serverData.getAutoDisconnectMode();
+        String name = getAutoDisconnectModeName(mode);
+
+        if (mode != preModel) {
+            serverData.setAutoDisconnectMode(mode);
+
+            // TODO DB変更リスナーで呼び出すようにする
+            getBot().getConnectControl().updateAutoDisconnectMode(guild.getIdLong());
+
+            event.reply("自動切断を" + name + "にしました。").queue();
+        } else {
+            event.reply("既に自動切断は" + name + "です。").queue();
+        }
+    }
+
+    private static String getAutoDisconnectModeName(AutoDisconnectMode autoDisconnectMode) {
+        String name;
+        switch (autoDisconnectMode) {
+            case OFF -> name = "無効";
+            case ON -> name = "有効";
+            case ON_RECONNECT -> name = "有効 (再接続)";
+            default -> throw new IllegalStateException("Unexpected value: " + autoDisconnectMode);
+        }
+        return name;
     }
 
     @Override
