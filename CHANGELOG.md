@@ -6,6 +6,8 @@
 ## [Unreleased]
 
 ### Added
+- 自動切断機能を追加
+- MySQLもしくはSQLiteを利用したデータ管理
 
 ### Changed
 
