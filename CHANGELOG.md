@@ -14,6 +14,7 @@
 ### Removed
 
 ### Fixed
+- 不要なインテントを要求していた問題を修正
 
 ### Security
 

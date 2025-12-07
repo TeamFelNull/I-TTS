@@ -43,8 +43,7 @@ public class Bot implements ITTSRuntimeUse {
         registeringCommands();
 
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_PRESENCES)
-                .enableCache(CacheFlag.ACTIVITY)
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(new DCEventListener(this), this.connectControl.getAdaptor())
                 .build();
 
