@@ -24,11 +24,11 @@ public class AbbreviationDictionary implements Dictionary {
      * 正規表現関係
      */
     private final RegexUtil regexUtil = new RegexUtil()
-            .addOption(1, "ユーアルエルショウリャク", s -> {
+            /*.addOption(1, "ユーアルエルショウリャク", s -> {
                 Pattern pattern = Pattern.compile("https?://[\\w!?/+\\-_~=;.,*&@#$%()'\\[\\]]+");
                 Matcher matcher = pattern.matcher(s);
                 return matcher.find();
-            })
+            })*/
             .addOption(1, "ドメインショウリャク", s -> {
                 Pattern pattern = Pattern.compile("^([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\\.)+[a-zA-Z]{2,}$");
                 Matcher matcher = pattern.matcher(s);
@@ -56,9 +56,14 @@ public class AbbreviationDictionary implements Dictionary {
                 return matcher.matches();
             });
 
+    /**
+     * URLリプレーサー
+     */
+    private final URLReplacer urlReplacer = new URLReplacer("ユーアルエルショウリャク");
 
     @Override
     public @NotNull String apply(@NotNull String text, long guildId) {
+        text = urlReplacer.replace(text);
         text = CODE_BLOCK_REGEX.matcher(text).replaceAll("コードブロックショウリャク");
         return regexUtil.replaceText(text);
     }
