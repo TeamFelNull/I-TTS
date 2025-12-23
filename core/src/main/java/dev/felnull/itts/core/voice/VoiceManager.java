@@ -82,7 +82,9 @@ public class VoiceManager implements ITTSBaseManager {
         return voicevoxManager;
     }
 
-    public CoeiroinkManager getCoeiroinkManager() {return coeiroinkManager;}
+    public CoeiroinkManager getCoeiroinkManager() {
+        return coeiroinkManager;
+    }
 
     public VoicevoxManager getSharevoxManager() {
         return sharevoxManager;

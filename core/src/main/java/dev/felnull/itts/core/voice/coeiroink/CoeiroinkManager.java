@@ -133,8 +133,9 @@ public class CoeiroinkManager {
     /**
      * 読み上げ音声データのストリームを開く
      *
-     * @param text      読み上げるテキスト
-     * @param styleId スタイルID
+     * @param text        読み上げるテキスト
+     * @param styleId     スタイルID
+     * @param speakerUuid スピーカーのUUID
      * @return 音声データのストリーム
      */
     protected InputStream openVoiceStream(String text, int styleId, String speakerUuid) {
@@ -170,7 +171,7 @@ public class CoeiroinkManager {
     /**
      * 音声合成用のパラメータを作成する
      * このメソッドは、Coeiroink音声合成エンジンに渡すための設定値を含むJSONオブジェクトを生成する
-     * 
+     *
      * @param text 合成したいテキスト
      * @param styleId スタイルID（発話スタイルを指定）
      * @param speakerUuid スピーカーのUUID

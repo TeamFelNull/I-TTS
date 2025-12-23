@@ -65,7 +65,7 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
      * CoeiroInkの使用カウンタを取得
      * このメソッドは、指定されたCIURLに対する使用回数をカウントするためのAtomicIntegerを返す
      * 初めて指定されたURLの場合、新しいAtomicIntegerが作成され、既存のURLの場合、既存のカウンタが返される
-     * 
+     *
      * @param ciurl CoeiroInkのURLを表すCIURLオブジェクト
      * @return 指定されたURLの使用回数をカウントするAtomicInteger
      */
@@ -112,7 +112,7 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
      * CoeiroinkエンジンのURLの可用性をチェックし、スピーカー情報を取得する
      *
      * @return ペアオブジェクトで、第一要素に可用なCIURLのリスト、第二要素にCoeiroinkSpeakerのリストを含む
-     * スピーカー情報は最初の成功したリクエストから取得されたもの
+     *     スピーカー情報は最初の成功したリクエストから取得されたもの
      * @throws RuntimeException IOエラーまたは中断が発生した場合にスローされる
      */
     private Pair<List<CIURL>, List<CoeiroinkSpeaker>> checkAndGet() {
@@ -159,9 +159,8 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
 
     /**
      * エンジンが利用可能かどうかをチェックする
-     * 
+     *
      * @return エンジンが利用可能であればtrue、それ以外はfalse
-     * 
      * @see #enginUrls
      */
     public boolean isAvailable() {
