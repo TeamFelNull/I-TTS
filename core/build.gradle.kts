@@ -17,7 +17,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
 
-    api("net.dv8tion:JDA:6.1.0")
+    api("net.dv8tion:JDA:6.2.0")
+    api("com.google.crypto.tink:tink:1.15.0")
     api("org.apache.commons:commons-lang3:3.19.0")
     api("com.google.code.gson:gson:2.13.2")
     api("com.google.guava:guava:33.5.0-jre")
