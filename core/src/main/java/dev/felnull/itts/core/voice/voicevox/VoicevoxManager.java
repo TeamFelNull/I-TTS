@@ -45,7 +45,7 @@ public class VoicevoxManager {
     private final VoicevoxBalancer balancer;
 
     /**
-     * エンジンのの前
+     * エンジン名
      */
     private final String name;
 
