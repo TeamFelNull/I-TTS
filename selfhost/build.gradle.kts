@@ -37,6 +37,10 @@ tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
 tasks.named<ShadowJar>("shadowJar") {
     shadowIn.isTransitive = true
     configurations = listOf(shadowIn)
