@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * VOICEVOXの声
+ * Coeiroinkの声
  *
  * @author MORIMORI0317
  */

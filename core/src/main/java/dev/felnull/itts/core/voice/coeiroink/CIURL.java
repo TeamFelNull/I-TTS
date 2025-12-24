@@ -6,11 +6,14 @@ import java.net.URL;
 
 /**
  * CoeiroinkのエンジンURL
+ * COEIROINKは全てのエンドポイントが/v1/プレフィックスを使用する
  *
- * @param url URL
+ * @param url ベースURL
  * @author MORIMORI0317
  */
 public record CIURL(String url) {
+
+    private static final String API_VERSION = "v1";
 
     /**
      * URLを作成
@@ -24,33 +27,22 @@ public record CIURL(String url) {
             throw new IllegalArgumentException("Do not start with /");
         }
 
-        String ur = url;
-
-        if (!ur.endsWith("/")) {
-            ur += "/";
-        }
-
-        return new URL(ur + path);
+        String baseUrl = url.endsWith("/") ? url : url + "/";
+        return new URL(baseUrl + path);
     }
 
     /**
-     * URIを作成
+     * v1 APIのURIを作成
      *
-     * @param path パス
-     * @return パスを含めたURI
+     * @param path パス (例: "speakers", "synthesis")
+     * @return /v1/パスを含めたURI
      */
     public URI createURI(String path) {
         if (path.startsWith("/")) {
             throw new IllegalArgumentException("Do not start with /");
         }
 
-        String ur = url;
-
-        if (!ur.endsWith("/")) {
-            ur += "/";
-        }
-
-        // TODO : v1/の挿入方法を改善する
-        return URI.create(ur + "v1/" + path);
+        String baseUrl = url.endsWith("/") ? url : url + "/";
+        return URI.create(baseUrl + API_VERSION + "/" + path);
     }
 }

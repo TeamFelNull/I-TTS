@@ -53,7 +53,7 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
     /**
      * コンストラクタ
      *
-     * @param manager   VOICEVOXマネージャー
+     * @param manager   Coeiroinkマネージャー
      * @param enginUrls エンジンのURL
      */
     public CoeiroinkBalancer(CoeiroinkManager manager, Supplier<List<String>> enginUrls) {

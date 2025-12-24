@@ -104,14 +104,14 @@ public class CoeiroinkManager {
     /**
      * エンジンのURLから話者一覧を取得
      *
-     * @param vvurl VOICEVOXのURL
+     * @param ciurl CoeiroinkのURL
      * @return 話者のリスト
      * @throws IOException          IO例外
      * @throws InterruptedException 割り込み例外
      */
-    protected List<CoeiroinkSpeaker> requestSpeakers(CIURL vvurl) throws IOException, InterruptedException {
+    protected List<CoeiroinkSpeaker> requestSpeakers(CIURL ciurl) throws IOException, InterruptedException {
         HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-        HttpRequest req = HttpRequest.newBuilder(vvurl.createURI("speakers"))
+        HttpRequest req = HttpRequest.newBuilder(ciurl.createURI("speakers"))
                 .timeout(Duration.of(3000, ChronoUnit.MILLIS))
                 .build();
         HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
