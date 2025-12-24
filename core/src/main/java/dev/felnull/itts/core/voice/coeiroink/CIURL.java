@@ -13,6 +13,9 @@ import java.net.URL;
  */
 public record CIURL(String url) {
 
+    /**
+     * APIバージョン
+     */
     private static final String API_VERSION = "v1";
 
     /**

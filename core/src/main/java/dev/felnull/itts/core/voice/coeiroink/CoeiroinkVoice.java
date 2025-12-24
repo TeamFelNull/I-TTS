@@ -37,6 +37,14 @@ public class CoeiroinkVoice extends CachedVoice {
 
     @Override
     protected InputStream openVoiceStream(String text) throws IOException, InterruptedException {
+        if (text == null || text.isEmpty()) {
+            throw new IllegalArgumentException("Text cannot be null or empty");
+        }
+
+        if (speaker.styles().isEmpty()) {
+            throw new IllegalStateException("Speaker has no styles available");
+        }
+
         return this.manager.openVoiceStream(text, speaker.styles().get(0).styleId(), speaker.speakerUuid().toString());
     }
 

@@ -44,7 +44,7 @@ public class CoeiroinkManager {
     private final CoeiroinkBalancer balancer;
 
     /**
-     * エンジンのの前
+     * エンジン名
      */
     private final String name;
 
@@ -179,30 +179,23 @@ public class CoeiroinkManager {
      * @see dev.felnull.itts.core.voice.coeiroink.CoeiroinkManager
      */
     private JsonObject createSynthesisParam(String text, int styleId, String speakerUuid) {
-
         JsonObject param = new JsonObject();
 
-        // TODO : 全部のKeyが必須かを検証する
+        // 必須パラメータ (COEIROINK API v2.12.3 SynthesisParam)
+        param.addProperty("speakerUuid", speakerUuid);
+        param.addProperty("styleId", styleId);
+        param.addProperty("text", text);
         param.addProperty("volumeScale", 1.0);
         param.addProperty("pitchScale", 0);
         param.addProperty("intonationScale", 1.0);
         param.addProperty("prePhonemeLength", 0.1);
         param.addProperty("postPhonemeLength", 0.1);
         param.addProperty("outputSamplingRate", 24000);
-        param.addProperty("sampledIntervalValue", 10);
-        param.addProperty("startTrimBuffer", 0.0);
-        param.addProperty("endTrimBuffer", 0.0);
-        param.addProperty("pauseLength", 0.0);
-        param.addProperty("pauseStartTrimBuffer", 0.0);
-        param.addProperty("pauseEndTrimBuffer", 0.0);
         param.addProperty("speedScale", 1.0);
 
-        param.addProperty("speakerUuid", speakerUuid);
-        param.addProperty("styleId", styleId);
-        param.addProperty("text", text);
-
+        // オプションパラメータ
         param.addProperty("processingAlgorithm", "default:orig_sr=44100,target_sr=24000");
-        param.add("prosodyDetail", null);
+
         return param;
     }
 }
