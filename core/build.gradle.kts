@@ -41,6 +41,10 @@ tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {

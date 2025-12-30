@@ -1,4 +1,4 @@
-package dev.felnull.itts.core.voice.voicevox;
+package dev.felnull.itts.core.voice.coeiroink;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -10,7 +10,6 @@ import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.voice.VoiceType;
 
 import java.io.*;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -23,11 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
- * VOICEVOX系エンジンの管理
+ * Coeiroinkエンジンの管理
  *
  * @author MORIMORI0317
  */
-public class VoicevoxManager {
+public class CoeiroinkManager {
 
     /**
      * GSON
@@ -35,14 +34,14 @@ public class VoicevoxManager {
     private static final Gson GSON = new Gson();
 
     /**
-     * VOICEVOX系の声カテゴリ
+     * Coeiroinkの声カテゴリ
      */
-    private final VoicevoxVoiceCategory category = new VoicevoxVoiceCategory(this);
+    private final CoeiroinkVoiceCategory category = new CoeiroinkVoiceCategory(this);
 
     /**
      * バランサー
      */
-    private final VoicevoxBalancer balancer;
+    private final CoeiroinkBalancer balancer;
 
     /**
      * エンジン名
@@ -50,7 +49,7 @@ public class VoicevoxManager {
     private final String name;
 
     /**
-     * VOICEVOX系エンジンのコンフィグ
+     * Coeiroinkエンジンのコンフィグ
      */
     private final Supplier<VoicevoxConfig> configSupplier;
 
@@ -61,10 +60,10 @@ public class VoicevoxManager {
      * @param enginUrls      エンジンURL
      * @param configSupplier コンフィグ
      */
-    public VoicevoxManager(String name, Supplier<List<String>> enginUrls, Supplier<VoicevoxConfig> configSupplier) {
+    public CoeiroinkManager(String name, Supplier<List<String>> enginUrls, Supplier<VoicevoxConfig> configSupplier) {
         this.name = name;
         this.configSupplier = configSupplier;
-        this.balancer = new VoicevoxBalancer(this, enginUrls);
+        this.balancer = new CoeiroinkBalancer(this, enginUrls);
     }
 
     protected VoicevoxConfig getConfig() {
@@ -80,7 +79,7 @@ public class VoicevoxManager {
         return balancer.init();
     }
 
-    public VoicevoxVoiceCategory getCategory() {
+    public CoeiroinkVoiceCategory getCategory() {
         return category;
     }
 
@@ -94,25 +93,25 @@ public class VoicevoxManager {
 
     public List<VoiceType> getAvailableVoiceTypes() {
         return balancer.getAvailableSpeakers().stream()
-                .map(r -> (VoiceType) new VoicevoxVoiceType(r, this))
+                .map(r -> (VoiceType) new CoeiroinkVoiceType(r, this))
                 .toList();
     }
 
-    protected VoicevoxBalancer getBalancer() {
+    protected CoeiroinkBalancer getBalancer() {
         return balancer;
     }
 
     /**
      * エンジンのURLから話者一覧を取得
      *
-     * @param vvurl VOICEVOXのURL
+     * @param ciurl CoeiroinkのURL
      * @return 話者のリスト
      * @throws IOException          IO例外
      * @throws InterruptedException 割り込み例外
      */
-    protected List<VoicevoxSpeaker> requestSpeakers(VVURL vvurl) throws IOException, InterruptedException {
+    protected List<CoeiroinkSpeaker> requestSpeakers(CIURL ciurl) throws IOException, InterruptedException {
         HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-        HttpRequest req = HttpRequest.newBuilder(vvurl.createURI("speakers"))
+        HttpRequest req = HttpRequest.newBuilder(ciurl.createURI("speakers"))
                 .timeout(Duration.of(3000, ChronoUnit.MILLIS))
                 .build();
         HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
@@ -122,48 +121,28 @@ public class VoicevoxManager {
             ja = GSON.fromJson(reader, JsonArray.class);
         }
 
-        ImmutableList.Builder<VoicevoxSpeaker> speakerBuilder = new ImmutableList.Builder<>();
+        ImmutableList.Builder<CoeiroinkSpeaker> speakerBuilder = new ImmutableList.Builder<>();
 
         for (JsonElement je : ja) {
-            speakerBuilder.add(VoicevoxSpeaker.of(je.getAsJsonObject()));
+            speakerBuilder.add(CoeiroinkSpeaker.of(je.getAsJsonObject()));
         }
 
         return speakerBuilder.build();
     }
 
-    private JsonObject getQuery(String text, int speakerId) {
-        text = URLEncoder.encode(text, StandardCharsets.UTF_8);
-
-        try (var urlUse = balancer.getUseURL()) {
-            HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-            HttpRequest req = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .timeout(Duration.of(10, ChronoUnit.SECONDS))
-                    .build();
-            HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
-
-            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-                return GSON.fromJson(reader, JsonObject.class);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * 読み上げ音声データのストリームを開く
      *
-     * @param text      読み上げるテキスト
-     * @param speakerId 話者ID
+     * @param text        読み上げるテキスト
+     * @param styleId     スタイルID
+     * @param speakerUuid スピーカーのUUID
      * @return 音声データのストリーム
-     * @throws IOException          IO例外
-     * @throws InterruptedException 割り込み例外
      */
-    protected InputStream openVoiceStream(String text, int speakerId) throws IOException, InterruptedException {
-        JsonObject qry = getQuery(text, speakerId);
+    protected InputStream openVoiceStream(String text, int styleId, String speakerUuid) {
+        JsonObject qry = createSynthesisParam(text, styleId, speakerUuid);
         try (var urlUse = balancer.getUseURL()) {
             HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-            HttpRequest request = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("synthesis?speaker=%d", speakerId)))
+            HttpRequest request = HttpRequest.newBuilder(urlUse.getCIURL().createURI("synthesis"))
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(qry)))
@@ -187,5 +166,36 @@ public class VoicevoxManager {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 音声合成用のパラメータを作成する
+     * このメソッドは、Coeiroink音声合成エンジンに渡すための設定値を含むJSONオブジェクトを生成する
+     *
+     * @param text 合成したいテキスト
+     * @param styleId スタイルID（発話スタイルを指定）
+     * @param speakerUuid スピーカーのUUID
+     * @return 音声合成用のパラメータを含むJSONオブジェクト
+     * @see dev.felnull.itts.core.voice.coeiroink.CoeiroinkManager
+     */
+    private JsonObject createSynthesisParam(String text, int styleId, String speakerUuid) {
+        JsonObject param = new JsonObject();
+
+        // 必須パラメータ (COEIROINK API v2.12.3 SynthesisParam)
+        param.addProperty("speakerUuid", speakerUuid);
+        param.addProperty("styleId", styleId);
+        param.addProperty("text", text);
+        param.addProperty("volumeScale", 1.0);
+        param.addProperty("pitchScale", 0);
+        param.addProperty("intonationScale", 1.0);
+        param.addProperty("prePhonemeLength", 0.1);
+        param.addProperty("postPhonemeLength", 0.1);
+        param.addProperty("outputSamplingRate", 24000);
+        param.addProperty("speedScale", 1.0);
+
+        // オプションパラメータ
+        param.addProperty("processingAlgorithm", "default:orig_sr=44100,target_sr=24000");
+
+        return param;
     }
 }
