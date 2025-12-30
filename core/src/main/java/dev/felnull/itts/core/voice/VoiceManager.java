@@ -128,7 +128,14 @@ public class VoiceManager implements ITTSBaseManager {
     public VoiceType getDefaultVoiceType() {
         return getAvailableVoiceTypes().values().stream()
                 .flatMap(Collection::stream)
-                .min(Comparator.comparingInt(vt -> voiceTextManager.getCategory() == vt.getCategory() ? 1 : 0))
+                .max(Comparator.comparingInt(vt -> {
+                    if (voiceTextManager.getCategory() == vt.getCategory()) {
+                        return -1;
+                    } else if (voicevoxManager.getCategory() == vt.getCategory()) {
+                        return 1;
+                    }
+                    return 0;
+                }))
                 .orElse(null);
     }
 
