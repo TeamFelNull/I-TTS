@@ -38,6 +38,10 @@ subprojects {
     version = rootProject.version
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))

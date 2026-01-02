@@ -76,7 +76,7 @@ public class AdminCommand extends BaseCommand {
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
 
-        if (name == null || name.isBlank()) {
+        if (name == null) {
             sud.setNickName(null);
             event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げユーザ名をリセットしました。").queue();
         } else {

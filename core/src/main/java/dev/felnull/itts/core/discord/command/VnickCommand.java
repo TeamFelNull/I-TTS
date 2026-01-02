@@ -48,7 +48,7 @@ public class VnickCommand extends BaseCommand {
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
 
-        if (name == null || name.isBlank()) {
+        if (name == null) {
             sud.setNickName(null);
             event.reply("自分の読み上げユーザ名をリセットしました。").setEphemeral(true).queue();
         } else {
