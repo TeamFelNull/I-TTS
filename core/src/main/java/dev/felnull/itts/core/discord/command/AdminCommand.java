@@ -40,7 +40,7 @@ public class AdminCommand extends BaseCommand {
                         .addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")
                                 .setRequired(true))
                         .addOptions(new OptionData(OptionType.STRING, "name", "名前")
-                                .setRequired(true)))
+                                .setRequired(false)))
                 .addSubcommandGroups(new SubcommandGroupData("voice", "読み上げ音声タイプ関係")
                         .addSubcommands((new SubcommandData("change", "他人の読み上げ音声タイプを変更")
                                         .addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")
@@ -71,12 +71,12 @@ public class AdminCommand extends BaseCommand {
 
     private void vnick(SlashCommandInteractionEvent event) {
         User user = Objects.requireNonNull(event.getOption("user", OptionMapping::getAsUser));
-        String name = Objects.requireNonNull(event.getOption("name", OptionMapping::getAsString));
+        String name = event.getOption("name", OptionMapping::getAsString);
         Guild guild = Objects.requireNonNull(event.getGuild());
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
 
-        if ("reset".equals(name)) {
+        if (name == null) {
             sud.setNickName(null);
             event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げユーザ名をリセットしました。").queue();
         } else {

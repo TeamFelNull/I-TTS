@@ -35,7 +35,7 @@ public class VnickCommand extends BaseCommand {
         return Commands.slash("vnick", "自分の読み上げユーザ名を変更")
                 .addOptions(new OptionData(OptionType.STRING, "name", "名前")
                         .setMaxLength(100)
-                        .setRequired(true))
+                        .setRequired(false))
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS);
     }
@@ -48,7 +48,7 @@ public class VnickCommand extends BaseCommand {
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
 
-        if ("reset".equals(name)) {
+        if (name == null) {
             sud.setNickName(null);
             event.reply("自分の読み上げユーザ名をリセットしました。").setEphemeral(true).queue();
         } else {
