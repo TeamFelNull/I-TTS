@@ -178,6 +178,10 @@ public class TTSManager implements ITTSRuntimeUse {
      * @param message        メッセージ
      */
     public void sayChat(@NotNull Guild guild, @NotNull MessageChannel messageChannel, @Nullable Member member, @NotNull Message message) {
+        if (message.getContentRaw().isEmpty()) {
+            return;
+        }
+
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
 
         String ignoreRegex = legacySaveDataLayer.getServerData(guild.getIdLong()).getIgnoreRegex();
