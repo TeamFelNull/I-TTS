@@ -8,7 +8,7 @@ base {
 }
 
 checkstyle {
-    toolVersion = "10.12.2"
+    toolVersion = "12.3.1"
     sourceSets = listOf(project.sourceSets.getByName("main"))
 }
 
@@ -17,24 +17,23 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
 
-    api("net.dv8tion:JDA:6.1.0")
-    api("org.apache.commons:commons-lang3:3.19.0")
+    api("net.dv8tion:JDA:6.2.0")
+    api("org.apache.commons:commons-lang3:3.20.0")
     api("com.google.code.gson:gson:2.13.2")
     api("com.google.guava:guava:33.5.0-jre")
     api("dev.felnull:felnull-java-library:1.75")
-    api("dev.arbjerg:lavaplayer:2.2.4")
-    api("commons-io:commons-io:2.20.0")
-    api("com.ibm.icu:icu4j:77.1")
+    api("dev.arbjerg:lavaplayer:2.2.6")
+    api("commons-io:commons-io:2.21.0")
+    api("com.ibm.icu:icu4j:78.1")
     api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
-    api("com.zaxxer:HikariCP:5.1.0")
-    api("mysql:mysql-connector-java:8.0.32")
-    api("org.xerial:sqlite-jdbc:3.46.0.1")
+    api("com.zaxxer:HikariCP:7.0.2")
+    api("com.mysql:mysql-connector-j:9.5.0")
+    api("org.xerial:sqlite-jdbc:3.51.1.0")
     api("it.unimi.dsi:fastutil:8.5.18")
 
     api("org.jetbrains:annotations:26.0.2-1")
 
-    // api("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
-    api("org.apache.logging.log4j:log4j-core:2.25.2")
+    api("org.apache.logging.log4j:log4j-core:2.25.3")
 }
 
 tasks.getByName<Test>("test") {
