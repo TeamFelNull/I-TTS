@@ -6,7 +6,7 @@
 ## [Unreleased]
 
 ### Added
-
+- COEIROINKの新APIに対応
 ### Changed
 
 ### Deprecated
