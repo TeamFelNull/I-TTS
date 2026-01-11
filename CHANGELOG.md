@@ -8,7 +8,7 @@
 ### Added
 - COEIROINKの新APIに対応
 ### Changed
-
+- vnickコマンドで空引数時にリセット可能に
 ### Deprecated
 
 ### Removed
