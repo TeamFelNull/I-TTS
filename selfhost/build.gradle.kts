@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.gradleup.shadow") version "8.3.6"
     id("checkstyle")
 }
 
@@ -10,7 +10,7 @@ base {
 }
 
 checkstyle {
-    toolVersion = "10.12.2"
+    toolVersion = "10.21.4"
 }
 
 tasks.named<Jar>("jar") {

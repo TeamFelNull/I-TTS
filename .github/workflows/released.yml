@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
-          java-version: '17'
+          java-version: '25'
 
       - name: Setup Gradle #Gradleセットアップ
         uses: gradle/gradle-build-action@v3
@@ -97,7 +97,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
-          java-version: '17'
+          java-version: '25'
 
       - name: Setup Gradle #Gradleセットアップ
         uses: gradle/gradle-build-action@v3
