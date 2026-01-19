@@ -10,7 +10,7 @@ base {
 }
 
 checkstyle {
-    toolVersion = "10.21.4"
+    toolVersion = "10.26.1"
 }
 
 tasks.named<Jar>("jar") {

@@ -1,0 +1,65 @@
+{
+	// コンフィグのバージョン 変更しないでください！
+	"config_version": 1,
+	// BOTのトークン
+	"bot_token": "",
+	// テーマカラー
+	"theme_color": 16711935,
+	// キャッシュを保存する期間(ms)
+	"cache_time": 180000,
+	// VoiceTextのコンフィグ
+	"voice_text": {
+		// 有効かどうか
+		"enable": true,
+		// APIキー
+		"api_key": "",
+	},
+	// VOICEVOXのコンフィグ
+	"voicevox": {
+		// 有効かどうか
+		"enable": true,
+		// EngineのURL
+		"api_url": [
+			"",
+		],
+		// APIが利用可能かどうか確認する間隔(ms)
+		"check_time": 15000,
+	},
+	// COEIROLNKのコンフィグ
+	"coeirolnk": {
+		// 有効かどうか
+		"enable": true,
+		// EngineのURL
+		"api_url": [
+			"",
+		],
+		// APIが利用可能かどうか確認する間隔(ms)
+		"check_time": 15000,
+	},
+	// SHAREVOXのコンフィグ
+	"sharevox": {
+		// 有効かどうか
+		"enable": true,
+		// EngineのURL
+		"api_url": [
+			"",
+		],
+		// APIが利用可能かどうか確認する間隔(ms)
+		"check_time": 15000,
+	},
+	// データベースのコンフィグ
+	"data_base": {
+		// 種類 [sqlite/mysql]
+		"type": "sqlite",
+		// ホスト名 (MySQL)
+		"host": "",
+		// ポート番号 (MySQL)
+		"port": 0,
+		// データベース名 (MySQL)
+		"database_name": "",
+		// ユーザー名 (MySQL)
+		"user": "",
+		// パスワード (MySQL)
+		"password": "",
+	},
+}

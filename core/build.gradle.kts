@@ -8,7 +8,7 @@ base {
 }
 
 checkstyle {
-    toolVersion = "10.21.4"
+    toolVersion = "10.26.1"
     sourceSets = listOf(project.sourceSets.getByName("main"))
 }
 
@@ -19,7 +19,7 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:5.21.0")
 
     api("net.dv8tion:JDA:6.3.0")
-    api("org.apache.commons:commons-lang3:3.19.0")
+    api("org.apache.commons:commons-lang3:3.20.0")
     api("com.google.code.gson:gson:2.13.2")
     api("com.google.guava:guava:33.5.0-jre")
     api("dev.felnull:felnull-java-library:1.75")
@@ -28,14 +28,14 @@ dependencies {
     api("com.ibm.icu:icu4j:77.1")
     api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
     api("com.zaxxer:HikariCP:7.0.2")
-    api("com.mysql:mysql-connector-j:9.1.0")
-    api("org.xerial:sqlite-jdbc:3.47.2.0")
+    api("com.mysql:mysql-connector-j:9.3.0")
+    api("org.xerial:sqlite-jdbc:3.49.1.0")
     api("it.unimi.dsi:fastutil:8.5.18")
 
     api("org.jetbrains:annotations:26.0.2-1")
 
     // api("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
-    api("org.apache.logging.log4j:log4j-core:2.25.2")
+    api("org.apache.logging.log4j:log4j-core:2.25.3")
 }
 
 tasks.getByName<Test>("test") {
