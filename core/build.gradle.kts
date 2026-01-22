@@ -29,7 +29,7 @@ dependencies {
     api("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
     api("com.zaxxer:HikariCP:7.0.2")
     api("com.mysql:mysql-connector-j:9.3.0")
-    api("org.xerial:sqlite-jdbc:3.49.1.0")
+    api("org.xerial:sqlite-jdbc:3.51.1.0")
     api("it.unimi.dsi:fastutil:8.5.18")
 
     api("org.jetbrains:annotations:26.0.2-1")
