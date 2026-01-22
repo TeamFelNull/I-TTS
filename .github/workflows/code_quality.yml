@@ -21,5 +21,7 @@ jobs:
           fetch-depth: 0
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2025.3
+        with:
+          args: -e,JAVA_HOME=/root/.jdks/jdk
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
