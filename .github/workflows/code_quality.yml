@@ -27,6 +27,6 @@ jobs:
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2025.3
         with:
-          args: --jdk-path,${{ env.JAVA_HOME }}
+          args: -v,${{ env.JAVA_HOME }}:/root/.jdks/jdk-25
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
