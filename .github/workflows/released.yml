@@ -57,7 +57,6 @@ jobs:
           ./gradlew build --stacktrace --no-daemon
 
       - name: Publish to Maven #Mavenリポジトリに公開
-        if: ${{ secrets.MAVEN_PASSWORD != '' }}
         shell: bash
         continue-on-error: true
         run: |
