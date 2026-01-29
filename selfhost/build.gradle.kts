@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.gradleup.shadow") version "8.3.6"
     id("checkstyle")
 }
 
@@ -10,7 +10,7 @@ base {
 }
 
 checkstyle {
-    toolVersion = "10.12.2"
+    toolVersion = "10.26.1"
 }
 
 tasks.named<Jar>("jar") {
@@ -20,9 +20,10 @@ tasks.named<Jar>("jar") {
     }
 }
 
-val shadowIn: Configuration by configurations.creating
+val shadowIn: Configuration by configurations.creating {
+    isTransitive = true
+}
 configurations {
-    shadowIn
     implementation.get().extendsFrom(shadowIn)
 }
 
@@ -42,7 +43,6 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.named<ShadowJar>("shadowJar") {
-    shadowIn.isTransitive = true
     configurations = listOf(shadowIn)
     archiveClassifier.set("")
     dependencies {
