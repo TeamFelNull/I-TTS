@@ -241,6 +241,10 @@ public class TTSManager implements ITTSRuntimeUse {
 
         long userId = user.getIdLong();
 
+        if (legacySaveDataLayer.getServerUserData(guildId, userId).isDeny()) {
+            return;
+        }
+
         TTSInstance ti = getTTSInstance(guildId);
         if (ti == null || ti.getTextChannel() != textChannelId) {
             return;
