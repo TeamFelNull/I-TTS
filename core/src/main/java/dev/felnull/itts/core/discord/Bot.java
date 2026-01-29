@@ -3,9 +3,11 @@ package dev.felnull.itts.core.discord;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
+import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -44,6 +46,7 @@ public class Bot implements ITTSRuntimeUse {
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(new DCEventListener(this), this.connectControl.getAdaptor())
+                .setAudioModuleConfig(new AudioModuleConfig().withDaveSessionFactory(new JDaveSessionFactory()))
                 .build();
 
         updateCommands(this.jda);
