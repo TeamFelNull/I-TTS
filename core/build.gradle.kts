@@ -35,6 +35,7 @@ dependencies {
 
     // api("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
     api("org.apache.logging.log4j:log4j-core:2.25.2")
+    api("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
 }
 
 tasks.getByName<Test>("test") {
