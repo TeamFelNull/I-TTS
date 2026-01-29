@@ -97,7 +97,7 @@ final class KeyData<T> extends SaveDataBase {
     private T getKeyFromDB(Connection connection, int keyId) throws SQLException {
         DAO.KeyTable<T> keyTable = keyTableProvider.apply(dao());
         Optional<T> key = keyTable.selectKey(connection, keyId);
-        return key.orElseThrow();
+        return key.orElse(null);
     }
 
 }
