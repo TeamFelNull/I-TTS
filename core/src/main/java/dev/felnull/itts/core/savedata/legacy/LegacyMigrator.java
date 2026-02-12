@@ -48,10 +48,39 @@ public class LegacyMigrator {
      */
     private final Gson gson = new Gson();
 
+
+    /**
+     * Jsonの保存先ディレクトリ
+     */
+    private final File jsonSaveDir;
+
+    /**
+     * グローバル辞書ファイル
+     */
+    private final File globalDictFile;
+
     private LegacyMigrator() {
+        this(JSON_SAVE_DIR, GLOBAL_DICT_DIR);
     }
 
-    private void execute(DataRepository repo) {
+    LegacyMigrator(File jsonSaveDir, File globalDictFile) {
+        this.jsonSaveDir = jsonSaveDir;
+        this.globalDictFile = globalDictFile;
+    }
+
+    void moveOldData(File moveDir) throws IOException {
+        FNDataUtil.wishMkdir(moveDir);
+
+        if (jsonSaveDir.exists()) {
+            Files.move(jsonSaveDir, new File(moveDir, jsonSaveDir.getName()));
+        }
+
+        if (globalDictFile.exists()) {
+            Files.move(globalDictFile, new File(moveDir, globalDictFile.getName()));
+        }
+    }
+
+    void execute(DataRepository repo) {
         migrateServerData(repo);
         migrateServerUserData(repo);
         migrateServerDictUseData(repo);
@@ -60,7 +89,7 @@ public class LegacyMigrator {
     }
 
     private void migrateServerData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "server");
+        File dir = new File(jsonSaveDir, "server");
         if (!dir.exists()) {
             return;
         }
@@ -105,7 +134,7 @@ public class LegacyMigrator {
     }
 
     private void migrateServerUserData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "server_users");
+        File dir = new File(jsonSaveDir, "server_users");
         if (!dir.exists()) {
             return;
         }
@@ -160,7 +189,7 @@ public class LegacyMigrator {
     }
 
     private void migrateServerDictUseData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "dict_use");
+        File dir = new File(jsonSaveDir, "dict_use");
         if (!dir.exists()) {
             return;
         }
@@ -211,7 +240,7 @@ public class LegacyMigrator {
     }
 
     private void migrateServerDictData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "server_dict");
+        File dir = new File(jsonSaveDir, "server_dict");
         if (!dir.exists()) {
             return;
         }
@@ -247,11 +276,11 @@ public class LegacyMigrator {
     }
 
     private void migrateGlobalDictData(DataRepository repo) {
-        if (!GLOBAL_DICT_DIR.exists()) {
+        if (!globalDictFile.exists()) {
             return;
         }
 
-        JsonObject jo = loadJson(GLOBAL_DICT_DIR);
+        JsonObject jo = loadJson(globalDictFile);
         if (jo == null) {
             return;
         }
@@ -336,15 +365,7 @@ public class LegacyMigrator {
         File moveDir = new File("old_save_data-" + timeText);
 
         try {
-            FNDataUtil.wishMkdir(moveDir);
-
-            if (JSON_SAVE_DIR.exists()) {
-                Files.move(JSON_SAVE_DIR, new File(moveDir, JSON_SAVE_DIR.getName()));
-            }
-
-            if (GLOBAL_DICT_DIR.exists()) {
-                Files.move(GLOBAL_DICT_DIR, new File(moveDir, GLOBAL_DICT_DIR.getName()));
-            }
+            migrator.moveOldData(moveDir);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to move Old SaveData", e);
         }
