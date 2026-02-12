@@ -297,6 +297,119 @@ class LegacyMigratorTest {
     }
 
     @Test
+    void testNonExistentDirectoriesSkipped(@TempDir Path tempDir) {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        DataRepository repo = createRepository(tempDir);
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        repo.dispose();
+    }
+
+    @Test
+    void testInvalidFileNameSkipped(@TempDir Path tempDir) throws IOException {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        JsonObject validJson = createVersionedJson();
+        validJson.add("data", new JsonObject());
+
+        writeJson(new File(saveDir, "server/not_a_number.json"), validJson);
+        writeJson(new File(saveDir, "server_users/invalid.json"), validJson);
+        writeJson(new File(saveDir, "dict_use/abc.json"), validJson);
+        writeJson(new File(saveDir, "server_dict/xyz.json"), validJson);
+
+        DataRepository repo = createRepository(tempDir);
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        repo.dispose();
+    }
+
+    @Test
+    void testInvalidUserIdSkipped(@TempDir Path tempDir) throws IOException {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        JsonObject invalidUser = new JsonObject();
+        invalidUser.addProperty("deny", true);
+
+        JsonObject validUser = new JsonObject();
+        validUser.addProperty("deny", true);
+
+        JsonObject data = new JsonObject();
+        data.add("not_a_number", invalidUser);
+        data.add(String.valueOf(USER_ID_1), validUser);
+
+        JsonObject usersJson = createVersionedJson();
+        usersJson.add("data", data);
+
+        writeJson(new File(saveDir, "server_users/" + SERVER_ID + ".json"), usersJson);
+
+        DataRepository repo = createRepository(tempDir);
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        ServerUserData userData = repo.getServerUserData(SERVER_ID, USER_ID_1);
+        assertTrue(userData.isDeny());
+
+        repo.dispose();
+    }
+
+    @Test
+    void testUnsupportedVersionSkipped(@TempDir Path tempDir) throws IOException {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        JsonObject serverJson = new JsonObject();
+        serverJson.addProperty("version", 1);
+        serverJson.addProperty("need_join", true);
+
+        writeJson(new File(saveDir, "server/" + SERVER_ID + ".json"), serverJson);
+
+        DataRepository repo = createRepository(tempDir);
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        ServerData serverData = repo.getServerData(SERVER_ID);
+        assertFalse(serverData.isNeedJoin());
+
+        repo.dispose();
+    }
+
+    @Test
+    void testMissingDataKeySkipped(@TempDir Path tempDir) throws IOException {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        JsonObject noDataJson = createVersionedJson();
+
+        writeJson(new File(saveDir, "server_users/" + SERVER_ID + ".json"), noDataJson);
+        writeJson(new File(saveDir, "dict_use/" + SERVER_ID + ".json"), noDataJson);
+        writeJson(new File(saveDir, "server_dict/" + SERVER_ID + ".json"), noDataJson);
+        writeJson(globalDict, noDataJson);
+
+        DataRepository repo = createRepository(tempDir);
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        CustomDictionaryData serverDict = repo.getServerCustomDictionaryData(SERVER_ID);
+        assertTrue(serverDict.getAll().isEmpty());
+
+        CustomDictionaryData globalDictData = repo.getGlobalCustomDictionaryData();
+        assertTrue(globalDictData.getAll().isEmpty());
+
+        repo.dispose();
+    }
+
+    @Test
     void testMoveOldData_bothExist(@TempDir Path tempDir) throws IOException {
         File saveDir = new File(tempDir.toFile(), "save_data");
         File globalDict = new File(tempDir.toFile(), "global_dict.json");
