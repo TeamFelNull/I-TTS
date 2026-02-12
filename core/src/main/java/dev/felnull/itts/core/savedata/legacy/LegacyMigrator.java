@@ -3,6 +3,7 @@ package dev.felnull.itts.core.savedata.legacy;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.itts.core.dict.CustomDictionaryEntry;
@@ -139,9 +140,9 @@ public class LegacyMigrator {
                     .forEach((entry) -> {
                         long userId;
                         try {
-                            userId = Long.parseLong(name);
+                            userId = Long.parseLong(entry.getKey());
                         } catch (NumberFormatException e) {
-                            LOGGER.error("Invalid data name {}", file.getName());
+                            LOGGER.error("Invalid data name {}", entry.getKey());
                             return;
                         }
                         JsonObject entryJo = entry.getValue().getAsJsonObject();
@@ -238,7 +239,9 @@ public class LegacyMigrator {
             Map<String, String> dictEntry = loadDict(jo);
             CustomDictionaryData dictionaryData = repo.getServerCustomDictionaryData(serverId);
             dictEntry.forEach((target, read) -> {
-                dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD));
+                if (dictionaryData.getByTarget(target).isEmpty()) {
+                    dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD));
+                }
             });
         });
     }
@@ -255,7 +258,11 @@ public class LegacyMigrator {
 
         Map<String, String> dictEntry = loadDict(jo);
         CustomDictionaryData dictionaryData = repo.getGlobalCustomDictionaryData();
-        dictEntry.forEach((target, read) -> dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD)));
+        dictEntry.forEach((target, read) -> {
+            if (dictionaryData.getByTarget(target).isEmpty()) {
+                dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD));
+            }
+        });
     }
 
     private Map<String, String> loadDict(JsonObject jo) {
@@ -280,8 +287,13 @@ public class LegacyMigrator {
 
         try (Reader reader = new FileReader(file); Reader bufReader = new BufferedReader(reader)) {
             jo = gson.fromJson(bufReader, JsonObject.class);
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             LOGGER.error("Loading failed {}", file.getName(), e);
+            return null;
+        }
+
+        if (jo == null) {
+            LOGGER.error("Empty json file {}", file.getName());
             return null;
         }
 
@@ -324,13 +336,14 @@ public class LegacyMigrator {
         File moveDir = new File("old_save_data-" + timeText);
 
         try {
+            FNDataUtil.wishMkdir(moveDir);
+
             if (JSON_SAVE_DIR.exists()) {
-                Files.move(JSON_SAVE_DIR, moveDir);
+                Files.move(JSON_SAVE_DIR, new File(moveDir, JSON_SAVE_DIR.getName()));
             }
 
             if (GLOBAL_DICT_DIR.exists()) {
-                FNDataUtil.wishMkdir(moveDir);
-                Files.move(GLOBAL_DICT_DIR, new File(moveDir, "global_dict.json"));
+                Files.move(GLOBAL_DICT_DIR, new File(moveDir, GLOBAL_DICT_DIR.getName()));
             }
         } catch (IOException e) {
             throw new IllegalStateException("Failed to move Old SaveData", e);
