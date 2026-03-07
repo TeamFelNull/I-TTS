@@ -63,8 +63,8 @@ public class VoiceManager implements ITTSBaseManager {
         return CompletableFuture.allOf(
                         voicevoxManager.init(),
                         coeiroinkManager.init(),
-                        sharevoxManager.init()).
-                thenAcceptAsync(v -> {
+                        sharevoxManager.init())
+                .thenAcceptAsync(v -> {
                     registerVoiceTypes(voiceTextManager::getVoiceTypes);
                     registerVoiceTypes(voicevoxManager::getAvailableVoiceTypes);
                     registerVoiceTypes(coeiroinkManager::getAvailableVoiceTypes);

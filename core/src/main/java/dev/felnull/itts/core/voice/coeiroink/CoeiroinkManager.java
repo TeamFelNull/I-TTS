@@ -76,6 +76,9 @@ public class CoeiroinkManager {
      * @return 初期化の非同期CompletableFuture
      */
     public CompletableFuture<?> init() {
+        if (!getConfig().isEnable()) {
+            return CompletableFuture.completedFuture(null);
+        }
         return balancer.init();
     }
 
