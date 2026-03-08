@@ -3,10 +3,12 @@ package dev.felnull.itts.core.savedata.legacy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.dict.ReplaceType;
+import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.DAOFactory;
 import dev.felnull.itts.core.savedata.repository.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -463,5 +465,82 @@ class LegacyMigratorTest {
         assertFalse(new File(moveDir, "save_data").exists());
         assertTrue(new File(moveDir, "global_dict.json").exists());
         assertFalse(globalDict.exists());
+    }
+
+    @Test
+    void testFileErrorIsolation(@TempDir Path tempDir) throws Exception {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        long serverId1 = 111111111111111111L;
+        long serverId2 = 222222222222222222L;
+
+        JsonObject server1 = createVersionedJson();
+        server1.addProperty("need_join", true);
+        writeJson(new File(saveDir, "server/" + serverId1 + ".json"), server1);
+
+        JsonObject server2 = createVersionedJson();
+        server2.addProperty("need_join", true);
+        writeJson(new File(saveDir, "server/" + serverId2 + ".json"), server2);
+
+        File dbFile = new File(tempDir.toFile(), "test.db");
+        DAO dao = DAOFactory.getInstance().createSQLiteDAO(dbFile);
+        DAO spyDao = Mockito.spy(dao);
+        DAO.ServerDataTable spyTable = Mockito.spy(spyDao.serverDataTable());
+        Mockito.doThrow(new IllegalStateException("test"))
+                .doCallRealMethod()
+                .when(spyTable)
+                .insertRecordIfNotExists(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.when(spyDao.serverDataTable()).thenReturn(spyTable);
+
+        DataRepository repo = DataRepository.create(spyDao);
+        repo.init();
+
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        boolean s1 = repo.getServerData(serverId1).isNeedJoin();
+        boolean s2 = repo.getServerData(serverId2).isNeedJoin();
+        assertTrue(s1 || s2, "At least one server should have been migrated");
+
+        repo.dispose();
+    }
+
+    @Test
+    void testPhaseErrorIsolation(@TempDir Path tempDir) throws Exception {
+        File saveDir = new File(tempDir.toFile(), "save_data");
+        File globalDict = new File(tempDir.toFile(), "global_dict.json");
+
+        JsonObject serverJson = createVersionedJson();
+        serverJson.addProperty("need_join", true);
+        writeJson(new File(saveDir, "server/" + SERVER_ID + ".json"), serverJson);
+
+        JsonObject user = new JsonObject();
+        user.addProperty("deny", true);
+        JsonObject data = new JsonObject();
+        data.add(String.valueOf(USER_ID_1), user);
+        JsonObject usersJson = createVersionedJson();
+        usersJson.add("data", data);
+        writeJson(new File(saveDir, "server_users/" + SERVER_ID + ".json"), usersJson);
+
+        File dbFile = new File(tempDir.toFile(), "test.db");
+        DAO dao = DAOFactory.getInstance().createSQLiteDAO(dbFile);
+        DAO spyDao = Mockito.spy(dao);
+        DAO.ServerDataTable spyTable = Mockito.spy(spyDao.serverDataTable());
+        Mockito.doThrow(new IllegalStateException("test"))
+                .when(spyTable)
+                .insertRecordIfNotExists(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.when(spyDao.serverDataTable()).thenReturn(spyTable);
+
+        DataRepository repo = DataRepository.create(spyDao);
+        repo.init();
+
+        LegacyMigrator migrator = new LegacyMigrator(saveDir, globalDict);
+        assertDoesNotThrow(() -> migrator.execute(repo));
+
+        ServerUserData userData = repo.getServerUserData(SERVER_ID, USER_ID_1);
+        assertTrue(userData.isDeny());
+
+        repo.dispose();
     }
 }
