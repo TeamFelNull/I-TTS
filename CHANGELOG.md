@@ -8,13 +8,14 @@
 ### Added
 
 ### Changed
-
+- IANAのTLDリストを参照してドメイン省略するように変更
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-
+- 多数の不備を修正
+- 辞書登録のバリデーションを強化
 ### Security
 
 ## [2.1.0] - 2026-02-11

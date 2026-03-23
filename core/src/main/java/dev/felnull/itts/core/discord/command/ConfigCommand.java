@@ -5,6 +5,7 @@ import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyServerData;
 import dev.felnull.itts.core.savedata.repository.ServerData;
+import dev.felnull.itts.core.util.PatternValidator;
 import dev.felnull.itts.core.voice.VoiceCategory;
 import dev.felnull.itts.core.voice.VoiceManager;
 import dev.felnull.itts.core.voice.VoiceType;
@@ -171,6 +172,13 @@ public class ConfigCommand extends BaseCommand {
         Guild guild = Objects.requireNonNull(event.getGuild());
 
         String op = Objects.requireNonNull(event.getOption("regex", OptionMapping::getAsString));
+
+        PatternValidator.ValidationResult validationResult = PatternValidator.validate(op);
+        if (!validationResult.valid()) {
+            event.reply(validationResult.error()).setEphemeral(true).queue();
+            return;
+        }
+
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
 
