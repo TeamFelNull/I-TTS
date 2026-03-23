@@ -118,10 +118,20 @@ public class CoeiroinkManager {
                 .timeout(Duration.of(3000, ChronoUnit.MILLIS))
                 .build();
         HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
+
+        int statusCode = rep.statusCode();
+        if (statusCode != 200) {
+            throw new IOException(name + " API error: HTTP " + statusCode);
+        }
+
         JsonArray ja;
 
         try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
             ja = GSON.fromJson(reader, JsonArray.class);
+        }
+
+        if (ja == null) {
+            throw new IOException(name + " API returned invalid JSON response");
         }
 
         ImmutableList.Builder<CoeiroinkSpeaker> speakerBuilder = new ImmutableList.Builder<>();

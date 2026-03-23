@@ -3,12 +3,14 @@ package dev.felnull.itts.core.discord.command;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import dev.felnull.itts.core.dict.Dictionary;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.dict.ServerDictionary;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
+import dev.felnull.itts.core.util.PatternValidator;
 import dev.felnull.itts.core.util.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -53,6 +55,11 @@ public class DictCommand extends BaseCommand {
      * フィールドに表示可能な最大文字数
      */
     private static final int MAX_FIELD_TEXT_LENGTH = 125;
+
+    /**
+     * アップロードファイルの最大サイズ (1MB)
+     */
+    private static final int MAX_UPLOAD_FILE_SIZE = 1024 * 1024;
 
     /**
      * GSOUN
@@ -175,11 +182,24 @@ public class DictCommand extends BaseCommand {
         Message.Attachment file = Objects.requireNonNull(event.getOption("file", OptionMapping::getAsAttachment));
         boolean overwrite = Objects.requireNonNull(event.getOption("overwrite", OptionMapping::getAsBoolean));
 
+        if (file.getSize() > MAX_UPLOAD_FILE_SIZE) {
+            int maxSizeMB = MAX_UPLOAD_FILE_SIZE / (1024 * 1024);
+            event.reply(String.format("ファイルサイズが大きすぎます。最大%dMBまでです。", maxSizeMB)).setEphemeral(true).queue();
+            return;
+        }
+
         event.deferReply().queue();
 
         file.getProxy().download().thenApplyAsync(stream -> {
-            try (InputStream st = new BufferedInputStream(stream); Reader reader = new InputStreamReader(st)) {
-                return GSON.fromJson(reader, JsonObject.class);
+            try (InputStream st = new BufferedInputStream(stream);
+                 Reader reader = new InputStreamReader(st, StandardCharsets.UTF_8)) {
+                JsonObject result = GSON.fromJson(reader, JsonObject.class);
+                if (result == null) {
+                    throw new RuntimeException("Invalid JSON file");
+                }
+                return result;
+            } catch (JsonSyntaxException e) {
+                throw new RuntimeException("Invalid JSON format: " + e.getMessage());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -204,7 +224,8 @@ public class DictCommand extends BaseCommand {
                 event.getHook().sendMessageEmbeds(replayEmbedBuilder.build()).addContent(overwrite ? "以下の単語の読みを上書き登録しました" : "以下の単語の読みを登録しました").queue();
             } else {
                 getITTSLogger().error("Dictionary registration failure", error);
-                event.getHook().sendMessage("辞書ファイルの読み込み中にエラーが発生しました").queue();
+                String errorMessage = error.getCause() != null ? error.getCause().getMessage() : error.getMessage();
+                event.getHook().sendMessage("辞書ファイルの読み込み中にエラーが発生しました: " + errorMessage).queue();
             }
         }, getAsyncExecutor());
 
@@ -266,8 +287,19 @@ public class DictCommand extends BaseCommand {
         String word = Objects.requireNonNull(event.getOption("word", OptionMapping::getAsString));
         String reading = Objects.requireNonNull(event.getOption("reading", OptionMapping::getAsString));
 
+        if (word.isBlank() || reading.isBlank()) {
+            event.reply("単語と読みを空にすることはできません。").setEphemeral(true).queue();
+            return;
+        }
+
         if (word.length() > MAX_TEXT_LENGTH || reading.length() > MAX_TEXT_LENGTH) {
-            event.reply(String.format("登録可能な最大文字数は%d文字です", MAX_TEXT_LENGTH)).queue();
+            event.reply(String.format("登録可能な最大文字数は%d文字です", MAX_TEXT_LENGTH)).setEphemeral(true).queue();
+            return;
+        }
+
+        PatternValidator.ValidationResult validationResult = PatternValidator.validate(word);
+        if (!validationResult.valid()) {
+            event.reply(validationResult.error()).setEphemeral(true).queue();
             return;
         }
 

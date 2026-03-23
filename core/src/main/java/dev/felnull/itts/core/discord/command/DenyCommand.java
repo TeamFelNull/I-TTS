@@ -92,7 +92,6 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        MessageCreateBuilder msg = new MessageCreateBuilder().addContent("読み上げ拒否されたユーザ一覧\n");
         StringBuilder sb = new StringBuilder();
 
         JDA jda = event.getJDA();
@@ -103,7 +102,15 @@ public class DenyCommand extends BaseCommand {
                 sb.append(DiscordUtils.getEscapedName(guild, user)).append("\n");
             }
         }
-        msg.addContent("``" + sb + "``");
+
+        if (sb.isEmpty()) {
+            event.reply("読み上げ拒否されたユーザの情報を取得できませんでした。").setEphemeral(true).queue();
+            return;
+        }
+
+        MessageCreateBuilder msg = new MessageCreateBuilder()
+                .addContent("読み上げ拒否されたユーザ一覧\n")
+                .addContent("```\n" + sb + "```");
         event.reply(msg.build()).setEphemeral(true).queue();
     }
 

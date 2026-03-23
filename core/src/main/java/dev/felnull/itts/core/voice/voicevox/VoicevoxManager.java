@@ -119,10 +119,20 @@ public class VoicevoxManager {
                 .timeout(Duration.of(3000, ChronoUnit.MILLIS))
                 .build();
         HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
+
+        int statusCode = rep.statusCode();
+        if (statusCode != 200) {
+            throw new IOException(name + " API error: HTTP " + statusCode);
+        }
+
         JsonArray ja;
 
         try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
             ja = GSON.fromJson(reader, JsonArray.class);
+        }
+
+        if (ja == null) {
+            throw new IOException(name + " API returned invalid JSON response");
         }
 
         ImmutableList.Builder<VoicevoxSpeaker> speakerBuilder = new ImmutableList.Builder<>();
@@ -145,9 +155,21 @@ public class VoicevoxManager {
                     .build();
             HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
-            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-                return GSON.fromJson(reader, JsonObject.class);
+            int statusCode = rep.statusCode();
+            if (statusCode != 200) {
+                throw new IOException(name + " audio_query API error: HTTP " + statusCode);
             }
+
+            JsonObject result;
+            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                result = GSON.fromJson(reader, JsonObject.class);
+            }
+
+            if (result == null) {
+                throw new IOException(name + " audio_query API returned invalid JSON response");
+            }
+
+            return result;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

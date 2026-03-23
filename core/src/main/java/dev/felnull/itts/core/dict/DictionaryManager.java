@@ -8,6 +8,7 @@ import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacyDictData;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.util.JsonUtils;
+import dev.felnull.itts.core.util.PatternValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,6 +28,16 @@ public class DictionaryManager implements ITTSRuntimeUse {
      * 辞書バージョン
      */
     private static final int FILE_VERSION = 0;
+
+    /**
+     * アップロード時の最大エントリ数
+     */
+    private static final int MAX_DICT_ENTRIES = 1000;
+
+    /**
+     * エントリの最大文字数
+     */
+    private static final int MAX_TEXT_LENGTH = 1000;
 
     /**
      * グローバル辞書
@@ -254,35 +265,55 @@ public class DictionaryManager implements ITTSRuntimeUse {
         int version = JsonUtils.getInt(jo, "version", -1);
 
         if (version != FILE_VERSION) {
-            throw new RuntimeException("Unsupported dictionary file version.");
+            throw new RuntimeException("Unsupported dictionary file version");
         }
 
-        if (jo.get("entry").isJsonObject()) {
-            JsonObject entry = jo.getAsJsonObject("entry");
-            LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
+        JsonElement entryElement = jo.get("entry");
+        if (entryElement == null || !entryElement.isJsonObject()) {
+            throw new RuntimeException("Invalid dictionary file format");
+        }
 
-            for (Map.Entry<String, JsonElement> en : entry.entrySet()) {
-                String target = en.getKey();
+        JsonObject entry = jo.getAsJsonObject("entry");
 
-                if (!en.getValue().isJsonPrimitive() || !en.getValue().getAsJsonPrimitive().isString()) {
-                    continue;
-                }
+        if (entry.size() > MAX_DICT_ENTRIES) {
+            throw new RuntimeException("Dictionary entry count exceeds limit. Maximum is " + MAX_DICT_ENTRIES);
+        }
 
-                String read = en.getValue().getAsString();
+        LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
 
-                LegacyDictData pre = legacySaveDataLayer.getServerDictData(guildId, target);
+        for (Map.Entry<String, JsonElement> en : entry.entrySet()) {
+            String target = en.getKey();
 
-                if (!overwrite && pre != null) {
-                    continue;
-                }
+            if (!en.getValue().isJsonPrimitive() || !en.getValue().getAsJsonPrimitive().isString()) {
+                continue;
+            }
 
-                legacySaveDataLayer.addServerDictData(guildId, target, read);
+            String read = en.getValue().getAsString();
 
-                LegacyDictData ndata = Objects.requireNonNull(legacySaveDataLayer.getServerDictData(guildId, target));
+            if (target.length() > MAX_TEXT_LENGTH || read.length() > MAX_TEXT_LENGTH) {
+                continue;
+            }
 
-                if (!ndata.equals(pre)) {
-                    ret.add(ndata);
-                }
+            if (target.isBlank() || read.isBlank()) {
+                continue;
+            }
+
+            if (!PatternValidator.validate(target).valid()) {
+                continue;
+            }
+
+            LegacyDictData pre = legacySaveDataLayer.getServerDictData(guildId, target);
+
+            if (!overwrite && pre != null) {
+                continue;
+            }
+
+            legacySaveDataLayer.addServerDictData(guildId, target, read);
+
+            LegacyDictData ndata = Objects.requireNonNull(legacySaveDataLayer.getServerDictData(guildId, target));
+
+            if (!ndata.equals(pre)) {
+                ret.add(ndata);
             }
         }
 
