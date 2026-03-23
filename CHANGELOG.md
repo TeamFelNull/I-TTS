@@ -8,15 +8,23 @@
 ### Added
 
 ### Changed
-- IANAのTLDリストを参照してドメイン省略するように変更
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+### Security
+
+## [2.1.1] - 2026-03-23
+
+### Changed
+- IANAのTLDリストを参照してドメイン省略するように変更
+
+### Fixed
 - 多数の不備を修正
 - 辞書登録のバリデーションを強化
-### Security
 
 ## [2.1.0] - 2026-02-11
 
@@ -114,7 +122,8 @@
 ### Added
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0...v2.0.1
