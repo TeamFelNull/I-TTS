@@ -29,11 +29,11 @@ public class AbbreviationDictionary implements Dictionary {
                 Matcher matcher = pattern.matcher(s);
                 return matcher.find();
             })*/
-            .addOption(1, "ドメインショウリャク", s -> {
+            /*.addOption(1, "ドメインショウリャク", s -> {
                 Pattern pattern = Pattern.compile("^([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\\.)+[a-zA-Z]{2,}$");
                 Matcher matcher = pattern.matcher(s);
                 return matcher.find();
-            })
+            })*/
             .addOption(1, "アイピーブイフォーショウリャク", s -> {
                 Pattern pattern = Pattern.compile("^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$");
                 Matcher matcher = pattern.matcher(s);
@@ -61,9 +61,15 @@ public class AbbreviationDictionary implements Dictionary {
      */
     private final URLReplacer urlReplacer = new URLReplacer("ユーアルエルショウリャク");
 
+    /**
+     * ドメインリプレーサー
+     */
+    private final DomainReplacer domainReplacer = new DomainReplacer("ドメインショウリャク");
+
     @Override
     public @NotNull String apply(@NotNull String text, long guildId) {
         text = urlReplacer.replace(text);
+        text = domainReplacer.replace(text);
         text = CODE_BLOCK_REGEX.matcher(text).replaceAll("コードブロックショウリャク");
         return regexUtil.replaceText(text);
     }

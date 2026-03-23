@@ -4,6 +4,7 @@ import dev.felnull.itts.core.audio.VoiceAudioManager;
 import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
+import dev.felnull.itts.core.dict.DomainListManager;
 import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
@@ -61,6 +62,10 @@ public interface ITTSRuntimeUse {
 
     default DictionaryManager getDictionaryManager() {
         return getITTSRuntime().getDictionaryManager();
+    }
+
+    default DomainListManager getDomainListManager() {
+        return getITTSRuntime().getDomainListManager();
     }
 
     default VoiceManager getVoiceManager() {

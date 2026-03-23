@@ -5,6 +5,7 @@ import dev.felnull.itts.core.audio.VoiceAudioManager;
 import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
+import dev.felnull.itts.core.dict.DomainListManager;
 import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSManager;
@@ -100,6 +101,11 @@ public class ITTSRuntime {
     private final VoiceAudioManager voiceAudioManager = new VoiceAudioManager();
 
     /**
+     * ドメイン名リストマネージャー
+     */
+    private final DomainListManager domainListManager = new DomainListManager();
+
+    /**
      * 辞書マネージャー
      */
     private final DictionaryManager dictionaryManager = new DictionaryManager();
@@ -148,7 +154,7 @@ public class ITTSRuntime {
         this.configManager = new ConfigManager(runtimeContext.getConfigContext());
         this.cacheManager = new CacheManager(runtimeContext.getGlobalCacheAccessFactory());
 
-        this.managers = ImmutableList.of(configManager, voiceManager);
+        this.managers = ImmutableList.of(configManager, voiceManager, domainListManager);
     }
 
     /**
@@ -265,6 +271,9 @@ public class ITTSRuntime {
         return dictionaryManager;
     }
 
+    public DomainListManager getDomainListManager() {
+        return domainListManager;
+    }
 
     public ITTSNetworkManager getNetworkManager() {
         return networkManager;
