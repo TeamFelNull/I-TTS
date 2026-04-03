@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'corretto'
-          java-version: '17'
+          java-version: '25'
 
       - name: Setup Gradle # Gradleセットアップ
         uses: gradle/actions/setup-gradle@v4

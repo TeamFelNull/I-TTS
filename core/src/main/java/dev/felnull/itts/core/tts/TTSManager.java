@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * TTS管理
@@ -186,9 +187,13 @@ public class TTSManager implements ITTSRuntimeUse {
 
         String ignoreRegex = legacySaveDataLayer.getServerData(guild.getIdLong()).getIgnoreRegex();
         if (ignoreRegex != null) {
-            Pattern ignorePattern = Pattern.compile(ignoreRegex);
-            if (ignorePattern.matcher(message.getContentDisplay()).matches()) {
-                return;
+            try {
+                Pattern ignorePattern = Pattern.compile(ignoreRegex);
+                if (ignorePattern.matcher(message.getContentDisplay()).matches()) {
+                    return;
+                }
+            } catch (PatternSyntaxException e) {
+                getITTSLogger().warn("Invalid ignore regex for guild {}: {}", guild.getIdLong(), ignoreRegex);
             }
         }
 
@@ -240,6 +245,10 @@ public class TTSManager implements ITTSRuntimeUse {
         }
 
         long userId = user.getIdLong();
+
+        if (legacySaveDataLayer.getServerUserData(guildId, userId).isDeny()) {
+            return;
+        }
 
         TTSInstance ti = getTTSInstance(guildId);
         if (ti == null || ti.getTextChannel() != textChannelId) {

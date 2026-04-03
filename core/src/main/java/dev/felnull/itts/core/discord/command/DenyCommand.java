@@ -4,6 +4,7 @@ import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import dev.felnull.itts.core.util.DiscordUtils;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -70,7 +71,7 @@ public class DenyCommand extends BaseCommand {
         }
 
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-        LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
+        LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
         if (!sud.isDeny()) {
             event.reply("読み上げ拒否をされていないユーザです。").setEphemeral(true).queue();
             return;
@@ -91,12 +92,25 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        MessageCreateBuilder msg = new MessageCreateBuilder().addContent("読み上げ拒否されたユーザ一覧\n");
         StringBuilder sb = new StringBuilder();
+
+        JDA jda = event.getJDA();
+
         for (Long deny : denyUsers) {
-            sb.append(DiscordUtils.getEscapedName(guild, Objects.requireNonNull(event.getJDA().getUserById(deny)))).append("\n");
+            User user = jda.retrieveUserById(deny).complete();
+            if (user != null) {
+                sb.append(DiscordUtils.getEscapedName(guild, user)).append("\n");
+            }
         }
-        msg.addContent("``" + sb + "``");
+
+        if (sb.isEmpty()) {
+            event.reply("読み上げ拒否されたユーザの情報を取得できませんでした。").setEphemeral(true).queue();
+            return;
+        }
+
+        MessageCreateBuilder msg = new MessageCreateBuilder()
+                .addContent("読み上げ拒否されたユーザ一覧\n")
+                .addContent("```\n" + sb + "```");
         event.reply(msg.build()).setEphemeral(true).queue();
     }
 
@@ -111,7 +125,7 @@ public class DenyCommand extends BaseCommand {
         }
 
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
-        LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), event.getUser().getIdLong());
+        LegacyServerUserData sud = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
         if (sud.isDeny()) {
             event.reply("すでに読み上げ拒否をされているユーザです。").setEphemeral(true).queue();
             return;

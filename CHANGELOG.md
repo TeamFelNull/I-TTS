@@ -6,16 +6,31 @@
 ## [Unreleased]
 
 ### Added
-- COEIROINKの新APIに対応
+
 ### Changed
-- vnickコマンドで空引数時にリセット可能に
+- IANAのTLDリストを参照してドメイン省略するように変更
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-- 画像のみのメッセージで読み上げエラーが発生する問題を修正
+- 多数の不備を修正
+- 辞書登録のバリデーションを強化
 ### Security
+
+## [2.1.0] - 2026-02-11
+
+### Added
+- COEIROINKの新APIに対応
+- DAVEプロトコルをサポート
+
+### Changed
+- vnickコマンドで空引数時にリセット可能に
+- Java25に移行
+
+### Fixed
+- 画像のみのメッセージで読み上げエラーが発生する問題を修正
+- denyコマンドの不具合を修正
 
 ## [2.0.2] - 2025-12-14
 
@@ -99,7 +114,8 @@
 ### Added
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.14...v2.0.0

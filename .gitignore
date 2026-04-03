@@ -158,3 +158,6 @@ $RECYCLE.BIN/
 # コンパイル関係
 core/bin/*
 selfhost/bin/*
+
+# Claude Code
+nul

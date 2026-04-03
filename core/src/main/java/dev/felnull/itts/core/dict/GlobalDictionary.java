@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * グローバル辞書
@@ -50,7 +52,15 @@ public class GlobalDictionary extends RegexReplaceBaseDictionary implements ITTS
     protected @NotNull Map<Pattern, Function<String, String>> getReplaces(long guildId) {
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         return legacySaveDataLayer.getAllGlobalDictData().stream()
-                .map(n -> Pair.of(Pattern.compile(n.getTarget()), n.getRead()))
+                .flatMap(n -> {
+                    try {
+                        Pattern pattern = Pattern.compile(n.getTarget());
+                        return Stream.of(Pair.of(pattern, n.getRead()));
+                    } catch (PatternSyntaxException e) {
+                        getITTSLogger().warn("Invalid regex pattern in global dict: {}", n.getTarget());
+                        return Stream.empty();
+                    }
+                })
                 .collect(Collectors.toMap(Pair::getLeft, patternStringPair -> n -> patternStringPair.getRight()));
     }
 }

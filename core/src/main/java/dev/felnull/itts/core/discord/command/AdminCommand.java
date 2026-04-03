@@ -79,6 +79,8 @@ public class AdminCommand extends BaseCommand {
         if (name == null) {
             sud.setNickName(null);
             event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げユーザ名をリセットしました。").queue();
+        } else if (name.isBlank()) {
+            event.reply("名前を空にすることはできません。リセットするには名前を指定せずに実行してください。").setEphemeral(true).queue();
         } else {
             sud.setNickName(name);
             event.reply(DiscordUtils.getEscapedName(event.getGuild(), user) + "の読み上げユーザ名を変更しました。").queue();

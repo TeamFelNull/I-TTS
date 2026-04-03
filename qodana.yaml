@@ -1,0 +1,7 @@
+version: 1.0
+linter: jetbrains/qodana-jvm-community:2025.3
+bootstrap: |
+  set -eu
+  mkdir -p /root/.jdks
+  curl -fsSL https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse | tar -xzf - -C /root/.jdks
+  mv /root/.jdks/jdk-* /root/.jdks/jdk
