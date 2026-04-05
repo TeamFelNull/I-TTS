@@ -217,8 +217,20 @@ public class DictCommand extends BaseCommand {
 
                 replayEmbedBuilder.setTitle("登録された単語と読み");
 
-                for (LegacyDictData dictData : ret) {
-                    addDictWordAndReadingField(replayEmbedBuilder, dictData.getTarget(), dictData.getRead());
+                ret.stream()
+                        .limit(MessageEmbed.MAX_FIELD_AMOUNT)
+                        .forEach(dictData -> addDictWordAndReadingField(replayEmbedBuilder, dictData.getTarget(), dictData.getRead()));
+
+                if (ret.size() >= 2) {
+                    StringBuilder footerSb = new StringBuilder();
+                    footerSb.append(String.format("計%d個", ret.size()));
+
+                    int omit = ret.size() - MessageEmbed.MAX_FIELD_AMOUNT;
+                    if (omit > 0) {
+                        footerSb.append(String.format(" (%d個省略)", omit));
+                    }
+
+                    replayEmbedBuilder.setFooter(footerSb.toString());
                 }
 
                 event.getHook().sendMessageEmbeds(replayEmbedBuilder.build()).addContent(overwrite ? "以下の単語の読みを上書き登録しました" : "以下の単語の読みを登録しました").queue();
@@ -250,10 +262,13 @@ public class DictCommand extends BaseCommand {
             getDictionaryManager().serverDictSaveToJson(jo, guildId);
             return GSON.toJson(jo).getBytes(StandardCharsets.UTF_8);
 
-        }, getHeavyExecutor()).thenAcceptAsync(data -> {
-
-            event.getHook().sendFiles(FileUpload.fromData(data, guildId + "_dict.json")).setEphemeral(true).queue();
-
+        }, getHeavyExecutor()).whenCompleteAsync((data, error) -> {
+            if (error == null) {
+                event.getHook().sendFiles(FileUpload.fromData(data, guildId + "_dict.json")).setEphemeral(true).queue();
+            } else {
+                getITTSLogger().error("Dictionary download failure", error);
+                event.getHook().sendMessage("辞書ファイルのダウンロード中にエラーが発生しました").setEphemeral(true).queue();
+            }
         }, getAsyncExecutor());
     }
 
@@ -323,13 +338,13 @@ public class DictCommand extends BaseCommand {
         String w;
         String r;
 
-        if (word.length() < MAX_FIELD_TEXT_LENGTH) {
+        if (word.length() <= MAX_FIELD_TEXT_LENGTH) {
             w = "` " + word.replace("\n", "\\n") + " `";
         } else {
             w = "` " + word.substring(0, MAX_FIELD_TEXT_LENGTH).replace("\n", "\\n") + "... `";
         }
 
-        if (reading.length() < MAX_FIELD_TEXT_LENGTH) {
+        if (reading.length() <= MAX_FIELD_TEXT_LENGTH) {
             r = "```" + reading.replace("```", "\\```") + "```";
         } else {
             r = "```" + reading.substring(0, MAX_FIELD_TEXT_LENGTH).replace("```", "\\```") + "... ```";

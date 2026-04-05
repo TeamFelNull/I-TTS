@@ -53,7 +53,7 @@ public class ReconnectCommand extends BaseCommand {
                 }
 
                 getTTSManager().setReadAroundChannel(event.getGuild(), event.getChannel());
-                audioManager.openAudioConnection(connectedChannel.asVoiceChannel());
+                audioManager.openAudioConnection(connectedChannel);
             }, getAsyncExecutor());
         } else {
             event.reply("現在VCに接続していません。").setEphemeral(true).queue();

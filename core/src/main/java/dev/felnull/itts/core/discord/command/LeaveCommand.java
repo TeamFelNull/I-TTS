@@ -63,7 +63,7 @@ public class LeaveCommand extends BaseCommand {
             if (reconnectChannelPair != null) {
                 AudioChannel audioChannel = event.getJDA().getVoiceChannelById(reconnectChannelPair.speakAudioChannel());
                 if (audioChannel != null) {
-                    event.reply(audioChannel.getAsMention() + "から切断します。").queue();
+                    event.reply(audioChannel.getAsMention() + "への再接続予約を取り消しました。").queue();
                     botStateData.setReconnectChannelPair(null);
                     reconnectFlg = true;
                 }
