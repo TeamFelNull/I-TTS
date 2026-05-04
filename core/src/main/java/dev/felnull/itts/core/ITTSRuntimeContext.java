@@ -38,4 +38,12 @@ public interface ITTSRuntimeContext {
      */
     @NotNull
     LogContext getLogContext();
+
+    /**
+     * 実行環境の情報を取得
+     *
+     * @return RuntimeInfo
+     */
+    @NotNull
+    RuntimeInfo getRuntimeInfo();
 }

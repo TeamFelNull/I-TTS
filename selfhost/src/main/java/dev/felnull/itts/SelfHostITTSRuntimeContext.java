@@ -1,6 +1,7 @@
 package dev.felnull.itts;
 
 import dev.felnull.itts.core.ITTSRuntimeContext;
+import dev.felnull.itts.core.RuntimeInfo;
 import dev.felnull.itts.core.cache.GlobalCacheAccess;
 import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.core.log.LogContext;
@@ -19,9 +20,23 @@ import java.util.function.Supplier;
 public class SelfHostITTSRuntimeContext implements ITTSRuntimeContext {
 
     /**
+     * 実行環境の情報
+     */
+    private final RuntimeInfo runtimeInfo;
+
+    /**
      * ログコンテキスト
      */
     private final LogContext logContext = new LogContextImpl();
+
+    /**
+     * コンストラクタ
+     *
+     * @param runtimeInfo 実行環境の情報
+     */
+    public SelfHostITTSRuntimeContext(RuntimeInfo runtimeInfo) {
+        this.runtimeInfo = runtimeInfo;
+    }
 
     @Override
     public @NotNull ConfigContext getConfigContext() {
@@ -36,6 +51,11 @@ public class SelfHostITTSRuntimeContext implements ITTSRuntimeContext {
     @Override
     public @NotNull LogContext getLogContext() {
         return logContext;
+    }
+
+    @Override
+    public @NotNull RuntimeInfo getRuntimeInfo() {
+        return runtimeInfo;
     }
 
     /**
