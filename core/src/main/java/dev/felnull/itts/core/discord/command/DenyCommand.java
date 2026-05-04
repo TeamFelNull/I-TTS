@@ -7,6 +7,7 @@ import dev.felnull.itts.core.util.DiscordUtils;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -92,26 +93,33 @@ public class DenyCommand extends BaseCommand {
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
+        event.deferReply(true).queue();
 
         JDA jda = event.getJDA();
 
-        for (Long deny : denyUsers) {
-            User user = jda.retrieveUserById(deny).complete();
-            if (user != null) {
-                sb.append(DiscordUtils.getEscapedName(guild, user)).append("\n");
+        List<RestAction<User>> fetches = denyUsers.stream()
+                .<RestAction<User>>map(jda::retrieveUserById)
+                .toList();
+
+        RestAction.allOf(fetches).queue(users -> {
+            StringBuilder sb = new StringBuilder();
+
+            for (User user : users) {
+                if (user != null) {
+                    sb.append(DiscordUtils.getEscapedName(guild, user)).append("\n");
+                }
             }
-        }
 
-        if (sb.isEmpty()) {
-            event.reply("読み上げ拒否されたユーザの情報を取得できませんでした。").setEphemeral(true).queue();
-            return;
-        }
+            if (sb.isEmpty()) {
+                event.getHook().sendMessage("読み上げ拒否されたユーザの情報を取得できませんでした。").setEphemeral(true).queue();
+                return;
+            }
 
-        MessageCreateBuilder msg = new MessageCreateBuilder()
-                .addContent("読み上げ拒否されたユーザ一覧\n")
-                .addContent("```\n" + sb + "```");
-        event.reply(msg.build()).setEphemeral(true).queue();
+            MessageCreateBuilder msg = new MessageCreateBuilder()
+                    .addContent("読み上げ拒否されたユーザ一覧\n")
+                    .addContent("```\n" + sb + "```");
+            event.getHook().sendMessage(msg.build()).setEphemeral(true).queue();
+        });
     }
 
     private void add(SlashCommandInteractionEvent event) {

@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -71,16 +70,6 @@ public class ITTSRuntime {
     private final DirectoryLock directoryLock = new DirectoryLock();
 
     /**
-     * バージョン
-     */
-    private final String version;
-
-    /**
-     * 開発環境かどうか
-     */
-    private final boolean developmentEnvironment;
-
-    /**
      * コンフィグマネージャー
      */
     private final ConfigManager configManager;
@@ -131,6 +120,11 @@ public class ITTSRuntime {
     private final List<ITTSBaseManager> managers;
 
     /**
+     * 実行環境のバージョン
+     */
+    private final RuntimeInfo runtimeInfo;
+
+    /**
      * 起動した時の時刻
      */
     private long startupTime;
@@ -146,9 +140,7 @@ public class ITTSRuntime {
 
         this.logger = runtimeContext.getLogContext().getLogger();
 
-        String v = ITTSRuntime.class.getPackage().getImplementationVersion();
-        this.developmentEnvironment = v == null;
-        this.version = Objects.requireNonNullElse(v, "None");
+        this.runtimeInfo = runtimeContext.getRuntimeInfo();
 
         this.bot = new Bot();
         this.configManager = new ConfigManager(runtimeContext.getConfigContext());
@@ -232,11 +224,11 @@ public class ITTSRuntime {
     }
 
     public boolean isDevelopmentEnvironment() {
-        return developmentEnvironment;
+        return runtimeInfo.developmentEnvironment();
     }
 
     public String getVersion() {
-        return version;
+        return runtimeInfo.version();
     }
 
     public String getVersionText() {

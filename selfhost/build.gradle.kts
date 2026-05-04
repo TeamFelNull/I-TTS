@@ -17,6 +17,7 @@ tasks.named<Jar>("jar") {
     manifest {
         attributes("Main-Class" to "dev.felnull.itts.Main")
         attributes("Implementation-Version" to project.version)
+        attributes("Enable-Native-Access" to "ALL-UNNAMED")
     }
 }
 
