@@ -14,8 +14,13 @@
 ### Removed
 
 ### Fixed
-- コマンド実行時に発生する可能性があった不具合を修正
+
 ### Security
+
+## [2.1.2] - 2026-05-04
+
+### Fixed
+- コマンド実行時に発生する可能性があった不具合を修正
 
 ## [2.1.1] - 2026-03-23
 
@@ -122,7 +127,8 @@
 ### Added
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.1...v2.0.2
