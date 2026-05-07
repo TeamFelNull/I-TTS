@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.audio.loader.VoiceTrackLoader;
+import dev.felnull.itts.core.tts.TTSCountRecorder;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.util.TTSUtils;
 import dev.felnull.itts.core.voice.Voice;
@@ -94,7 +95,15 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
 
                     Objects.requireNonNull(voice, "Voice is null");
 
-                    return Pair.of(TTSUtils.roundText(voice, guildId, sayText, false), voice);
+                    String finalText = TTSUtils.roundText(voice, guildId, sayText, false);
+
+                    TTSCountRecorder recorder = getTTSCountRecorder();
+                    if (recorder != null && finalText != null) {
+                        long botId = getBot().getBotId();
+                        recorder.record(botId, guildId, finalText.length());
+                    }
+
+                    return Pair.of(finalText, voice);
                 }, getAsyncExecutor())
                 .thenComposeAsync((sayTextVoice) -> {
                     VoiceTrackLoader vtl = sayTextVoice.getRight().createVoiceTrackLoader(sayTextVoice.getLeft());

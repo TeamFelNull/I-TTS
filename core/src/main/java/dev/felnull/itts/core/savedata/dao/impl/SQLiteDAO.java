@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -91,6 +92,11 @@ public class SQLiteDAO extends BaseDAO {
      * 共通カスタム辞書テーブルのインスタンス
      */
     private final GlobalCustomDictionaryTable globalCustomDictionaryTable = new GlobalCustomDictionaryTableImpl();
+
+    /**
+     * 読み上げ文字数集計テーブルのインスタンス
+     */
+    private final TTSCountTable ttsCountTable = new TTSCountTableImpl();
 
     /**
      * DBファイル
@@ -204,6 +210,11 @@ public class SQLiteDAO extends BaseDAO {
     @Override
     public GlobalCustomDictionaryTable globalCustomDictionaryTable() {
         return globalCustomDictionaryTable;
+    }
+
+    @Override
+    public TTSCountTable ttsCountTable() {
+        return ttsCountTable;
     }
 
     @Override
@@ -2431,6 +2442,167 @@ public class SQLiteDAO extends BaseDAO {
             }
 
             return ret.build();
+        }
+    }
+
+    /**
+     * 読み上げ文字数集計テーブルの実装
+     */
+    private final class TTSCountTableImpl implements TTSCountTable {
+
+        @Override
+        public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    create table if not exists tts_count_data(
+                        id integer not null primary key autoincrement,
+                        bot_id integer not null,
+                        server_id integer not null,
+                        target_date date not null,
+                        spoken_char_count bigint not null default 0,
+                        spoken_message_count bigint not null default 0,
+
+                        unique(bot_id, server_id, target_date),
+                        foreign key (bot_id) references bot_key(id)
+                    );
+                    """;
+
+            execute(connection, sql);
+        }
+
+        @Override
+        public void incrementCount(@NotNull Connection connection,
+                                   int botKeyId,
+                                   int serverKeyId,
+                                   @NotNull LocalDate date,
+                                   long charDelta,
+                                   long messageDelta) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    insert into tts_count_data(bot_id, server_id, target_date, spoken_char_count, spoken_message_count)
+                    values (?, ?, ?, ?, ?)
+                    on conflict(bot_id, server_id, target_date) do update set
+                        spoken_char_count = spoken_char_count + excluded.spoken_char_count,
+                        spoken_message_count = spoken_message_count + excluded.spoken_message_count
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, botKeyId);
+                statement.setInt(2, serverKeyId);
+                statement.setString(3, date.toString());
+                statement.setLong(4, charDelta);
+                statement.setLong(5, messageDelta);
+                statement.execute();
+            }
+        }
+
+        @Override
+        public Optional<TTSCountRecord> getCount(@NotNull Connection connection,
+                                                 int botKeyId,
+                                                 int serverKeyId,
+                                                 @NotNull LocalDate date) throws SQLException {
+            @Language("SQLite")
+            String sql = """
+                    select spoken_char_count, spoken_message_count
+                    from tts_count_data
+                    where bot_id = ? and server_id = ? and target_date = ?
+                    limit 1
+                    """;
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, botKeyId);
+                statement.setInt(2, serverKeyId);
+                statement.setString(3, date.toString());
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        long ch = rs.getLong("spoken_char_count");
+                        long ms = rs.getLong("spoken_message_count");
+                        return Optional.of(new TTSCountRecord(0L, 0L, date, ch, ms));
+                    }
+                }
+            }
+
+            return Optional.empty();
+        }
+
+        @Override
+        public long sumCharCountRange(@NotNull Connection connection,
+                                      int botKeyId,
+                                      int serverKeyId,
+                                      @NotNull LocalDate from,
+                                      @NotNull LocalDate to) throws SQLException {
+            return sumRangeByColumn(connection, botKeyId, serverKeyId, from, to, "spoken_char_count");
+        }
+
+        @Override
+        public long sumMessageCountRange(@NotNull Connection connection,
+                                         int botKeyId,
+                                         int serverKeyId,
+                                         @NotNull LocalDate from,
+                                         @NotNull LocalDate to) throws SQLException {
+            return sumRangeByColumn(connection, botKeyId, serverKeyId, from, to, "spoken_message_count");
+        }
+
+        private long sumRangeByColumn(@NotNull Connection connection,
+                                      int botKeyId,
+                                      int serverKeyId,
+                                      @NotNull LocalDate from,
+                                      @NotNull LocalDate to,
+                                      @NotNull String column) throws SQLException {
+            @Language("SQLite")
+            String sql = "select coalesce(sum(" + column + "), 0) as total from tts_count_data "
+                    + "where bot_id = ? and server_id = ? and target_date between ? and ?";
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, botKeyId);
+                statement.setInt(2, serverKeyId);
+                statement.setString(3, from.toString());
+                statement.setString(4, to.toString());
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getLong("total");
+                    }
+                }
+            }
+
+            return 0L;
+        }
+
+        @Override
+        public long sumAllCharCount(@NotNull Connection connection,
+                                    int botKeyId,
+                                    int serverKeyId) throws SQLException {
+            return sumAllByColumn(connection, botKeyId, serverKeyId, "spoken_char_count");
+        }
+
+        @Override
+        public long sumAllMessageCount(@NotNull Connection connection,
+                                       int botKeyId,
+                                       int serverKeyId) throws SQLException {
+            return sumAllByColumn(connection, botKeyId, serverKeyId, "spoken_message_count");
+        }
+
+        private long sumAllByColumn(@NotNull Connection connection,
+                                    int botKeyId,
+                                    int serverKeyId,
+                                    @NotNull String column) throws SQLException {
+            @Language("SQLite")
+            String sql = "select coalesce(sum(" + column + "), 0) as total from tts_count_data where bot_id = ? and server_id = ?";
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, botKeyId);
+                statement.setInt(2, serverKeyId);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getLong("total");
+                    }
+                }
+            }
+
+            return 0L;
         }
     }
 }

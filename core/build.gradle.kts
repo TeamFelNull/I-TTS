@@ -37,6 +37,9 @@ dependencies {
     api("org.xerial:sqlite-jdbc:3.51.1.0")
     api("it.unimi.dsi:fastutil:8.5.18")
 
+    api("io.micrometer:micrometer-core:1.13.6")
+    api("io.micrometer:micrometer-registry-prometheus:1.13.6")
+
     api("org.jetbrains:annotations:26.0.2-1")
 
     // api("org.apache.logging.log4j:log4j-core:3.0.0-beta3")

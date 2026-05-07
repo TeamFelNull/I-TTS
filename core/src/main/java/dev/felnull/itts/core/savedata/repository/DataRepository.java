@@ -7,6 +7,7 @@ import dev.felnull.itts.core.tts.TTSChannelPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -147,4 +148,101 @@ public interface DataRepository {
     @NotNull
     @Unmodifiable
     Map<Long, BotStateData> getAllBotStateData(long botId);
+
+    /**
+     * サーバー単位の読み上げ文字数集計データを取得
+     *
+     * @param botId    BOTのID
+     * @param serverId サーバーID
+     * @param date     集計日
+     * @return カウントデータ
+     */
+    @NotNull
+    TTSCountData getServerTTSCount(long botId, long serverId, @NotNull LocalDate date);
+
+    /**
+     * BOT全体の読み上げ文字数集計データを取得
+     *
+     * @param botId BOTのID
+     * @param date  集計日
+     * @return カウントデータ
+     */
+    @NotNull
+    TTSCountData getGlobalTTSCount(long botId, @NotNull LocalDate date);
+
+    /**
+     * BOT全体の期間内文字数合計を取得
+     *
+     * @param botId BOTのID
+     * @param from  開始日
+     * @param to    終了日
+     * @return 文字数合計
+     */
+    long sumGlobalCharCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to);
+
+    /**
+     * BOT全体の期間内メッセージ数合計を取得
+     *
+     * @param botId BOTのID
+     * @param from  開始日
+     * @param to    終了日
+     * @return メッセージ数合計
+     */
+    long sumGlobalMessageCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to);
+
+    /**
+     * サーバー単位の期間内文字数合計を取得
+     *
+     * @param botId    BOTのID
+     * @param serverId サーバーID
+     * @param from     開始日
+     * @param to       終了日
+     * @return 文字数合計
+     */
+    long sumServerCharCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to);
+
+    /**
+     * サーバー単位の期間内メッセージ数合計を取得
+     *
+     * @param botId    BOTのID
+     * @param serverId サーバーID
+     * @param from     開始日
+     * @param to       終了日
+     * @return メッセージ数合計
+     */
+    long sumServerMessageCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to);
+
+    /**
+     * BOT全体の累計文字数を取得
+     *
+     * @param botId BOTのID
+     * @return 累計文字数
+     */
+    long sumGlobalAllCharCount(long botId);
+
+    /**
+     * BOT全体の累計メッセージ数を取得
+     *
+     * @param botId BOTのID
+     * @return 累計メッセージ数
+     */
+    long sumGlobalAllMessageCount(long botId);
+
+    /**
+     * サーバー単位の累計文字数を取得
+     *
+     * @param botId    BOTのID
+     * @param serverId サーバーID
+     * @return 累計文字数
+     */
+    long sumServerAllCharCount(long botId, long serverId);
+
+    /**
+     * サーバー単位の累計メッセージ数を取得
+     *
+     * @param botId    BOTのID
+     * @param serverId サーバーID
+     * @return 累計メッセージ数
+     */
+    long sumServerAllMessageCount(long botId, long serverId);
 }

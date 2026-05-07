@@ -5,6 +5,7 @@ import blue.endless.jankson.JsonPrimitive;
 import dev.felnull.itts.config.old.ConfigV0;
 import dev.felnull.itts.core.config.Config;
 import dev.felnull.itts.core.config.DataBaseConfig;
+import dev.felnull.itts.core.config.MetricsConfig;
 import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.util.NameSerializableEnum;
@@ -26,6 +27,7 @@ import java.util.Optional;
  * @param coeirolnkConfig COEIROLNK コンフィグ
  * @param sharevoxConfig  SHAREVOX コンフィグ
  * @param dataBaseConfig  データベースコンフィグ
+ * @param metricsConfig   Prometheusメトリクスコンフィグ
  */
 public record ConfigImpl(
         String botToken,
@@ -35,7 +37,8 @@ public record ConfigImpl(
         VoicevoxConfig voicevoxConfig,
         VoicevoxConfig coeirolnkConfig,
         VoicevoxConfig sharevoxConfig,
-        DataBaseConfig dataBaseConfig
+        DataBaseConfig dataBaseConfig,
+        MetricsConfig metricsConfig
 ) implements Config {
 
     /**
@@ -52,6 +55,7 @@ public record ConfigImpl(
             VoicevoxConfig coeirolnkConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("coeirolnk")).orElseGet(JsonObject::new));
             VoicevoxConfig sharevoxConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("sharevox")).orElseGet(JsonObject::new));
             DataBaseConfig dataBaseConfig = DataBaseConfigImpl.fromJson(Optional.ofNullable(json5.getObject("data_base")).orElseGet(JsonObject::new));
+            MetricsConfig metricsConfig = MetricsConfigImpl.fromJson(Optional.ofNullable(json5.getObject("metrics")).orElseGet(JsonObject::new));
 
             return new ConfigImpl(
                     botToken,
@@ -61,7 +65,8 @@ public record ConfigImpl(
                     voicevoxConfig,
                     coeirolnkConfig,
                     sharevoxConfig,
-                    dataBaseConfig
+                    dataBaseConfig,
+                    metricsConfig
             );
         }
 
@@ -77,7 +82,8 @@ public record ConfigImpl(
                     new VoicevoxConfigImpl(configV0.voicevoxConfig().enable(), configV0.voicevoxConfig().apiUrls(), configV0.voicevoxConfig().checkTime()),
                     new VoicevoxConfigImpl(configV0.coeirolnkConfig().enable(), configV0.coeirolnkConfig().apiUrls(), configV0.coeirolnkConfig().checkTime()),
                     new VoicevoxConfigImpl(configV0.sharevoxConfig().enable(), configV0.sharevoxConfig().apiUrls(), configV0.sharevoxConfig().checkTime()),
-                    new DataBaseConfigImpl()
+                    new DataBaseConfigImpl(),
+                    new MetricsConfigImpl()
             );
         }
     };
@@ -96,7 +102,8 @@ public record ConfigImpl(
                 new VoicevoxConfigImpl(),
                 new VoicevoxConfigImpl(),
                 new VoicevoxConfigImpl(),
-                new DataBaseConfigImpl()
+                new DataBaseConfigImpl(),
+                new MetricsConfigImpl()
         );
     }
 
@@ -112,6 +119,7 @@ public record ConfigImpl(
         json5.put("coeirolnk", ((VoicevoxConfigImpl) this.coeirolnkConfig).toJson(), "COEIROLNKのコンフィグ");
         json5.put("sharevox", ((VoicevoxConfigImpl) this.sharevoxConfig).toJson(), "SHAREVOXのコンフィグ");
         json5.put("data_base", ((DataBaseConfigImpl) this.dataBaseConfig).toJson(), "データベースのコンフィグ");
+        json5.put("metrics", ((MetricsConfigImpl) this.metricsConfig).toJson(), "Prometheusメトリクスのコンフィグ");
     }
 
     @Override
@@ -152,6 +160,11 @@ public record ConfigImpl(
     @Override
     public DataBaseConfig getDataBaseConfig() {
         return dataBaseConfig;
+    }
+
+    @Override
+    public MetricsConfig getMetricsConfig() {
+        return metricsConfig;
     }
 
     /**
@@ -311,6 +324,54 @@ public record ConfigImpl(
         @Override
         public @NotNull String getPassword() {
             return password;
+        }
+    }
+
+    /**
+     * Prometheusメトリクスコンフィグの実装
+     *
+     * @param enabled     有効かどうか
+     * @param bindAddress バインドアドレス
+     * @param port        ポート番号
+     */
+    private record MetricsConfigImpl(
+            boolean enabled,
+            String bindAddress,
+            @Range(from = 0, to = 65535) int port
+    ) implements MetricsConfig {
+
+        private MetricsConfigImpl() {
+            this(DEFAULT_ENABLED, DEFAULT_BIND_ADDRESS, DEFAULT_PORT);
+        }
+
+        public static MetricsConfigImpl fromJson(JsonObject jo) {
+            boolean enabled = jo.getBoolean("enable", DEFAULT_ENABLED);
+            String bindAddress = Json5Utils.getStringOrElse(jo, "bind_address", DEFAULT_BIND_ADDRESS);
+            int port = jo.getInt("port", DEFAULT_PORT);
+            return new MetricsConfigImpl(enabled, bindAddress, port);
+        }
+
+        public JsonObject toJson() {
+            JsonObject jo = new JsonObject();
+            jo.put("enable", JsonPrimitive.of(enabled), "Prometheusメトリクス公開を有効にするかどうか");
+            jo.put("bind_address", JsonPrimitive.of(bindAddress), "メトリクスHTTPサーバーのバインドアドレス");
+            jo.put("port", new JsonPrimitive((long) port), "メトリクスHTTPサーバーのポート番号");
+            return jo;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        @Override
+        public @NotNull String getBindAddress() {
+            return bindAddress;
+        }
+
+        @Override
+        public @Range(from = 0, to = 65535) int getPort() {
+            return port;
         }
     }
 }
