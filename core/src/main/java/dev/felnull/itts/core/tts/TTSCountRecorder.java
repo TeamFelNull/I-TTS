@@ -45,8 +45,8 @@ public final class TTSCountRecorder implements ITTSRuntimeUse {
             try {
                 metricsRegistry.getOrCreateCharCounter(botDiscordId, guildDiscordId).increment(charCount);
                 metricsRegistry.getOrCreateMessageCounter(botDiscordId, guildDiscordId).increment();
-                metricsRegistry.getOrCreateCharCounter(botDiscordId, null).increment(charCount);
-                metricsRegistry.getOrCreateMessageCounter(botDiscordId, null).increment();
+                metricsRegistry.getOrCreateCharCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment(charCount);
+                metricsRegistry.getOrCreateMessageCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment();
             } catch (Throwable t) {
                 getITTSLogger().warn("Failed to update metrics counter", t);
             }

@@ -29,11 +29,6 @@ public class InfoCommand extends BaseCommand {
     private static final String SOURCE_URL = "https://github.com/TeamFelnull/I-TTS";
 
     /**
-     * 時間を相対的に表示するフォーマット
-     */
-    private static final String RELATIVE_TIME_FORMAT = "<t:%d:R>";
-
-    /**
      * コンストラクタ
      */
     public InfoCommand() {

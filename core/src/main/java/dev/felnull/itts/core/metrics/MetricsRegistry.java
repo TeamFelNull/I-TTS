@@ -18,6 +18,31 @@ import java.util.concurrent.ConcurrentMap;
 public final class MetricsRegistry {
 
     /**
+     * BOT全体合計を表すサーバーIDの予約値
+     */
+    public static final long GLOBAL_SERVER_ID = 0L;
+
+    /**
+     * 文字数Counterのメトリクス名
+     */
+    private static final String CHAR_METRIC_NAME = "itts_spoken_chars_total";
+
+    /**
+     * 文字数Counterの説明
+     */
+    private static final String CHAR_METRIC_DESCRIPTION = "Total spoken characters delivered to TTS API";
+
+    /**
+     * メッセージ数Counterのメトリクス名
+     */
+    private static final String MESSAGE_METRIC_NAME = "itts_spoken_messages_total";
+
+    /**
+     * メッセージ数Counterの説明
+     */
+    private static final String MESSAGE_METRIC_DESCRIPTION = "Total spoken messages delivered to TTS API";
+
+    /**
      * Prometheus形式のレジストリ
      */
     private final PrometheusMeterRegistry registry;
@@ -71,33 +96,48 @@ public final class MetricsRegistry {
      * 文字数Counterをラベル付きで取得
      *
      * @param botId    BOTのID
-     * @param serverId サーバーID nullの場合はBOT全体
+     * @param serverId サーバーID GLOBAL_SERVER_IDの場合はBOT全体
      * @return Counter
      */
     @NotNull
-    public Counter getOrCreateCharCounter(long botId, Long serverId) {
-        String key = botId + "|" + (serverId == null ? "global" : serverId.toString());
-        return charCounters.computeIfAbsent(key, k -> Counter.builder("itts_spoken_chars_total")
-                .description("Total spoken characters delivered to TTS API")
-                .tag("bot_id", String.valueOf(botId))
-                .tag("server_id", serverId == null ? "global" : String.valueOf(serverId))
-                .register(registry));
+    public Counter getOrCreateCharCounter(long botId, long serverId) {
+        return getOrCreate(charCounters, CHAR_METRIC_NAME, CHAR_METRIC_DESCRIPTION, botId, serverId);
     }
 
     /**
      * メッセージ数Counterをラベル付きで取得
      *
      * @param botId    BOTのID
-     * @param serverId サーバーID nullの場合はBOT全体
+     * @param serverId サーバーID GLOBAL_SERVER_IDの場合はBOT全体
      * @return Counter
      */
     @NotNull
-    public Counter getOrCreateMessageCounter(long botId, Long serverId) {
-        String key = botId + "|" + (serverId == null ? "global" : serverId.toString());
-        return messageCounters.computeIfAbsent(key, k -> Counter.builder("itts_spoken_messages_total")
-                .description("Total spoken messages delivered to TTS API")
+    public Counter getOrCreateMessageCounter(long botId, long serverId) {
+        return getOrCreate(messageCounters, MESSAGE_METRIC_NAME, MESSAGE_METRIC_DESCRIPTION, botId, serverId);
+    }
+
+    /**
+     * Counterをキャッシュから取得もしくは生成する
+     *
+     * @param cache       Counterキャッシュ
+     * @param metricName  メトリクス名
+     * @param description メトリクスの説明
+     * @param botId       BOTのID
+     * @param serverId    サーバーID GLOBAL_SERVER_IDの場合はBOT全体
+     * @return Counter
+     */
+    @NotNull
+    private Counter getOrCreate(@NotNull ConcurrentMap<String, Counter> cache,
+                                @NotNull String metricName,
+                                @NotNull String description,
+                                long botId,
+                                long serverId) {
+        String serverTag = serverId == GLOBAL_SERVER_ID ? "global" : String.valueOf(serverId);
+        String key = botId + "|" + serverTag;
+        return cache.computeIfAbsent(key, k -> Counter.builder(metricName)
+                .description(description)
                 .tag("bot_id", String.valueOf(botId))
-                .tag("server_id", serverId == null ? "global" : String.valueOf(serverId))
+                .tag("server_id", serverTag)
                 .register(registry));
     }
 }

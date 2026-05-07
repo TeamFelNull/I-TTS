@@ -1,8 +1,8 @@
 package dev.felnull.itts.core.savedata.repository.impl;
 
+import dev.felnull.itts.core.savedata.dao.DAO;
 import dev.felnull.itts.core.savedata.dao.TTSCountRecord;
 import dev.felnull.itts.core.savedata.repository.TTSCountData;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -18,49 +18,44 @@ class TTSCountDataImpl extends SaveDataBase implements TTSCountData {
     private final long botId;
 
     /**
-     * サーバーID nullの場合はBOT全体合計
+     * サーバーID 0の場合はBOT全体合計
      */
-    @Nullable
-    private final Long serverId;
+    private final long serverId;
 
     /**
      * 集計日
      */
     private final LocalDate date;
 
-    TTSCountDataImpl(DataRepositoryImpl repository, long botId, @Nullable Long serverId, LocalDate date) {
+    TTSCountDataImpl(DataRepositoryImpl repository, long botId, long serverId, LocalDate date) {
         super(repository);
         this.botId = botId;
         this.serverId = serverId;
         this.date = date;
     }
 
+    private int resolveServerKeyId() {
+        if (serverId == 0L) {
+            return DAO.TTSCountTable.GLOBAL_SERVER_KEY_ID;
+        }
+        return repository.getServerKeyData().getId(serverId);
+    }
+
     @Override
     public void addCount(long charDelta, long messageDelta) {
         sqlProc(connection -> {
             int botKeyId = repository.getBotKeyData().getId(botId);
-            Integer serverKeyId = serverId == null ? null : repository.getServerKeyData().getId(serverId);
+            int serverKeyId = resolveServerKeyId();
             dao().ttsCountTable().incrementCount(connection, botKeyId, serverKeyId, date, charDelta, messageDelta);
         });
     }
 
     @Override
-    public long getCharCount() {
+    public Optional<TTSCountRecord> getRecord() {
         return sqlProcReturnable(connection -> {
             int botKeyId = repository.getBotKeyData().getId(botId);
-            Integer serverKeyId = serverId == null ? null : repository.getServerKeyData().getId(serverId);
-            Optional<TTSCountRecord> rec = dao().ttsCountTable().getCount(connection, botKeyId, serverKeyId, date);
-            return rec.map(TTSCountRecord::charCount).orElse(0L);
-        });
-    }
-
-    @Override
-    public long getMessageCount() {
-        return sqlProcReturnable(connection -> {
-            int botKeyId = repository.getBotKeyData().getId(botId);
-            Integer serverKeyId = serverId == null ? null : repository.getServerKeyData().getId(serverId);
-            Optional<TTSCountRecord> rec = dao().ttsCountTable().getCount(connection, botKeyId, serverKeyId, date);
-            return rec.map(TTSCountRecord::messageCount).orElse(0L);
+            int serverKeyId = resolveServerKeyId();
+            return dao().ttsCountTable().getCount(connection, botKeyId, serverKeyId, date);
         });
     }
 }

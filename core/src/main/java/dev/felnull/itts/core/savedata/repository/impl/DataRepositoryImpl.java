@@ -370,94 +370,115 @@ public final class DataRepositoryImpl implements DataRepository {
 
     @Override
     public @NotNull TTSCountData getGlobalTTSCount(long botId, @NotNull LocalDate date) {
-        return new TTSCountDataImpl(this, botId, null, date);
+        return new TTSCountDataImpl(this, botId, 0L, date);
     }
 
     @Override
     public long sumGlobalCharCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to) {
-        try (Connection connection = dao.getConnection()) {
+        return withConnection(connection -> {
             int botKeyId = botKeyData.getId(botId);
-            return dao.ttsCountTable().sumCharCountRange(connection, botKeyId, null, from, to);
-        } catch (Exception e) {
-            fireErrorEvent(e);
-            throw new RuntimeException(e);
-        } catch (Throwable throwable) {
-            fireErrorEvent(throwable);
-            throw throwable;
-        }
+            return dao.ttsCountTable().sumCharCountRange(connection, botKeyId, DAO.TTSCountTable.GLOBAL_SERVER_KEY_ID, from, to);
+        }, 0L);
+    }
+
+    @Override
+    public long sumGlobalMessageCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to) {
+        return withConnection(connection -> {
+            int botKeyId = botKeyData.getId(botId);
+            return dao.ttsCountTable().sumMessageCountRange(connection, botKeyId, DAO.TTSCountTable.GLOBAL_SERVER_KEY_ID, from, to);
+        }, 0L);
     }
 
     @Override
     public long sumServerCharCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to) {
-        try (Connection connection = dao.getConnection()) {
+        return withConnection(connection -> {
             int botKeyId = botKeyData.getId(botId);
             int serverKeyId = serverKeyData.getId(serverId);
             return dao.ttsCountTable().sumCharCountRange(connection, botKeyId, serverKeyId, from, to);
-        } catch (Exception e) {
-            fireErrorEvent(e);
-            throw new RuntimeException(e);
-        } catch (Throwable throwable) {
-            fireErrorEvent(throwable);
-            throw throwable;
-        }
+        }, 0L);
+    }
+
+    @Override
+    public long sumServerMessageCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to) {
+        return withConnection(connection -> {
+            int botKeyId = botKeyData.getId(botId);
+            int serverKeyId = serverKeyData.getId(serverId);
+            return dao.ttsCountTable().sumMessageCountRange(connection, botKeyId, serverKeyId, from, to);
+        }, 0L);
     }
 
     @Override
     public long sumGlobalAllCharCount(long botId) {
-        try (Connection connection = dao.getConnection()) {
+        return withConnection(connection -> {
             int botKeyId = botKeyData.getId(botId);
-            return dao.ttsCountTable().sumAllCharCount(connection, botKeyId, null);
-        } catch (Exception e) {
-            fireErrorEvent(e);
-            throw new RuntimeException(e);
-        } catch (Throwable throwable) {
-            fireErrorEvent(throwable);
-            throw throwable;
-        }
+            return dao.ttsCountTable().sumAllCharCount(connection, botKeyId, DAO.TTSCountTable.GLOBAL_SERVER_KEY_ID);
+        }, 0L);
     }
 
     @Override
     public long sumGlobalAllMessageCount(long botId) {
-        try (Connection connection = dao.getConnection()) {
+        return withConnection(connection -> {
             int botKeyId = botKeyData.getId(botId);
-            return dao.ttsCountTable().sumAllMessageCount(connection, botKeyId, null);
-        } catch (Exception e) {
-            fireErrorEvent(e);
-            throw new RuntimeException(e);
-        } catch (Throwable throwable) {
-            fireErrorEvent(throwable);
-            throw throwable;
-        }
+            return dao.ttsCountTable().sumAllMessageCount(connection, botKeyId, DAO.TTSCountTable.GLOBAL_SERVER_KEY_ID);
+        }, 0L);
     }
 
     @Override
     public long sumServerAllCharCount(long botId, long serverId) {
-        try (Connection connection = dao.getConnection()) {
+        return withConnection(connection -> {
             int botKeyId = botKeyData.getId(botId);
             int serverKeyId = serverKeyData.getId(serverId);
             return dao.ttsCountTable().sumAllCharCount(connection, botKeyId, serverKeyId);
-        } catch (Exception e) {
-            fireErrorEvent(e);
-            throw new RuntimeException(e);
-        } catch (Throwable throwable) {
-            fireErrorEvent(throwable);
-            throw throwable;
-        }
+        }, 0L);
     }
 
     @Override
     public long sumServerAllMessageCount(long botId, long serverId) {
-        try (Connection connection = dao.getConnection()) {
+        return withConnection(connection -> {
             int botKeyId = botKeyData.getId(botId);
             int serverKeyId = serverKeyData.getId(serverId);
             return dao.ttsCountTable().sumAllMessageCount(connection, botKeyId, serverKeyId);
+        }, 0L);
+    }
+
+    /**
+     * コネクションを取得して処理を実行する
+     * 例外発生時はエラーリスナーへ通知してフォールバック値を返す
+     *
+     * @param function 処理関数
+     * @param fallback 例外時のフォールバック値
+     * @param <T>      戻り値型
+     * @return 処理結果またはフォールバック値
+     */
+    private <T> T withConnection(SQLFunction<Connection, T> function, T fallback) {
+        try (Connection connection = dao.getConnection()) {
+            return function.apply(connection);
         } catch (Exception e) {
             fireErrorEvent(e);
-            throw new RuntimeException(e);
+            return fallback;
         } catch (Throwable throwable) {
             fireErrorEvent(throwable);
-            throw throwable;
+            return fallback;
         }
+    }
+
+    /**
+     * SQL処理用の関数インタフェース
+     *
+     * @param <T> 入力型
+     * @param <R> 戻り値型
+     */
+    @FunctionalInterface
+    private interface SQLFunction<T, R> {
+
+        /**
+         * 処理を適用する
+         *
+         * @param input 入力
+         * @return 結果
+         * @throws Exception 例外
+         */
+        R apply(T input) throws Exception;
     }
 
     /**

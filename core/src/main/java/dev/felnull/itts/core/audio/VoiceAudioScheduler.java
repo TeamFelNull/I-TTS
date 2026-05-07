@@ -100,7 +100,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
 
                     TTSCountRecorder recorder = ITTSRuntime.getInstance().getTTSCountRecorder();
                     if (recorder != null && finalText != null) {
-                        long botId = audioManager.getGuild().getJDA().getSelfUser().getIdLong();
+                        long botId = getBot().getBotId();
                         recorder.record(botId, guildId, finalText.length());
                     }
 

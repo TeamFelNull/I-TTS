@@ -10,7 +10,6 @@ import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.metrics.MetricsRegistry;
 import dev.felnull.itts.core.metrics.PrometheusHttpExposer;
 import dev.felnull.itts.core.savedata.SaveDataManager;
-import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.tts.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
@@ -241,7 +240,6 @@ public class ITTSRuntime {
             this.prometheusHttpExposer = new PrometheusHttpExposer(metricsRegistry);
             this.prometheusHttpExposer.start(metricsConfig.getBindAddress(), metricsConfig.getPort());
             logger.info("Prometheus metrics endpoint started on {}:{}/metrics", metricsConfig.getBindAddress(), metricsConfig.getPort());
-            warmupMetricsCounters();
         } catch (Exception e) {
             logger.warn("Failed to start Prometheus HTTP exposer", e);
             this.prometheusHttpExposer = null;
@@ -252,31 +250,6 @@ public class ITTSRuntime {
                 this.prometheusHttpExposer.stop();
             }
         }, "prometheus-exposer-shutdown"));
-    }
-
-    private void warmupMetricsCounters() {
-        if (metricsRegistry == null) {
-            return;
-        }
-
-        DataRepository repo = SaveDataManager.getInstance().getRepository();
-        if (repo == null) {
-            return;
-        }
-
-        try {
-            long botId = bot.getBotId();
-            long charTotal = repo.sumGlobalAllCharCount(botId);
-            long messageTotal = repo.sumGlobalAllMessageCount(botId);
-            if (charTotal > 0) {
-                metricsRegistry.getOrCreateCharCounter(botId, null).increment(charTotal);
-            }
-            if (messageTotal > 0) {
-                metricsRegistry.getOrCreateMessageCounter(botId, null).increment(messageTotal);
-            }
-        } catch (Throwable t) {
-            logger.warn("Failed to warmup metrics counters", t);
-        }
     }
 
     public long getStartupTime() {

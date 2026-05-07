@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.discord.command;
 
 import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.dao.TTSCountRecord;
 import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.savedata.repository.TTSCountData;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -16,16 +17,12 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 読み上げ統計表示コマンド
  */
 public class StatCommand extends BaseCommand {
-
-    /**
-     * 時間を相対的に表示するフォーマット
-     */
-    private static final String RELATIVE_TIME_FORMAT = "<t:%d:R>";
 
     /**
      * コンストラクタ
@@ -60,13 +57,17 @@ public class StatCommand extends BaseCommand {
 
     private void today(SlashCommandInteractionEvent event) {
         DataRepository repo = SaveDataManager.getInstance().getRepository();
-        long botId = event.getJDA().getSelfUser().getIdLong();
+        long botId = getBot().getBotId();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         TTSCountData data = repo.getGlobalTTSCount(botId, today);
 
+        Optional<TTSCountRecord> record = data.getRecord();
+        long charCount = record.map(TTSCountRecord::charCount).orElse(0L);
+        long messageCount = record.map(TTSCountRecord::messageCount).orElse(0L);
+
         EmbedBuilder builder = baseEmbed("本日の読み上げ統計 (UTC)");
-        builder.addField("文字数", data.getCharCount() + "文字", true);
-        builder.addField("メッセージ数", data.getMessageCount() + "件", true);
+        builder.addField("文字数", charCount + "文字", true);
+        builder.addField("メッセージ数", messageCount + "件", true);
         addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
@@ -74,15 +75,17 @@ public class StatCommand extends BaseCommand {
 
     private void week(SlashCommandInteractionEvent event) {
         DataRepository repo = SaveDataManager.getInstance().getRepository();
-        long botId = event.getJDA().getSelfUser().getIdLong();
+        long botId = getBot().getBotId();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         LocalDate from = today.minusDays(6);
 
         long charSum = repo.sumGlobalCharCount(botId, from, today);
+        long messageSum = repo.sumGlobalMessageCount(botId, from, today);
 
         EmbedBuilder builder = baseEmbed("過去7日の読み上げ統計 (UTC)");
         builder.addField("期間", from + " - " + today, false);
         builder.addField("文字数", charSum + "文字", true);
+        builder.addField("メッセージ数", messageSum + "件", true);
         addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
@@ -90,7 +93,7 @@ public class StatCommand extends BaseCommand {
 
     private void all(SlashCommandInteractionEvent event) {
         DataRepository repo = SaveDataManager.getInstance().getRepository();
-        long botId = event.getJDA().getSelfUser().getIdLong();
+        long botId = getBot().getBotId();
 
         long charSum = repo.sumGlobalAllCharCount(botId);
         long messageSum = repo.sumGlobalAllMessageCount(botId);
@@ -106,7 +109,7 @@ public class StatCommand extends BaseCommand {
     private void server(SlashCommandInteractionEvent event) {
         Guild guild = Objects.requireNonNull(event.getGuild());
         DataRepository repo = SaveDataManager.getInstance().getRepository();
-        long botId = event.getJDA().getSelfUser().getIdLong();
+        long botId = getBot().getBotId();
         long serverId = guild.getIdLong();
 
         long charSum = repo.sumServerAllCharCount(botId, serverId);

@@ -181,6 +181,16 @@ public interface DataRepository {
     long sumGlobalCharCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to);
 
     /**
+     * BOT全体の期間内メッセージ数合計を取得
+     *
+     * @param botId BOTのID
+     * @param from  開始日
+     * @param to    終了日
+     * @return メッセージ数合計
+     */
+    long sumGlobalMessageCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to);
+
+    /**
      * サーバー単位の期間内文字数合計を取得
      *
      * @param botId    BOTのID
@@ -190,6 +200,17 @@ public interface DataRepository {
      * @return 文字数合計
      */
     long sumServerCharCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to);
+
+    /**
+     * サーバー単位の期間内メッセージ数合計を取得
+     *
+     * @param botId    BOTのID
+     * @param serverId サーバーID
+     * @param from     開始日
+     * @param to       終了日
+     * @return メッセージ数合計
+     */
+    long sumServerMessageCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to);
 
     /**
      * BOT全体の累計文字数を取得

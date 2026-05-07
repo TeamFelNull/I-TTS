@@ -2457,14 +2457,13 @@ public class SQLiteDAO extends BaseDAO {
                     create table if not exists tts_count_data(
                         id integer not null primary key autoincrement,
                         bot_id integer not null,
-                        server_id integer,
+                        server_id integer not null,
                         target_date date not null,
                         spoken_char_count bigint not null default 0,
                         spoken_message_count bigint not null default 0,
 
                         unique(bot_id, server_id, target_date),
-                        foreign key (bot_id) references bot_key(id),
-                        foreign key (server_id) references server_key(id)
+                        foreign key (bot_id) references bot_key(id)
                     );
                     """;
 
@@ -2474,15 +2473,10 @@ public class SQLiteDAO extends BaseDAO {
         @Override
         public void incrementCount(@NotNull Connection connection,
                                    int botKeyId,
-                                   @Nullable Integer serverKeyId,
+                                   int serverKeyId,
                                    @NotNull LocalDate date,
                                    long charDelta,
                                    long messageDelta) throws SQLException {
-            if (serverKeyId == null) {
-                incrementCountServerNull(connection, botKeyId, date, charDelta, messageDelta);
-                return;
-            }
-
             @Language("SQLite")
             String sql = """
                     insert into tts_count_data(bot_id, server_id, target_date, spoken_char_count, spoken_message_count)
@@ -2502,80 +2496,29 @@ public class SQLiteDAO extends BaseDAO {
             }
         }
 
-        private void incrementCountServerNull(@NotNull Connection connection,
-                                              int botKeyId,
-                                              @NotNull LocalDate date,
-                                              long charDelta,
-                                              long messageDelta) throws SQLException {
-            @Language("SQLite")
-            String updateSql = """
-                    update tts_count_data
-                    set spoken_char_count = spoken_char_count + ?,
-                        spoken_message_count = spoken_message_count + ?
-                    where bot_id = ? and server_id is null and target_date = ?
-                    """;
-
-            try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
-                statement.setLong(1, charDelta);
-                statement.setLong(2, messageDelta);
-                statement.setInt(3, botKeyId);
-                statement.setString(4, date.toString());
-
-                if (statement.executeUpdate() > 0) {
-                    return;
-                }
-            }
-
-            @Language("SQLite")
-            String insertSql = """
-                    insert into tts_count_data(bot_id, server_id, target_date, spoken_char_count, spoken_message_count)
-                    values (?, null, ?, ?, ?)
-                    """;
-
-            try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
-                statement.setInt(1, botKeyId);
-                statement.setString(2, date.toString());
-                statement.setLong(3, charDelta);
-                statement.setLong(4, messageDelta);
-                statement.execute();
-            }
-        }
-
         @Override
         public Optional<TTSCountRecord> getCount(@NotNull Connection connection,
                                                  int botKeyId,
-                                                 @Nullable Integer serverKeyId,
+                                                 int serverKeyId,
                                                  @NotNull LocalDate date) throws SQLException {
             @Language("SQLite")
-            String sqlServer = """
+            String sql = """
                     select spoken_char_count, spoken_message_count
                     from tts_count_data
                     where bot_id = ? and server_id = ? and target_date = ?
                     limit 1
                     """;
 
-            @Language("SQLite")
-            String sqlNull = """
-                    select spoken_char_count, spoken_message_count
-                    from tts_count_data
-                    where bot_id = ? and server_id is null and target_date = ?
-                    limit 1
-                    """;
-
-            try (PreparedStatement statement = connection.prepareStatement(serverKeyId == null ? sqlNull : sqlServer)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setInt(1, botKeyId);
-                if (serverKeyId == null) {
-                    statement.setString(2, date.toString());
-                } else {
-                    statement.setInt(2, serverKeyId);
-                    statement.setString(3, date.toString());
-                }
+                statement.setInt(2, serverKeyId);
+                statement.setString(3, date.toString());
 
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {
                         long ch = rs.getLong("spoken_char_count");
                         long ms = rs.getLong("spoken_message_count");
-                        return Optional.of(new TTSCountRecord(0L, null, date, ch, ms));
+                        return Optional.of(new TTSCountRecord(0L, 0L, date, ch, ms));
                     }
                 }
             }
@@ -2586,33 +2529,36 @@ public class SQLiteDAO extends BaseDAO {
         @Override
         public long sumCharCountRange(@NotNull Connection connection,
                                       int botKeyId,
-                                      @Nullable Integer serverKeyId,
+                                      int serverKeyId,
                                       @NotNull LocalDate from,
                                       @NotNull LocalDate to) throws SQLException {
-            @Language("SQLite")
-            String sqlServer = """
-                    select coalesce(sum(spoken_char_count), 0) as total
-                    from tts_count_data
-                    where bot_id = ? and server_id = ? and target_date between ? and ?
-                    """;
+            return sumRangeByColumn(connection, botKeyId, serverKeyId, from, to, "spoken_char_count");
+        }
 
-            @Language("SQLite")
-            String sqlNull = """
-                    select coalesce(sum(spoken_char_count), 0) as total
-                    from tts_count_data
-                    where bot_id = ? and server_id is null and target_date between ? and ?
-                    """;
+        @Override
+        public long sumMessageCountRange(@NotNull Connection connection,
+                                         int botKeyId,
+                                         int serverKeyId,
+                                         @NotNull LocalDate from,
+                                         @NotNull LocalDate to) throws SQLException {
+            return sumRangeByColumn(connection, botKeyId, serverKeyId, from, to, "spoken_message_count");
+        }
 
-            try (PreparedStatement statement = connection.prepareStatement(serverKeyId == null ? sqlNull : sqlServer)) {
+        private long sumRangeByColumn(@NotNull Connection connection,
+                                      int botKeyId,
+                                      int serverKeyId,
+                                      @NotNull LocalDate from,
+                                      @NotNull LocalDate to,
+                                      @NotNull String column) throws SQLException {
+            @Language("SQLite")
+            String sql = "select coalesce(sum(" + column + "), 0) as total from tts_count_data "
+                    + "where bot_id = ? and server_id = ? and target_date between ? and ?";
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setInt(1, botKeyId);
-                if (serverKeyId == null) {
-                    statement.setString(2, from.toString());
-                    statement.setString(3, to.toString());
-                } else {
-                    statement.setInt(2, serverKeyId);
-                    statement.setString(3, from.toString());
-                    statement.setString(4, to.toString());
-                }
+                statement.setInt(2, serverKeyId);
+                statement.setString(3, from.toString());
+                statement.setString(4, to.toString());
 
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {
@@ -2627,32 +2573,27 @@ public class SQLiteDAO extends BaseDAO {
         @Override
         public long sumAllCharCount(@NotNull Connection connection,
                                     int botKeyId,
-                                    @Nullable Integer serverKeyId) throws SQLException {
+                                    int serverKeyId) throws SQLException {
             return sumAllByColumn(connection, botKeyId, serverKeyId, "spoken_char_count");
         }
 
         @Override
         public long sumAllMessageCount(@NotNull Connection connection,
                                        int botKeyId,
-                                       @Nullable Integer serverKeyId) throws SQLException {
+                                       int serverKeyId) throws SQLException {
             return sumAllByColumn(connection, botKeyId, serverKeyId, "spoken_message_count");
         }
 
         private long sumAllByColumn(@NotNull Connection connection,
                                     int botKeyId,
-                                    @Nullable Integer serverKeyId,
+                                    int serverKeyId,
                                     @NotNull String column) throws SQLException {
             @Language("SQLite")
-            String sqlServer = "select coalesce(sum(" + column + "), 0) as total from tts_count_data where bot_id = ? and server_id = ?";
+            String sql = "select coalesce(sum(" + column + "), 0) as total from tts_count_data where bot_id = ? and server_id = ?";
 
-            @Language("SQLite")
-            String sqlNull = "select coalesce(sum(" + column + "), 0) as total from tts_count_data where bot_id = ? and server_id is null";
-
-            try (PreparedStatement statement = connection.prepareStatement(serverKeyId == null ? sqlNull : sqlServer)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setInt(1, botKeyId);
-                if (serverKeyId != null) {
-                    statement.setInt(2, serverKeyId);
-                }
+                statement.setInt(2, serverKeyId);
 
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {

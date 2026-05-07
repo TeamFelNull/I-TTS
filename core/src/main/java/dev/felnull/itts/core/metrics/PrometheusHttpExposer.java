@@ -1,17 +1,31 @@
 package dev.felnull.itts.core.metrics;
 
 import com.sun.net.httpserver.HttpServer;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * PrometheusメトリクスをHTTPで公開するエクスポーザ
  */
 public final class PrometheusHttpExposer {
+
+    /**
+     * リクエスト処理スレッドプールのスレッド数
+     */
+    private static final int EXECUTOR_THREAD_COUNT = 2;
+
+    /**
+     * Executor停止時の待機秒数
+     */
+    private static final int EXECUTOR_SHUTDOWN_TIMEOUT_SEC = 5;
 
     /**
      * メトリクスレジストリ
@@ -22,6 +36,11 @@ public final class PrometheusHttpExposer {
      * 内部HTTPサーバー
      */
     private HttpServer httpServer;
+
+    /**
+     * リクエスト処理用スレッドプール
+     */
+    private ExecutorService executor;
 
     /**
      * コンストラクタ
@@ -50,9 +69,15 @@ public final class PrometheusHttpExposer {
                 out.write(bytes);
             }
         });
-        server.setExecutor(null);
+        ExecutorService pool = Executors.newFixedThreadPool(EXECUTOR_THREAD_COUNT,
+                new BasicThreadFactory.Builder()
+                        .namingPattern("prometheus-exposer-%d")
+                        .daemon(true)
+                        .build());
+        server.setExecutor(pool);
         server.start();
         this.httpServer = server;
+        this.executor = pool;
     }
 
     /**
@@ -62,6 +87,18 @@ public final class PrometheusHttpExposer {
         if (httpServer != null) {
             httpServer.stop(0);
             httpServer = null;
+        }
+        if (executor != null) {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            executor = null;
         }
     }
 }

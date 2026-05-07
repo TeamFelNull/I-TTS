@@ -776,16 +776,21 @@ public interface DAO {
     }
 
     /**
-     * 読み上げ文字数集計テーブル
+     * 期間内の文字数合計を取得する
      */
     interface TTSCountTable extends Table {
+
+        /**
+         * BOT全体合計を表すサーバーキーIDの予約値
+         */
+        int GLOBAL_SERVER_KEY_ID = 0;
 
         /**
          * 指定日のカウントを増分する
          *
          * @param connection   コネクション
          * @param botKeyId     BOTキーID
-         * @param serverKeyId  サーバーキーID nullの場合はBOT全体合計
+         * @param serverKeyId  サーバーキーID GLOBAL_SERVER_KEY_IDの場合はBOT全体合計
          * @param date         集計日
          * @param charDelta    文字数の増分
          * @param messageDelta メッセージ数の増分
@@ -793,7 +798,7 @@ public interface DAO {
          */
         void incrementCount(@NotNull Connection connection,
                             int botKeyId,
-                            @Nullable Integer serverKeyId,
+                            int serverKeyId,
                             @NotNull LocalDate date,
                             long charDelta,
                             long messageDelta) throws SQLException;
@@ -803,14 +808,14 @@ public interface DAO {
          *
          * @param connection  コネクション
          * @param botKeyId    BOTキーID
-         * @param serverKeyId サーバーキーID nullの場合はBOT全体合計
+         * @param serverKeyId サーバーキーID GLOBAL_SERVER_KEY_IDの場合はBOT全体合計
          * @param date        集計日
          * @return カウントレコード
          * @throws SQLException エラー
          */
         Optional<TTSCountRecord> getCount(@NotNull Connection connection,
                                           int botKeyId,
-                                          @Nullable Integer serverKeyId,
+                                          int serverKeyId,
                                           @NotNull LocalDate date) throws SQLException;
 
         /**
@@ -818,43 +823,60 @@ public interface DAO {
          *
          * @param connection  コネクション
          * @param botKeyId    BOTキーID
-         * @param serverKeyId サーバーキーID nullの場合はBOT全体合計
+         * @param serverKeyId サーバーキーID GLOBAL_SERVER_KEY_IDの場合はBOT全体合計
          * @param from        開始日 (含む)
          * @param to          終了日 (含む)
-         * @return 文字数とメッセージ数の合計
+         * @return 文字数の合計
          * @throws SQLException エラー
          */
         long sumCharCountRange(@NotNull Connection connection,
                                int botKeyId,
-                               @Nullable Integer serverKeyId,
+                               int serverKeyId,
                                @NotNull LocalDate from,
                                @NotNull LocalDate to) throws SQLException;
+
+        /**
+         * 期間内のメッセージ数合計を取得する
+         *
+         * @param connection  コネクション
+         * @param botKeyId    BOTキーID
+         * @param serverKeyId サーバーキーID GLOBAL_SERVER_KEY_IDの場合はBOT全体合計
+         * @param from        開始日 (含む)
+         * @param to          終了日 (含む)
+         * @return メッセージ数の合計
+         * @throws SQLException エラー
+         */
+        long sumMessageCountRange(@NotNull Connection connection,
+                                  int botKeyId,
+                                  int serverKeyId,
+                                  @NotNull LocalDate from,
+                                  @NotNull LocalDate to) throws SQLException;
 
         /**
          * 全期間の文字数合計を取得する
          *
          * @param connection  コネクション
          * @param botKeyId    BOTキーID
-         * @param serverKeyId サーバーキーID nullの場合はBOT全体合計
+         * @param serverKeyId サーバーキーID GLOBAL_SERVER_KEY_IDの場合はBOT全体合計
          * @return 文字数の合計
          * @throws SQLException エラー
          */
         long sumAllCharCount(@NotNull Connection connection,
                              int botKeyId,
-                             @Nullable Integer serverKeyId) throws SQLException;
+                             int serverKeyId) throws SQLException;
 
         /**
          * 全期間のメッセージ数合計を取得する
          *
          * @param connection  コネクション
          * @param botKeyId    BOTキーID
-         * @param serverKeyId サーバーキーID nullの場合はBOT全体合計
+         * @param serverKeyId サーバーキーID GLOBAL_SERVER_KEY_IDの場合はBOT全体合計
          * @return メッセージ数の合計
          * @throws SQLException エラー
          */
         long sumAllMessageCount(@NotNull Connection connection,
                                 int botKeyId,
-                                @Nullable Integer serverKeyId) throws SQLException;
+                                int serverKeyId) throws SQLException;
     }
 
 }
