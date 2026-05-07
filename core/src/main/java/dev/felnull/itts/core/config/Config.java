@@ -82,13 +82,4 @@ public interface Config {
      * @return DB関係のコンフィグ
      */
     DataBaseConfig getDataBaseConfig();
-
-    /**
-     * Prometheusメトリクスのコンフィグを取得
-     *
-     * @return メトリクスコンフィグ
-     */
-    default MetricsConfig getMetricsConfig() {
-        return MetricsConfig.DEFAULT;
-    }
 }

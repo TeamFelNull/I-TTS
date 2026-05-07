@@ -1,7 +1,6 @@
 package dev.felnull.itts.core.tts;
 
 import dev.felnull.itts.core.ITTSRuntimeUse;
-import dev.felnull.itts.core.metrics.MetricsRegistry;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.repository.DataRepository;
 import dev.felnull.itts.core.savedata.repository.TTSCountData;
@@ -16,21 +15,6 @@ import java.util.concurrent.CompletableFuture;
 public final class TTSCountRecorder implements ITTSRuntimeUse {
 
     /**
-     * メトリクスレジストリ
-     * 公開無効時はNoOp実装が渡されるためnullにはならない
-     */
-    private final MetricsRegistry metricsRegistry;
-
-    /**
-     * コンストラクタ
-     *
-     * @param metricsRegistry メトリクスレジストリ
-     */
-    public TTSCountRecorder(MetricsRegistry metricsRegistry) {
-        this.metricsRegistry = metricsRegistry;
-    }
-
-    /**
      * 読み上げ文字数を記録する
      *
      * @param botDiscordId   BOTのDiscord ID
@@ -40,15 +24,6 @@ public final class TTSCountRecorder implements ITTSRuntimeUse {
     public void record(long botDiscordId, long guildDiscordId, int charCount) {
         if (charCount <= 0) {
             return;
-        }
-
-        try {
-            metricsRegistry.getOrCreateCharCounter(botDiscordId, guildDiscordId).increment(charCount);
-            metricsRegistry.getOrCreateMessageCounter(botDiscordId, guildDiscordId).increment();
-            metricsRegistry.getOrCreateCharCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment(charCount);
-            metricsRegistry.getOrCreateMessageCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment();
-        } catch (Throwable t) {
-            getITTSLogger().warn("Failed to update metrics counter", t);
         }
 
         CompletableFuture.runAsync(() -> writeToDatabase(botDiscordId, guildDiscordId, charCount), getAsyncExecutor())

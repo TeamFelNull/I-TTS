@@ -5,7 +5,6 @@ import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
-import dev.felnull.itts.core.metrics.MetricsRegistry;
 import dev.felnull.itts.core.tts.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
@@ -93,15 +92,5 @@ public interface ITTSRuntimeUse {
      */
     default TTSCountRecorder getTTSCountRecorder() {
         return getITTSRuntime().getTTSCountRecorder();
-    }
-
-    /**
-     * メトリクスレジストリを取得
-     * 公開無効時もNoOp実装が返るためnullにはならない
-     *
-     * @return メトリクスレジストリ
-     */
-    default MetricsRegistry getMetricsRegistry() {
-        return getITTSRuntime().getMetricsRegistry();
     }
 }
