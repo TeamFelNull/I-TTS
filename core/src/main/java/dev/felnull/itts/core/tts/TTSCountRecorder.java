@@ -16,7 +16,8 @@ import java.util.concurrent.CompletableFuture;
 public final class TTSCountRecorder implements ITTSRuntimeUse {
 
     /**
-     * メトリクスレジストリ nullの場合はメトリクス公開無効
+     * メトリクスレジストリ
+     * 公開無効時はNoOp実装が渡されるためnullにはならない
      */
     private final MetricsRegistry metricsRegistry;
 
@@ -41,15 +42,13 @@ public final class TTSCountRecorder implements ITTSRuntimeUse {
             return;
         }
 
-        if (metricsRegistry != null) {
-            try {
-                metricsRegistry.getOrCreateCharCounter(botDiscordId, guildDiscordId).increment(charCount);
-                metricsRegistry.getOrCreateMessageCounter(botDiscordId, guildDiscordId).increment();
-                metricsRegistry.getOrCreateCharCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment(charCount);
-                metricsRegistry.getOrCreateMessageCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment();
-            } catch (Throwable t) {
-                getITTSLogger().warn("Failed to update metrics counter", t);
-            }
+        try {
+            metricsRegistry.getOrCreateCharCounter(botDiscordId, guildDiscordId).increment(charCount);
+            metricsRegistry.getOrCreateMessageCounter(botDiscordId, guildDiscordId).increment();
+            metricsRegistry.getOrCreateCharCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment(charCount);
+            metricsRegistry.getOrCreateMessageCounter(botDiscordId, MetricsRegistry.GLOBAL_SERVER_ID).increment();
+        } catch (Throwable t) {
+            getITTSLogger().warn("Failed to update metrics counter", t);
         }
 
         CompletableFuture.runAsync(() -> writeToDatabase(botDiscordId, guildDiscordId, charCount), getAsyncExecutor())

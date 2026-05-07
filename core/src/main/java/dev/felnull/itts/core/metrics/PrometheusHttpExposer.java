@@ -28,9 +28,9 @@ public final class PrometheusHttpExposer {
     private static final int EXECUTOR_SHUTDOWN_TIMEOUT_SEC = 5;
 
     /**
-     * メトリクスレジストリ
+     * Prometheus形式のメトリクスレジストリ
      */
-    private final MetricsRegistry metricsRegistry;
+    private final PrometheusMetricsRegistry metricsRegistry;
 
     /**
      * 内部HTTPサーバー
@@ -45,9 +45,9 @@ public final class PrometheusHttpExposer {
     /**
      * コンストラクタ
      *
-     * @param metricsRegistry メトリクスレジストリ
+     * @param metricsRegistry Prometheus形式のメトリクスレジストリ
      */
-    public PrometheusHttpExposer(@NotNull MetricsRegistry metricsRegistry) {
+    public PrometheusHttpExposer(@NotNull PrometheusMetricsRegistry metricsRegistry) {
         this.metricsRegistry = metricsRegistry;
     }
 

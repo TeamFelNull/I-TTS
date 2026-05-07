@@ -4,7 +4,6 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.audio.loader.VoiceTrackLoader;
 import dev.felnull.itts.core.tts.TTSCountRecorder;
@@ -98,7 +97,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
 
                     String finalText = TTSUtils.roundText(voice, guildId, sayText, false);
 
-                    TTSCountRecorder recorder = ITTSRuntime.getInstance().getTTSCountRecorder();
+                    TTSCountRecorder recorder = getTTSCountRecorder();
                     if (recorder != null && finalText != null) {
                         long botId = getBot().getBotId();
                         recorder.record(botId, guildId, finalText.length());

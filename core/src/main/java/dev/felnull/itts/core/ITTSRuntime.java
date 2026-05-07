@@ -9,6 +9,7 @@ import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.metrics.MetricsRegistry;
 import dev.felnull.itts.core.metrics.PrometheusHttpExposer;
+import dev.felnull.itts.core.metrics.PrometheusMetricsRegistry;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
@@ -134,7 +135,8 @@ public class ITTSRuntime {
     private long startupTime;
 
     /**
-     * Prometheusメトリクスのレジストリ
+     * メトリクスレジストリ
+     * 公開無効時はNoOp実装が入る
      */
     private MetricsRegistry metricsRegistry;
 
@@ -222,32 +224,48 @@ public class ITTSRuntime {
         logger.info("Setup complete");
 
         initMetrics();
+        registerShutdownHooks();
 
         bot.start();
     }
 
+    /**
+     * メトリクス関連コンポーネントを生成し起動する
+     * 公開無効時はNoOp実装を採用しnullを返さない
+     */
     private void initMetrics() {
         MetricsConfig metricsConfig = configManager.getConfig().getMetricsConfig();
-        this.metricsRegistry = metricsConfig.isEnabled() ? new MetricsRegistry() : null;
-        this.ttsCountRecorder = new TTSCountRecorder(metricsRegistry);
 
-        if (metricsRegistry == null) {
+        if (!metricsConfig.isEnabled()) {
+            this.metricsRegistry = MetricsRegistry.noop();
+            this.ttsCountRecorder = new TTSCountRecorder(metricsRegistry);
             logger.info("Prometheus metrics is disabled");
             return;
         }
 
+        PrometheusMetricsRegistry prometheusRegistry = new PrometheusMetricsRegistry();
+        this.metricsRegistry = prometheusRegistry;
+        this.ttsCountRecorder = new TTSCountRecorder(metricsRegistry);
+
         try {
-            this.prometheusHttpExposer = new PrometheusHttpExposer(metricsRegistry);
+            this.prometheusHttpExposer = new PrometheusHttpExposer(prometheusRegistry);
             this.prometheusHttpExposer.start(metricsConfig.getBindAddress(), metricsConfig.getPort());
             logger.info("Prometheus metrics endpoint started on {}:{}/metrics", metricsConfig.getBindAddress(), metricsConfig.getPort());
         } catch (Exception e) {
             logger.warn("Failed to start Prometheus HTTP exposer", e);
             this.prometheusHttpExposer = null;
         }
+    }
 
+    /**
+     * シャットダウンフックを登録する
+     * メトリクスHTTPサーバなどライフサイクル管理対象を集約する
+     */
+    private void registerShutdownHooks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (this.prometheusHttpExposer != null) {
-                this.prometheusHttpExposer.stop();
+            PrometheusHttpExposer exposer = this.prometheusHttpExposer;
+            if (exposer != null) {
+                exposer.stop();
             }
         }, "prometheus-exposer-shutdown"));
     }
@@ -331,9 +349,10 @@ public class ITTSRuntime {
     }
 
     /**
-     * Prometheusメトリクスのレジストリを取得
+     * メトリクスレジストリを取得
+     * 公開無効時はNoOp実装が返るためnullにはならない
      *
-     * @return レジストリ nullの場合はメトリクス無効
+     * @return メトリクスレジストリ
      */
     public MetricsRegistry getMetricsRegistry() {
         return metricsRegistry;
