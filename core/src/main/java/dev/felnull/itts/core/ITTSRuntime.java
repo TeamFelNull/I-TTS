@@ -4,9 +4,14 @@ import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.audio.VoiceAudioManager;
 import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
+import dev.felnull.itts.core.config.MetricsConfig;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
+import dev.felnull.itts.core.metrics.MetricsRegistry;
+import dev.felnull.itts.core.metrics.PrometheusHttpExposer;
 import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.savedata.repository.DataRepository;
+import dev.felnull.itts.core.tts.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -129,6 +134,21 @@ public class ITTSRuntime {
      */
     private long startupTime;
 
+    /**
+     * Prometheusメトリクスのレジストリ
+     */
+    private MetricsRegistry metricsRegistry;
+
+    /**
+     * Prometheusメトリクス公開HTTPサーバー
+     */
+    private PrometheusHttpExposer prometheusHttpExposer;
+
+    /**
+     * 読み上げ文字数のレコーダー
+     */
+    private TTSCountRecorder ttsCountRecorder;
+
     private ITTSRuntime(ITTSRuntimeContext runtimeContext) {
         if (instance != null) {
             throw new IllegalStateException("ITTSRuntime must be a singleton instance");
@@ -202,7 +222,61 @@ public class ITTSRuntime {
 
         logger.info("Setup complete");
 
+        initMetrics();
+
         bot.start();
+    }
+
+    private void initMetrics() {
+        MetricsConfig metricsConfig = configManager.getConfig().getMetricsConfig();
+        this.metricsRegistry = metricsConfig.isEnabled() ? new MetricsRegistry() : null;
+        this.ttsCountRecorder = new TTSCountRecorder(metricsRegistry);
+
+        if (metricsRegistry == null) {
+            logger.info("Prometheus metrics is disabled");
+            return;
+        }
+
+        try {
+            this.prometheusHttpExposer = new PrometheusHttpExposer(metricsRegistry);
+            this.prometheusHttpExposer.start(metricsConfig.getBindAddress(), metricsConfig.getPort());
+            logger.info("Prometheus metrics endpoint started on {}:{}/metrics", metricsConfig.getBindAddress(), metricsConfig.getPort());
+            warmupMetricsCounters();
+        } catch (Exception e) {
+            logger.warn("Failed to start Prometheus HTTP exposer", e);
+            this.prometheusHttpExposer = null;
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (this.prometheusHttpExposer != null) {
+                this.prometheusHttpExposer.stop();
+            }
+        }, "prometheus-exposer-shutdown"));
+    }
+
+    private void warmupMetricsCounters() {
+        if (metricsRegistry == null) {
+            return;
+        }
+
+        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        if (repo == null) {
+            return;
+        }
+
+        try {
+            long botId = bot.getBotId();
+            long charTotal = repo.sumGlobalAllCharCount(botId);
+            long messageTotal = repo.sumGlobalAllMessageCount(botId);
+            if (charTotal > 0) {
+                metricsRegistry.getOrCreateCharCounter(botId, null).increment(charTotal);
+            }
+            if (messageTotal > 0) {
+                metricsRegistry.getOrCreateMessageCounter(botId, null).increment(messageTotal);
+            }
+        } catch (Throwable t) {
+            logger.warn("Failed to warmup metrics counters", t);
+        }
     }
 
     public long getStartupTime() {
@@ -272,5 +346,23 @@ public class ITTSRuntime {
 
     public Bot getBot() {
         return bot;
+    }
+
+    /**
+     * 読み上げ文字数のレコーダーを取得
+     *
+     * @return レコーダー
+     */
+    public TTSCountRecorder getTTSCountRecorder() {
+        return ttsCountRecorder;
+    }
+
+    /**
+     * Prometheusメトリクスのレジストリを取得
+     *
+     * @return レジストリ nullの場合はメトリクス無効
+     */
+    public MetricsRegistry getMetricsRegistry() {
+        return metricsRegistry;
     }
 }

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -200,6 +201,7 @@ public final class DataRepositoryImpl implements DataRepository {
             dao.botStateDataTable().createTableIfNotExists(con);
             dao.serverCustomDictionaryTable().createTableIfNotExists(con);
             dao.globalCustomDictionaryTable().createTableIfNotExists(con);
+            dao.ttsCountTable().createTableIfNotExists(con);
         }
     }
 
@@ -352,6 +354,103 @@ public final class DataRepositoryImpl implements DataRepository {
             List<Long> allServerIdList = dao.botStateDataTable().selectAll(connection, botKeyData.getId(botId));
             return allServerIdList.stream().map(it -> Pair.of(it, getBotStateData(it, botId)))
                     .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public @NotNull TTSCountData getServerTTSCount(long botId, long serverId, @NotNull LocalDate date) {
+        return new TTSCountDataImpl(this, botId, serverId, date);
+    }
+
+    @Override
+    public @NotNull TTSCountData getGlobalTTSCount(long botId, @NotNull LocalDate date) {
+        return new TTSCountDataImpl(this, botId, null, date);
+    }
+
+    @Override
+    public long sumGlobalCharCount(long botId, @NotNull LocalDate from, @NotNull LocalDate to) {
+        try (Connection connection = dao.getConnection()) {
+            int botKeyId = botKeyData.getId(botId);
+            return dao.ttsCountTable().sumCharCountRange(connection, botKeyId, null, from, to);
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public long sumServerCharCount(long botId, long serverId, @NotNull LocalDate from, @NotNull LocalDate to) {
+        try (Connection connection = dao.getConnection()) {
+            int botKeyId = botKeyData.getId(botId);
+            int serverKeyId = serverKeyData.getId(serverId);
+            return dao.ttsCountTable().sumCharCountRange(connection, botKeyId, serverKeyId, from, to);
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public long sumGlobalAllCharCount(long botId) {
+        try (Connection connection = dao.getConnection()) {
+            int botKeyId = botKeyData.getId(botId);
+            return dao.ttsCountTable().sumAllCharCount(connection, botKeyId, null);
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public long sumGlobalAllMessageCount(long botId) {
+        try (Connection connection = dao.getConnection()) {
+            int botKeyId = botKeyData.getId(botId);
+            return dao.ttsCountTable().sumAllMessageCount(connection, botKeyId, null);
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public long sumServerAllCharCount(long botId, long serverId) {
+        try (Connection connection = dao.getConnection()) {
+            int botKeyId = botKeyData.getId(botId);
+            int serverKeyId = serverKeyData.getId(serverId);
+            return dao.ttsCountTable().sumAllCharCount(connection, botKeyId, serverKeyId);
+        } catch (Exception e) {
+            fireErrorEvent(e);
+            throw new RuntimeException(e);
+        } catch (Throwable throwable) {
+            fireErrorEvent(throwable);
+            throw throwable;
+        }
+    }
+
+    @Override
+    public long sumServerAllMessageCount(long botId, long serverId) {
+        try (Connection connection = dao.getConnection()) {
+            int botKeyId = botKeyData.getId(botId);
+            int serverKeyId = serverKeyData.getId(serverId);
+            return dao.ttsCountTable().sumAllMessageCount(connection, botKeyId, serverKeyId);
         } catch (Exception e) {
             fireErrorEvent(e);
             throw new RuntimeException(e);
