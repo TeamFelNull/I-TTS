@@ -4,8 +4,12 @@ import com.google.common.collect.ImmutableList;
 import dev.felnull.itts.core.audio.VoiceAudioManager;
 import dev.felnull.itts.core.cache.CacheManager;
 import dev.felnull.itts.core.config.ConfigManager;
+import dev.felnull.itts.core.config.MetricsConfig;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.discord.Bot;
+import dev.felnull.itts.core.metrics.MetricsRegistry;
+import dev.felnull.itts.core.metrics.PrometheusHttpExposer;
+import dev.felnull.itts.core.metrics.PrometheusMetricsRegistry;
 import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.tts.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
@@ -121,11 +125,6 @@ public class ITTSRuntime {
     private final Bot bot;
 
     /**
-     * 読み上げ文字数のレコーダー
-     */
-    private final TTSCountRecorder ttsCountRecorder = new TTSCountRecorder();
-
-    /**
      * 全てのマネージャー
      */
     private final List<ITTSBaseManager> managers;
@@ -134,6 +133,22 @@ public class ITTSRuntime {
      * 起動した時の時刻
      */
     private long startupTime;
+
+    /**
+     * メトリクスレジストリ
+     * 公開無効時はNoOp実装が入る
+     */
+    private MetricsRegistry metricsRegistry;
+
+    /**
+     * Prometheusメトリクス公開HTTPサーバー
+     */
+    private PrometheusHttpExposer prometheusHttpExposer;
+
+    /**
+     * 読み上げ文字数のレコーダー
+     */
+    private TTSCountRecorder ttsCountRecorder;
 
     private ITTSRuntime(ITTSRuntimeContext runtimeContext) {
         if (instance != null) {
@@ -208,7 +223,51 @@ public class ITTSRuntime {
 
         logger.info("Setup complete");
 
+        initMetrics();
+        registerShutdownHooks();
+
         bot.start();
+    }
+
+    /**
+     * メトリクス関連コンポーネントを生成し起動する
+     * 公開無効時はNoOp実装を採用しnullを返さない
+     */
+    private void initMetrics() {
+        MetricsConfig metricsConfig = configManager.getConfig().getMetricsConfig();
+
+        if (!metricsConfig.isEnabled()) {
+            this.metricsRegistry = MetricsRegistry.noop();
+            this.ttsCountRecorder = new TTSCountRecorder(metricsRegistry);
+            logger.info("Prometheus metrics is disabled");
+            return;
+        }
+
+        PrometheusMetricsRegistry prometheusRegistry = new PrometheusMetricsRegistry();
+        this.metricsRegistry = prometheusRegistry;
+        this.ttsCountRecorder = new TTSCountRecorder(metricsRegistry);
+
+        try {
+            this.prometheusHttpExposer = new PrometheusHttpExposer(prometheusRegistry);
+            this.prometheusHttpExposer.start(metricsConfig.getBindAddress(), metricsConfig.getPort());
+            logger.info("Prometheus metrics endpoint started on {}:{}/metrics", metricsConfig.getBindAddress(), metricsConfig.getPort());
+        } catch (Exception e) {
+            logger.warn("Failed to start Prometheus HTTP exposer", e);
+            this.prometheusHttpExposer = null;
+        }
+    }
+
+    /**
+     * シャットダウンフックを登録する
+     * メトリクスHTTPサーバなどライフサイクル管理対象を集約する
+     */
+    private void registerShutdownHooks() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            PrometheusHttpExposer exposer = this.prometheusHttpExposer;
+            if (exposer != null) {
+                exposer.stop();
+            }
+        }, "prometheus-exposer-shutdown"));
     }
 
     public long getStartupTime() {
@@ -287,5 +346,15 @@ public class ITTSRuntime {
      */
     public TTSCountRecorder getTTSCountRecorder() {
         return ttsCountRecorder;
+    }
+
+    /**
+     * メトリクスレジストリを取得
+     * 公開無効時はNoOp実装が返るためnullにはならない
+     *
+     * @return メトリクスレジストリ
+     */
+    public MetricsRegistry getMetricsRegistry() {
+        return metricsRegistry;
     }
 }
