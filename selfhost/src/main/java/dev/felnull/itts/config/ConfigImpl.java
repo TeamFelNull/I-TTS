@@ -7,6 +7,7 @@ import dev.felnull.itts.core.config.Config;
 import dev.felnull.itts.core.config.DataBaseConfig;
 import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
+import dev.felnull.itts.core.statistics.StatisticsConfig;
 import dev.felnull.itts.core.util.NameSerializableEnum;
 import dev.felnull.itts.utils.Json5Utils;
 import org.jetbrains.annotations.NotNull;
@@ -18,14 +19,15 @@ import java.util.Optional;
 
 /**
  *
- * @param botToken        BOTトークン
- * @param themeColor      テーマカラー
- * @param cacheTime       キャッシュを保持する期間
- * @param voiceTextConfig VOICETEXT コンフィグ
- * @param voicevoxConfig  VOICEVOX コンフィグ
- * @param coeirolnkConfig COEIROLNK コンフィグ
- * @param sharevoxConfig  SHAREVOX コンフィグ
- * @param dataBaseConfig  データベースコンフィグ
+ * @param botToken         BOTトークン
+ * @param themeColor       テーマカラー
+ * @param cacheTime        キャッシュを保持する期間
+ * @param voiceTextConfig  VOICETEXT コンフィグ
+ * @param voicevoxConfig   VOICEVOX コンフィグ
+ * @param coeirolnkConfig  COEIROLNK コンフィグ
+ * @param sharevoxConfig   SHAREVOX コンフィグ
+ * @param dataBaseConfig   データベースコンフィグ
+ * @param statisticsConfig 統計機能コンフィグ
  */
 public record ConfigImpl(
         String botToken,
@@ -35,7 +37,8 @@ public record ConfigImpl(
         VoicevoxConfig voicevoxConfig,
         VoicevoxConfig coeirolnkConfig,
         VoicevoxConfig sharevoxConfig,
-        DataBaseConfig dataBaseConfig
+        DataBaseConfig dataBaseConfig,
+        StatisticsConfig statisticsConfig
 ) implements Config {
 
     /**
@@ -52,6 +55,7 @@ public record ConfigImpl(
             VoicevoxConfig coeirolnkConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("coeirolnk")).orElseGet(JsonObject::new));
             VoicevoxConfig sharevoxConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("sharevox")).orElseGet(JsonObject::new));
             DataBaseConfig dataBaseConfig = DataBaseConfigImpl.fromJson(Optional.ofNullable(json5.getObject("data_base")).orElseGet(JsonObject::new));
+            StatisticsConfig statisticsConfig = StatisticsConfigImpl.fromJson(Optional.ofNullable(json5.getObject("statistics")).orElseGet(JsonObject::new));
 
             return new ConfigImpl(
                     botToken,
@@ -61,7 +65,8 @@ public record ConfigImpl(
                     voicevoxConfig,
                     coeirolnkConfig,
                     sharevoxConfig,
-                    dataBaseConfig
+                    dataBaseConfig,
+                    statisticsConfig
             );
         }
 
@@ -77,7 +82,8 @@ public record ConfigImpl(
                     new VoicevoxConfigImpl(configV0.voicevoxConfig().enable(), configV0.voicevoxConfig().apiUrls(), configV0.voicevoxConfig().checkTime()),
                     new VoicevoxConfigImpl(configV0.coeirolnkConfig().enable(), configV0.coeirolnkConfig().apiUrls(), configV0.coeirolnkConfig().checkTime()),
                     new VoicevoxConfigImpl(configV0.sharevoxConfig().enable(), configV0.sharevoxConfig().apiUrls(), configV0.sharevoxConfig().checkTime()),
-                    new DataBaseConfigImpl()
+                    new DataBaseConfigImpl(),
+                    new StatisticsConfigImpl()
             );
         }
     };
@@ -96,7 +102,8 @@ public record ConfigImpl(
                 new VoicevoxConfigImpl(),
                 new VoicevoxConfigImpl(),
                 new VoicevoxConfigImpl(),
-                new DataBaseConfigImpl()
+                new DataBaseConfigImpl(),
+                new StatisticsConfigImpl()
         );
     }
 
@@ -112,6 +119,7 @@ public record ConfigImpl(
         json5.put("coeirolnk", ((VoicevoxConfigImpl) this.coeirolnkConfig).toJson(), "COEIROLNKのコンフィグ");
         json5.put("sharevox", ((VoicevoxConfigImpl) this.sharevoxConfig).toJson(), "SHAREVOXのコンフィグ");
         json5.put("data_base", ((DataBaseConfigImpl) this.dataBaseConfig).toJson(), "データベースのコンフィグ");
+        json5.put("statistics", ((StatisticsConfigImpl) this.statisticsConfig).toJson(), "統計機能");
     }
 
     @Override
@@ -152,6 +160,11 @@ public record ConfigImpl(
     @Override
     public DataBaseConfig getDataBaseConfig() {
         return dataBaseConfig;
+    }
+
+    @Override
+    public @NotNull StatisticsConfig getStatisticsConfig() {
+        return statisticsConfig;
     }
 
     /**
@@ -311,6 +324,45 @@ public record ConfigImpl(
         @Override
         public @NotNull String getPassword() {
             return password;
+        }
+    }
+
+    /**
+     * 統計機能コンフィグの実装
+     *
+     * @param enable   有効かどうか
+     * @param dataBase データベースコンフィグ
+     */
+    private record StatisticsConfigImpl(
+            boolean enable,
+            DataBaseConfig dataBase
+    ) implements StatisticsConfig {
+
+        private StatisticsConfigImpl() {
+            this(DEFAULT_ENABLE, new DataBaseConfigImpl());
+        }
+
+        public static StatisticsConfigImpl fromJson(JsonObject jo) {
+            boolean enable = jo.getBoolean("enable", DEFAULT_ENABLE);
+            DataBaseConfig dataBase = DataBaseConfigImpl.fromJson(Optional.ofNullable(jo.getObject("data_base")).orElseGet(JsonObject::new));
+            return new StatisticsConfigImpl(enable, dataBase);
+        }
+
+        public JsonObject toJson() {
+            JsonObject jo = new JsonObject();
+            jo.put("enable", JsonPrimitive.of(enable), "集計を有効にするかどうか");
+            jo.put("data_base", ((DataBaseConfigImpl) dataBase).toJson(), "統計データの保存先");
+            return jo;
+        }
+
+        @Override
+        public boolean isEnable() {
+            return enable;
+        }
+
+        @Override
+        public @NotNull DataBaseConfig getDataBase() {
+            return dataBase;
         }
     }
 }

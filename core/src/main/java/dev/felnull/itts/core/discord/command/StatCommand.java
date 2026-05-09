@@ -1,9 +1,8 @@
 package dev.felnull.itts.core.discord.command;
 
-import dev.felnull.itts.core.savedata.SaveDataManager;
-import dev.felnull.itts.core.savedata.dao.TTSCountRecord;
-import dev.felnull.itts.core.savedata.repository.DataRepository;
-import dev.felnull.itts.core.savedata.repository.TTSCountData;
+import dev.felnull.itts.core.statistics.StatisticsManager;
+import dev.felnull.itts.core.statistics.dao.StatisticsDAO.TTSCountSum;
+import dev.felnull.itts.core.statistics.repository.StatisticsRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -17,7 +16,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * 読み上げ統計表示コマンド
@@ -56,72 +54,85 @@ public class StatCommand extends BaseCommand {
     }
 
     private void today(SlashCommandInteractionEvent event) {
-        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        if (replyIfDisabled(event)) {
+            return;
+        }
+        StatisticsRepository repo = StatisticsManager.getInstance().getRepository();
         long botId = getBot().getBotId();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        TTSCountData data = repo.getGlobalTTSCount(botId, today);
-
-        Optional<TTSCountRecord> record = data.getRecord();
-        long charCount = record.map(TTSCountRecord::charCount).orElse(0L);
-        long messageCount = record.map(TTSCountRecord::messageCount).orElse(0L);
+        TTSCountSum sum = repo.sumCount(botId, null, today, today);
 
         EmbedBuilder builder = baseEmbed("本日の読み上げ統計 (UTC)");
-        builder.addField("文字数", charCount + "文字", true);
-        builder.addField("メッセージ数", messageCount + "件", true);
+        builder.addField("文字数", sum.charCount() + "文字", true);
+        builder.addField("メッセージ数", sum.messageCount() + "件", true);
         addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
     }
 
     private void week(SlashCommandInteractionEvent event) {
-        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        if (replyIfDisabled(event)) {
+            return;
+        }
+        StatisticsRepository repo = StatisticsManager.getInstance().getRepository();
         long botId = getBot().getBotId();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         LocalDate from = today.minusDays(6);
 
-        long charSum = repo.sumGlobalCharCount(botId, from, today);
-        long messageSum = repo.sumGlobalMessageCount(botId, from, today);
+        TTSCountSum sum = repo.sumCount(botId, null, from, today);
 
         EmbedBuilder builder = baseEmbed("過去7日の読み上げ統計 (UTC)");
         builder.addField("期間", from + " - " + today, false);
-        builder.addField("文字数", charSum + "文字", true);
-        builder.addField("メッセージ数", messageSum + "件", true);
+        builder.addField("文字数", sum.charCount() + "文字", true);
+        builder.addField("メッセージ数", sum.messageCount() + "件", true);
         addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
     }
 
     private void all(SlashCommandInteractionEvent event) {
-        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        if (replyIfDisabled(event)) {
+            return;
+        }
+        StatisticsRepository repo = StatisticsManager.getInstance().getRepository();
         long botId = getBot().getBotId();
 
-        long charSum = repo.sumGlobalAllCharCount(botId);
-        long messageSum = repo.sumGlobalAllMessageCount(botId);
+        TTSCountSum sum = repo.sumCount(botId, null, null, null);
 
         EmbedBuilder builder = baseEmbed("BOT全体の累計読み上げ統計");
-        builder.addField("累計文字数", charSum + "文字", true);
-        builder.addField("累計メッセージ数", messageSum + "件", true);
+        builder.addField("累計文字数", sum.charCount() + "文字", true);
+        builder.addField("累計メッセージ数", sum.messageCount() + "件", true);
         addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
     }
 
     private void server(SlashCommandInteractionEvent event) {
+        if (replyIfDisabled(event)) {
+            return;
+        }
         Guild guild = Objects.requireNonNull(event.getGuild());
-        DataRepository repo = SaveDataManager.getInstance().getRepository();
+        StatisticsRepository repo = StatisticsManager.getInstance().getRepository();
         long botId = getBot().getBotId();
         long serverId = guild.getIdLong();
 
-        long charSum = repo.sumServerAllCharCount(botId, serverId);
-        long messageSum = repo.sumServerAllMessageCount(botId, serverId);
+        TTSCountSum sum = repo.sumCount(botId, serverId, null, null);
 
         EmbedBuilder builder = baseEmbed("このサーバーの累計読み上げ統計");
         builder.addField("サーバー名", guild.getName(), false);
-        builder.addField("累計文字数", charSum + "文字", true);
-        builder.addField("累計メッセージ数", messageSum + "件", true);
+        builder.addField("累計文字数", sum.charCount() + "文字", true);
+        builder.addField("累計メッセージ数", sum.messageCount() + "件", true);
         addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
+    }
+
+    private boolean replyIfDisabled(SlashCommandInteractionEvent event) {
+        if (StatisticsManager.getInstance().getRepository() == null) {
+            event.reply("統計機能は無効になっています").setEphemeral(true).queue();
+            return true;
+        }
+        return false;
     }
 
     private EmbedBuilder baseEmbed(String title) {
