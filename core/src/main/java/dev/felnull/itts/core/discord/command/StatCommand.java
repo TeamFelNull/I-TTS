@@ -51,20 +51,10 @@ public class StatCommand extends BaseCommand {
         EmbedBuilder builder = new EmbedBuilder();
         builder.setColor(getConfigManager().getConfig().getThemeColor());
         builder.setTitle("このサーバーの累計読み上げ統計");
-        builder.addField("サーバー名", guild.getName(), false);
         builder.addField("累計文字数", sum.charCount() + "文字", true);
         builder.addField("累計メッセージ数", sum.messageCount() + "件", true);
-        addUptimeFields(builder);
 
         event.replyEmbeds(builder.build()).setEphemeral(true).queue();
-    }
-
-    private void addUptimeFields(EmbedBuilder builder) {
-        long startup = getITTSRuntime().getStartupTime();
-        long now = System.currentTimeMillis();
-        Duration uptime = Duration.ofMillis(now - startup);
-        builder.addField("稼働開始", String.format(RELATIVE_TIME_FORMAT, startup / 1000), true);
-        builder.addField("稼働時間", formatDuration(uptime), true);
     }
 
     private String formatDuration(Duration duration) {
