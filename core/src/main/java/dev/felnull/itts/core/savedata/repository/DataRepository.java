@@ -147,4 +147,5 @@ public interface DataRepository {
     @NotNull
     @Unmodifiable
     Map<Long, BotStateData> getAllBotStateData(long botId);
+
 }

@@ -25,6 +25,11 @@ public abstract class BaseCommand implements ITTSRuntimeUse {
     protected static final DefaultMemberPermissions OWNERS_PERMISSIONS = DefaultMemberPermissions.enabledFor(Permission.MANAGE_SERVER);
 
     /**
+     * 時間を相対的に表示するフォーマット
+     */
+    protected static final String RELATIVE_TIME_FORMAT = "<t:%d:R>";
+
+    /**
      * コマンド名
      */
     @NotNull
