@@ -50,7 +50,12 @@ public class CachedVoiceTrackLoader implements VoiceTrackLoader, ITTSRuntimeUse 
     @Override
     public CompletableFuture<AudioTrack> load() {
         return getCacheManager().loadOrRestore(hash, streamOpener)
-                .thenApplyAsync(this::loadTack, getAsyncExecutor());
+                .thenApplyAsync(this::loadTack, getAsyncExecutor())
+                .whenComplete((_, throwable) -> {
+                    if (throwable != null) {
+                        dispose();
+                    }
+                });
     }
 
     private AudioTrack loadTack(CacheUseEntry cacheUseEntry) {

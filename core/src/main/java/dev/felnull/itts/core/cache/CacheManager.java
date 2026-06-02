@@ -63,8 +63,15 @@ public class CacheManager implements ITTSRuntimeUse {
      * @return キャッシュエントリのCompletableFuture
      */
     public CompletableFuture<CacheUseEntry> loadOrRestore(@NotNull HashCode key, @NotNull StreamOpener loadOpener) {
-        return localCaches.computeIfAbsent(key, ky -> createLocalCache(ky, loadOpener))
-                .thenApplyAsync(LocalCache::restore, getAsyncExecutor());
+        CompletableFuture<LocalCache> cache = localCaches.computeIfAbsent(key, ky -> createLocalCache(ky, loadOpener));
+
+        cache.whenComplete((_, throwable) -> {
+            if (throwable != null) {
+                localCaches.remove(key, cache);
+            }
+        });
+
+        return cache.thenApplyAsync(LocalCache::restore, getAsyncExecutor());
     }
 
     private CompletableFuture<LocalCache> createLocalCache(HashCode key, StreamOpener loadOpener) {
@@ -78,16 +85,22 @@ public class CacheManager implements ITTSRuntimeUse {
 
                     if (data == null) {
                         gca.lock(key);
+                        try {
+                            data = gca.get(key);
+                            if (data == null) {
+                                try (var in = new BufferedInputStream(loadOpener.openStream())) {
+                                    data = in.readAllBytes();
+                                }
 
-                        data = gca.get(key);
-                        if (data == null) {
-                            try (var in = new BufferedInputStream(loadOpener.openStream());) {
-                                data = in.readAllBytes();
+                                if (data.length == 0) {
+                                    throw new IOException("Synthesized audio data is empty");
+                                }
+
+                                gca.set(key, data);
                             }
-                            gca.set(key, data);
+                        } finally {
+                            gca.unlock(key);
                         }
-
-                        gca.unlock(key);
                     }
 
                     Files.write(lcFile.toPath(), data);
@@ -105,6 +118,13 @@ public class CacheManager implements ITTSRuntimeUse {
                     FNDataUtil.inputToOutputBuff(in, out);
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
+                }
+
+                if (lcFile.length() == 0L) {
+                    if (!lcFile.delete()) {
+                        getITTSLogger().warn("Failed to delete empty cache file: {}", lcFile);
+                    }
+                    throw new RuntimeException(new IOException("Synthesized audio data is empty"));
                 }
 
                 return lcFile;
@@ -125,7 +145,11 @@ public class CacheManager implements ITTSRuntimeUse {
     protected void disposeCache(HashCode hashCode) {
         CompletableFuture<LocalCache> lc = localCaches.remove(hashCode);
         if (lc != null) {
-            lc.thenAcceptAsync(LocalCache::dispose, getAsyncExecutor());
+            lc.thenAcceptAsync(LocalCache::dispose, getAsyncExecutor())
+                    .exceptionally(throwable -> {
+                        getITTSLogger().error("Failed to dispose cache", throwable);
+                        return null;
+                    });
         }
     }
 }
