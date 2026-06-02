@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
@@ -38,6 +39,11 @@ public class CacheManager implements ITTSRuntimeUse {
      * 保存済みローカルキャッシュ
      */
     private final Map<HashCode, CompletableFuture<LocalCache>> localCaches = new ConcurrentHashMap<>();
+
+    /**
+     * ローカルキャッシュファイルの世代識別用カウンタ
+     */
+    private final AtomicLong localCacheFileCounter = new AtomicLong();
 
     /**
      * グローバルキャッシュアクセスの取得
@@ -80,7 +86,7 @@ public class CacheManager implements ITTSRuntimeUse {
     }
 
     private CompletableFuture<LocalCache> createLocalCache(HashCode key, StreamOpener loadOpener) {
-        File lcFile = getLocalCacheFile(key);
+        File lcFile = localCacheFile(key, localCacheFileCounter.getAndIncrement());
 
         CompletableFuture<File> cf = globalCacheAccessFactory != null
                 ? createViaGlobalCache(key, lcFile, loadOpener)
@@ -119,6 +125,8 @@ public class CacheManager implements ITTSRuntimeUse {
                         gca.unlock(key);
                     }
                 }
+
+                validateNonEmpty(data);
 
                 Files.write(lcFile.toPath(), data);
 
@@ -168,8 +176,16 @@ public class CacheManager implements ITTSRuntimeUse {
         }
     }
 
-    private File getLocalCacheFile(HashCode hashCode) {
-        return new File(LOCAL_CACHE_FOLDER, hashCode.toString());
+    /**
+     * ハッシュコードと世代番号からローカルキャッシュファイルのパスを構築する
+     * 世代番号が異なれば同一キーでも異なるパスになり破棄と再生成の競合を防ぐ
+     *
+     * @param hashCode   キャッシュのキー用ハッシュコード
+     * @param generation 世代番号
+     * @return ローカルキャッシュファイル
+     */
+    static File localCacheFile(HashCode hashCode, long generation) {
+        return new File(LOCAL_CACHE_FOLDER, hashCode + "-" + generation);
     }
 
     /**
