@@ -30,6 +30,11 @@ public class CacheManager implements ITTSRuntimeUse {
     private static final File LOCAL_CACHE_FOLDER = new File("./tmp");
 
     /**
+     * 合成音声が空の場合の例外メッセージ
+     */
+    private static final String EMPTY_AUDIO_MESSAGE = "Synthesized audio data is empty";
+
+    /**
      * 保存済みローカルキャッシュ
      */
     private final Map<HashCode, CompletableFuture<LocalCache>> localCaches = new ConcurrentHashMap<>();
@@ -75,62 +80,92 @@ public class CacheManager implements ITTSRuntimeUse {
     }
 
     private CompletableFuture<LocalCache> createLocalCache(HashCode key, StreamOpener loadOpener) {
-        CompletableFuture<File> cf;
         File lcFile = getLocalCacheFile(key);
 
-        if (globalCacheAccessFactory != null) {
-            cf = CompletableFuture.supplyAsync(() -> {
-                try (var gca = globalCacheAccessFactory.get()) {
-                    byte[] data = gca.get(key);
+        CompletableFuture<File> cf = globalCacheAccessFactory != null
+                ? createViaGlobalCache(key, lcFile, loadOpener)
+                : createViaLocalSource(lcFile, loadOpener);
 
-                    if (data == null) {
-                        gca.lock(key);
-                        try {
-                            data = gca.get(key);
-                            if (data == null) {
-                                try (var in = new BufferedInputStream(loadOpener.openStream())) {
-                                    data = in.readAllBytes();
-                                }
+        return cf.thenApplyAsync((file) -> new LocalCache(key, file), getAsyncExecutor());
+    }
 
-                                if (data.length == 0) {
-                                    throw new IOException("Synthesized audio data is empty");
-                                }
+    /**
+     * グローバルキャッシュ経由でローカルキャッシュファイルを生成する
+     *
+     * @param key        キー
+     * @param lcFile     ローカルキャッシュファイル
+     * @param loadOpener ストリーム生成
+     * @return キャッシュファイルのCompletableFuture
+     */
+    private CompletableFuture<File> createViaGlobalCache(HashCode key, File lcFile, StreamOpener loadOpener) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (var gca = globalCacheAccessFactory.get()) {
+                byte[] data = gca.get(key);
 
-                                gca.set(key, data);
+                if (data == null) {
+                    gca.lock(key);
+                    try {
+                        data = gca.get(key);
+                        if (data == null) {
+                            try (var in = new BufferedInputStream(loadOpener.openStream())) {
+                                data = in.readAllBytes();
                             }
-                        } finally {
-                            gca.unlock(key);
+
+                            validateNonEmpty(data);
+
+                            gca.set(key, data);
                         }
+                    } finally {
+                        gca.unlock(key);
                     }
-
-                    Files.write(lcFile.toPath(), data);
-
-                    return lcFile;
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            }, getAsyncExecutor());
-
-        } else {
-            cf = CompletableFuture.supplyAsync(() -> {
-
-                try (var in = loadOpener.openStream(); var out = new FileOutputStream(lcFile)) {
-                    FNDataUtil.inputToOutputBuff(in, out);
-                } catch (IOException | InterruptedException e) {
-                    throw new RuntimeException(e);
                 }
 
-                if (lcFile.length() == 0L) {
-                    if (!lcFile.delete()) {
-                        getITTSLogger().warn("Failed to delete empty cache file: {}", lcFile);
-                    }
-                    throw new RuntimeException(new IOException("Synthesized audio data is empty"));
-                }
+                Files.write(lcFile.toPath(), data);
 
                 return lcFile;
-            }, getAsyncExecutor());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }, getAsyncExecutor());
+    }
+
+    /**
+     * 合成元ストリームから直接ローカルキャッシュファイルを生成する
+     *
+     * @param lcFile     ローカルキャッシュファイル
+     * @param loadOpener ストリーム生成
+     * @return キャッシュファイルのCompletableFuture
+     */
+    private CompletableFuture<File> createViaLocalSource(File lcFile, StreamOpener loadOpener) {
+        return CompletableFuture.supplyAsync(() -> {
+
+            try (var in = loadOpener.openStream(); var out = new FileOutputStream(lcFile)) {
+                FNDataUtil.inputToOutputBuff(in, out);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (lcFile.length() == 0L) {
+                if (!lcFile.delete()) {
+                    getITTSLogger().warn("Failed to delete empty cache file: {}", lcFile);
+                }
+                throw new RuntimeException(new IOException(EMPTY_AUDIO_MESSAGE));
+            }
+
+            return lcFile;
+        }, getAsyncExecutor());
+    }
+
+    /**
+     * 合成音声データが空でないことを検証する
+     *
+     * @param data 検証対象データ
+     * @throws IOException データが空の場合
+     */
+    private static void validateNonEmpty(byte[] data) throws IOException {
+        if (data.length == 0) {
+            throw new IOException(EMPTY_AUDIO_MESSAGE);
         }
-        return cf.thenApplyAsync((file) -> new LocalCache(key, file), getAsyncExecutor());
     }
 
     private File getLocalCacheFile(HashCode hashCode) {
