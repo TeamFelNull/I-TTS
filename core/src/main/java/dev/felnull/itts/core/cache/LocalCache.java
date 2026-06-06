@@ -89,7 +89,7 @@ public class LocalCache implements ITTSRuntimeUse {
      */
     protected void dispose() {
         destroy.set(true);
-        if (file.exists() && file.delete()) {
+        if (file.exists() && !file.delete()) {
             throw new RuntimeException("Failed to delete file");
         }
     }
