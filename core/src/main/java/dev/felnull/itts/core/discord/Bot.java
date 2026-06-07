@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.discord;
 
+import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
@@ -11,10 +12,12 @@ import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * BOT管理
@@ -26,6 +29,11 @@ public class Bot implements ITTSRuntimeUse {
      * 全コマンド
      */
     protected final List<BaseCommand> baseCommands = new ArrayList<>();
+
+    /**
+     * Logger
+     */
+    private final Logger logger = ITTSRuntime.getInstance().getLogger();
 
     /**
      * 接続制御
@@ -60,6 +68,34 @@ public class Bot implements ITTSRuntimeUse {
                 updateActivityAsync();
             }
         }, 0, 1000 * 10);
+    }
+
+    /**
+     * BOTを停止
+     */
+
+    public void stop() {
+        logger.info("Stopping bot...");
+
+        try {
+            if (this.getImmortalityTimer() != null) {
+                this.getImmortalityTimer().cancel();
+            }
+
+            if (this.jda != null) {
+                this.jda.shutdown();
+
+                if (!this.jda.awaitShutdown(10, TimeUnit.SECONDS)) {
+                    logger.warn("Force shutdown JDA");
+                    this.jda.shutdownNow();
+                }
+            }
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        logger.info("Bot stopped");
     }
 
     private void registeringCommands() {

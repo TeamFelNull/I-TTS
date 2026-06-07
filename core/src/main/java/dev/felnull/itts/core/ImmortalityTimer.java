@@ -49,6 +49,14 @@ public class ImmortalityTimer implements ITTSRuntimeUse {
     }
 
     /**
+     * Timerをキャンセル
+     */
+    public void cancel() {
+        timer.cancel();
+        timer.purge();
+    }
+
+    /**
      * TimerTaskのラップ
      *
      * @author MORIMORI0317
