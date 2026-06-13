@@ -34,7 +34,7 @@ public final class TTSCountRecorder implements ITTSRuntimeUse {
         if (voice != null) {
             VoiceType voiceType = voice.getVoiceType();
             if (voiceType != null) {
-                voiceTypeId = voiceType.getId();
+                voiceTypeId = voiceType.getStatisticsName();
                 VoiceCategory category = voiceType.getCategory();
                 if (category != null) {
                     voiceCategoryId = category.getId();
