@@ -2,7 +2,7 @@ package dev.felnull.itts.config;
 
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
-import dev.felnull.itts.config.old.ConfigV0;
+import dev.felnull.itts.config.old.ConfigV1;
 import dev.felnull.itts.core.config.Config;
 import dev.felnull.itts.core.config.DataBaseConfig;
 import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
@@ -72,17 +72,18 @@ public record ConfigImpl(
 
         @Override
         public ConfigImpl migrate(Object oldConfig) {
-            ConfigV0 configV0 = (ConfigV0) oldConfig;
+            ConfigV1 configV1 = (ConfigV1) oldConfig;
+            ConfigV1.DataBaseConfigV1 db = configV1.dataBaseConfig();
 
             return new ConfigImpl(
-                    configV0.botToken(),
-                    configV0.themeColor(),
-                    configV0.cacheTime(),
-                    new VoiceTextConfigImpl(configV0.voiceTextConfig().enable(), configV0.voiceTextConfig().apiKey()),
-                    new VoicevoxConfigImpl(configV0.voicevoxConfig().enable(), configV0.voicevoxConfig().apiUrls(), configV0.voicevoxConfig().checkTime()),
-                    new VoicevoxConfigImpl(configV0.coeirolnkConfig().enable(), configV0.coeirolnkConfig().apiUrls(), configV0.coeirolnkConfig().checkTime()),
-                    new VoicevoxConfigImpl(configV0.sharevoxConfig().enable(), configV0.sharevoxConfig().apiUrls(), configV0.sharevoxConfig().checkTime()),
-                    new DataBaseConfigImpl(),
+                    configV1.botToken(),
+                    configV1.themeColor(),
+                    configV1.cacheTime(),
+                    new VoiceTextConfigImpl(configV1.voiceTextConfig().enable(), configV1.voiceTextConfig().apiKey()),
+                    new VoicevoxConfigImpl(configV1.voicevoxConfig().enable(), configV1.voicevoxConfig().apiUrls(), configV1.voicevoxConfig().checkTime()),
+                    new VoicevoxConfigImpl(configV1.coeirolnkConfig().enable(), configV1.coeirolnkConfig().apiUrls(), configV1.coeirolnkConfig().checkTime()),
+                    new VoicevoxConfigImpl(configV1.sharevoxConfig().enable(), configV1.sharevoxConfig().apiUrls(), configV1.sharevoxConfig().checkTime()),
+                    new DataBaseConfigImpl(db.type(), db.host(), db.port(), db.databaseName(), db.user(), db.password()),
                     new StatisticsConfigImpl()
             );
         }
