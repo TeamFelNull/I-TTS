@@ -36,9 +36,9 @@ public final class StatisticsRepositoryImpl implements StatisticsRepository {
     private final KeyIdCache<Long> serverKeyCache = new KeyIdCache<>(StatisticsDAO::serverKeyTable, 1000);
 
     /**
-     * ボイスタイプキーのキャッシュ
+     * ボイスタイプのキャッシュ
      */
-    private final KeyIdCache<String> voiceTypeKeyCache = new KeyIdCache<>(StatisticsDAO::voiceTypeKeyTable, 100);
+    private final VoiceTypeIdCache voiceTypeCache = new VoiceTypeIdCache(100);
 
     /**
      * ボイスカテゴリキーのキャッシュ
@@ -80,8 +80,8 @@ public final class StatisticsRepositoryImpl implements StatisticsRepository {
         try (Connection con = dao.getConnection()) {
             dao.botKeyTable().createTableIfNotExists(con);
             dao.serverKeyTable().createTableIfNotExists(con);
-            dao.voiceTypeKeyTable().createTableIfNotExists(con);
             dao.voiceCategoryKeyTable().createTableIfNotExists(con);
+            dao.voiceTypeTable().createTableIfNotExists(con);
             dao.ttsCountTable().createTableIfNotExists(con);
         } catch (SQLException e) {
             throw new IllegalStateException("Statistics database initialization failure", e);
@@ -131,14 +131,14 @@ public final class StatisticsRepositoryImpl implements StatisticsRepository {
         try (Connection con = dao.getConnection()) {
             int botKeyId = botKeyCache.getOrInsertId(con, dao, botId);
             int serverKeyId = serverKeyCache.getOrInsertId(con, dao, serverId);
-            int voiceTypeKeyId = voiceTypeId != null
-                    ? voiceTypeKeyCache.getOrInsertId(con, dao, voiceTypeId)
-                    : TTSCountTable.UNKNOWN_VOICE_KEY_ID;
             int voiceCategoryKeyId = voiceCategoryId != null
                     ? voiceCategoryKeyCache.getOrInsertId(con, dao, voiceCategoryId)
                     : TTSCountTable.UNKNOWN_VOICE_KEY_ID;
+            int voiceTypeKeyId = voiceTypeId != null
+                    ? voiceTypeCache.getOrInsertId(con, dao, voiceTypeId, voiceCategoryKeyId)
+                    : TTSCountTable.UNKNOWN_VOICE_KEY_ID;
 
-            dao.ttsCountTable().incrementCount(con, botKeyId, serverKeyId, voiceTypeKeyId, voiceCategoryKeyId, date, charDelta, messageDelta);
+            dao.ttsCountTable().incrementCount(con, botKeyId, serverKeyId, voiceTypeKeyId, date, charDelta, messageDelta);
         } catch (Exception e) {
             fireErrorEvent(e);
             throw new RuntimeException(e);
@@ -165,7 +165,7 @@ public final class StatisticsRepositoryImpl implements StatisticsRepository {
                 serverKeyId = sid.getAsInt();
             }
 
-            return dao.ttsCountTable().sumCount(con, botKeyId.getAsInt(), serverKeyId, null, null, from, to);
+            return dao.ttsCountTable().sumCount(con, botKeyId.getAsInt(), serverKeyId, null, from, to);
         } catch (Exception e) {
             fireErrorEvent(e);
             return TTSCountSum.ZERO;
@@ -215,6 +215,58 @@ public final class StatisticsRepositoryImpl implements StatisticsRepository {
             } else {
                 table.insertKeyIfNotExists(con, key);
                 id = table.selectId(con, key).orElseThrow();
+            }
+            cache.put(key, id);
+            return id;
+        }
+    }
+
+    /**
+     * ボイスタイプの名前とカテゴリキーIDの組
+     *
+     * @param name          ボイスタイプ名
+     * @param categoryKeyId ボイスカテゴリキーID
+     */
+    private record VoiceTypeKey(@NotNull String name, int categoryKeyId) {
+    }
+
+    /**
+     * ボイスタイプIDのキャッシュ
+     * 名前とカテゴリキーIDの組からIDを解決する
+     */
+    private static final class VoiceTypeIdCache {
+
+        /**
+         * キャッシュ本体
+         */
+        private final LoadingCache<VoiceTypeKey, Integer> cache;
+
+        VoiceTypeIdCache(int maxSize) {
+            this.cache = CacheBuilder.newBuilder()
+                    .maximumSize(maxSize)
+                    .build(new CacheLoader<>() {
+                        @Override
+                        public @NotNull Integer load(@NotNull VoiceTypeKey key) {
+                            throw new UnsupportedOperationException("Use getOrInsertId(...) instead");
+                        }
+                    });
+        }
+
+        int getOrInsertId(@NotNull Connection con, @NotNull StatisticsDAO dao, @NotNull String name, int categoryKeyId) throws SQLException {
+            VoiceTypeKey key = new VoiceTypeKey(name, categoryKeyId);
+            Integer cached = cache.getIfPresent(key);
+            if (cached != null) {
+                return cached;
+            }
+
+            StatisticsDAO.VoiceTypeTable table = dao.voiceTypeTable();
+            OptionalInt existing = table.selectId(con, name, categoryKeyId);
+            int id;
+            if (existing.isPresent()) {
+                id = existing.getAsInt();
+            } else {
+                table.insertKeyIfNotExists(con, name, categoryKeyId);
+                id = table.selectId(con, name, categoryKeyId).orElseThrow();
             }
             cache.put(key, id);
             return id;

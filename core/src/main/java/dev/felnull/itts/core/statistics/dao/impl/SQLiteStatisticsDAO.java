@@ -34,9 +34,9 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
     private final ServerKeyTable serverKeyTable = new ServerKeyTableImpl();
 
     /**
-     * ボイスタイプキーテーブルのインスタンス
+     * ボイスタイプテーブルのインスタンス
      */
-    private final VoiceTypeKeyTable voiceTypeKeyTable = new VoiceTypeKeyTableImpl();
+    private final VoiceTypeTable voiceTypeTable = new VoiceTypeTableImpl();
 
     /**
      * ボイスカテゴリキーテーブルのインスタンス
@@ -99,8 +99,8 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
     }
 
     @Override
-    public VoiceTypeKeyTable voiceTypeKeyTable() {
-        return voiceTypeKeyTable;
+    public VoiceTypeTable voiceTypeTable() {
+        return voiceTypeTable;
     }
 
     @Override
@@ -250,14 +250,14 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
     }
 
     /**
-     * ボイスタイプキーテーブルの実装
+     * ボイスタイプテーブルの実装
      */
-    private final class VoiceTypeKeyTableImpl implements VoiceTypeKeyTable {
+    private final class VoiceTypeTableImpl implements VoiceTypeTable {
 
         @Override
-        public Optional<String> selectKey(@NotNull Connection connection, int keyId) throws SQLException {
+        public Optional<String> selectName(@NotNull Connection connection, int keyId) throws SQLException {
             @Language("SQLite")
-            String sql = "select name from voice_type_key where id = ? limit 1;";
+            String sql = "select name from voice_type where id = ? limit 1;";
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setInt(1, keyId);
@@ -272,12 +272,13 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
         }
 
         @Override
-        public OptionalInt selectId(@NotNull Connection connection, @NotNull String key) throws SQLException {
+        public OptionalInt selectId(@NotNull Connection connection, @NotNull String name, int categoryKeyId) throws SQLException {
             @Language("SQLite")
-            String sql = "select id from voice_type_key where name = ? limit 1;";
+            String sql = "select id from voice_type where name = ? and voice_category_id = ? limit 1;";
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, key);
+                statement.setString(1, name);
+                statement.setInt(2, categoryKeyId);
 
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {
@@ -289,16 +290,18 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
         }
 
         @Override
-        public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String key) throws SQLException {
+        public void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String name, int categoryKeyId) throws SQLException {
             @Language("SQLite")
             String sql = """
-                    insert into voice_type_key(name)
-                    select ? where not exists(select * from voice_type_key where name = ?);
+                    insert into voice_type(name, voice_category_id)
+                    select ?, ? where not exists(select * from voice_type where name = ? and voice_category_id = ?);
                     """;
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, key);
-                statement.setString(2, key);
+                statement.setString(1, name);
+                statement.setInt(2, categoryKeyId);
+                statement.setString(3, name);
+                statement.setInt(4, categoryKeyId);
                 statement.execute();
             }
         }
@@ -307,9 +310,12 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
         public void createTableIfNotExists(@NotNull Connection connection) throws SQLException {
             @Language("SQLite")
             String sql = """
-                    create table if not exists voice_type_key(
+                    create table if not exists voice_type(
                         id integer not null primary key autoincrement,
-                        name varchar(75) not null unique
+                        name varchar(75) not null,
+                        voice_category_id integer not null default 0,
+
+                        unique(name, voice_category_id)
                     );
                     """;
 
@@ -399,12 +405,11 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
                         bot_id integer not null,
                         server_id integer not null,
                         voice_type_id integer not null default 0,
-                        voice_category_id integer not null default 0,
                         target_date date not null,
                         spoken_char_count bigint not null default 0,
                         spoken_message_count bigint not null default 0,
 
-                        unique(bot_id, server_id, voice_type_id, voice_category_id, target_date),
+                        unique(bot_id, server_id, voice_type_id, target_date),
                         foreign key (bot_id) references bot_key(id),
                         foreign key (server_id) references server_key(id)
                     );
@@ -418,15 +423,14 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
                                    int botKeyId,
                                    int serverKeyId,
                                    int voiceTypeKeyId,
-                                   int voiceCategoryKeyId,
                                    @NotNull LocalDate date,
                                    long charDelta,
                                    long messageDelta) throws SQLException {
             @Language("SQLite")
             String sql = """
-                    insert into tts_count_data(bot_id, server_id, voice_type_id, voice_category_id, target_date, spoken_char_count, spoken_message_count)
-                    values (?, ?, ?, ?, ?, ?, ?)
-                    on conflict(bot_id, server_id, voice_type_id, voice_category_id, target_date) do update set
+                    insert into tts_count_data(bot_id, server_id, voice_type_id, target_date, spoken_char_count, spoken_message_count)
+                    values (?, ?, ?, ?, ?, ?)
+                    on conflict(bot_id, server_id, voice_type_id, target_date) do update set
                         spoken_char_count = spoken_char_count + excluded.spoken_char_count,
                         spoken_message_count = spoken_message_count + excluded.spoken_message_count
                     """;
@@ -435,10 +439,9 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
                 statement.setInt(1, botKeyId);
                 statement.setInt(2, serverKeyId);
                 statement.setInt(3, voiceTypeKeyId);
-                statement.setInt(4, voiceCategoryKeyId);
-                statement.setString(5, date.toString());
-                statement.setLong(6, charDelta);
-                statement.setLong(7, messageDelta);
+                statement.setString(4, date.toString());
+                statement.setLong(5, charDelta);
+                statement.setLong(6, messageDelta);
                 statement.execute();
             }
         }
@@ -448,7 +451,6 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
                                              int botKeyId,
                                              @Nullable Integer serverKeyId,
                                              @Nullable Integer voiceTypeKeyId,
-                                             @Nullable Integer voiceCategoryKeyId,
                                              @Nullable LocalDate from,
                                              @Nullable LocalDate to) throws SQLException {
             StringBuilder where = new StringBuilder("bot_id = ?");
@@ -462,10 +464,6 @@ class SQLiteStatisticsDAO extends BaseStatisticsDAO {
             if (voiceTypeKeyId != null) {
                 where.append(" and voice_type_id = ?");
                 params.add(voiceTypeKeyId);
-            }
-            if (voiceCategoryKeyId != null) {
-                where.append(" and voice_category_id = ?");
-                params.add(voiceCategoryKeyId);
             }
             if (from != null) {
                 where.append(" and target_date >= ?");
