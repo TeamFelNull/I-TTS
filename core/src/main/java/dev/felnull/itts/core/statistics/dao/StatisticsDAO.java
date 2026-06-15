@@ -48,11 +48,11 @@ public interface StatisticsDAO {
     ServerKeyTable serverKeyTable();
 
     /**
-     * ボイスタイプキーテーブルを取得
+     * ボイスタイプテーブルを取得
      *
      * @return テーブルインスタンス
      */
-    VoiceTypeKeyTable voiceTypeKeyTable();
+    VoiceTypeTable voiceTypeTable();
 
     /**
      * ボイスカテゴリキーテーブルを取得
@@ -155,9 +155,41 @@ public interface StatisticsDAO {
     }
 
     /**
-     * ボイスタイプキーテーブル
+     * ボイスタイプテーブル
+     * 名前とボイスカテゴリキーIDの組でボイスタイプを一意に管理する
      */
-    interface VoiceTypeKeyTable extends KeyTable<String> {
+    interface VoiceTypeTable extends Table {
+
+        /**
+         * 名前とカテゴリキーIDからIDを取得
+         *
+         * @param connection    コネクション
+         * @param name          ボイスタイプ名
+         * @param categoryKeyId ボイスカテゴリキーID 未指定の場合はTTSCountTable.UNKNOWN_VOICE_KEY_ID
+         * @return ボイスタイプキーID
+         * @throws SQLException エラー
+         */
+        OptionalInt selectId(@NotNull Connection connection, @NotNull String name, int categoryKeyId) throws SQLException;
+
+        /**
+         * IDから名前を取得
+         *
+         * @param connection コネクション
+         * @param keyId      ボイスタイプキーID
+         * @return ボイスタイプ名
+         * @throws SQLException エラー
+         */
+        Optional<String> selectName(@NotNull Connection connection, int keyId) throws SQLException;
+
+        /**
+         * 指定された名前とカテゴリキーIDの組が存在しなければ追加する
+         *
+         * @param connection    コネクション
+         * @param name          ボイスタイプ名
+         * @param categoryKeyId ボイスカテゴリキーID 未指定の場合はTTSCountTable.UNKNOWN_VOICE_KEY_ID
+         * @throws SQLException エラー
+         */
+        void insertKeyIfNotExists(@NotNull Connection connection, @NotNull String name, int categoryKeyId) throws SQLException;
     }
 
     /**
@@ -179,21 +211,19 @@ public interface StatisticsDAO {
         /**
          * 指定日のカウントを増分する
          *
-         * @param connection         コネクション
-         * @param botKeyId           BOTキーID
-         * @param serverKeyId        サーバーキーID
-         * @param voiceTypeKeyId     ボイスタイプキーID 未指定の場合はUNKNOWN_VOICE_KEY_ID
-         * @param voiceCategoryKeyId ボイスカテゴリキーID 未指定の場合はUNKNOWN_VOICE_KEY_ID
-         * @param date               集計日
-         * @param charDelta          文字数の増分
-         * @param messageDelta       メッセージ数の増分
+         * @param connection     コネクション
+         * @param botKeyId       BOTキーID
+         * @param serverKeyId    サーバーキーID
+         * @param voiceTypeKeyId ボイスタイプキーID 未指定の場合はUNKNOWN_VOICE_KEY_ID
+         * @param date           集計日
+         * @param charDelta      文字数の増分
+         * @param messageDelta   メッセージ数の増分
          * @throws SQLException エラー
          */
         void incrementCount(@NotNull Connection connection,
                             int botKeyId,
                             int serverKeyId,
                             int voiceTypeKeyId,
-                            int voiceCategoryKeyId,
                             @NotNull LocalDate date,
                             long charDelta,
                             long messageDelta) throws SQLException;
@@ -202,13 +232,12 @@ public interface StatisticsDAO {
          * 指定条件のカウントを集計して取得する
          * サーバーやボイスにnullを渡すとそのフィルタを無視する
          *
-         * @param connection         コネクション
-         * @param botKeyId           BOTキーID
-         * @param serverKeyId        サーバーキーIDフィルタ nullで全サーバー集計
-         * @param voiceTypeKeyId     ボイスタイプキーIDフィルタ nullで全ボイス集計
-         * @param voiceCategoryKeyId ボイスカテゴリキーIDフィルタ nullで全カテゴリ集計
-         * @param from               開始日 nullで下限なし
-         * @param to                 終了日 nullで上限なし
+         * @param connection     コネクション
+         * @param botKeyId       BOTキーID
+         * @param serverKeyId    サーバーキーIDフィルタ nullで全サーバー集計
+         * @param voiceTypeKeyId ボイスタイプキーIDフィルタ nullで全ボイス集計
+         * @param from           開始日 nullで下限なし
+         * @param to             終了日 nullで上限なし
          * @return 文字数とメッセージ数の合計
          * @throws SQLException エラー
          */
@@ -217,7 +246,6 @@ public interface StatisticsDAO {
                              int botKeyId,
                              @Nullable Integer serverKeyId,
                              @Nullable Integer voiceTypeKeyId,
-                             @Nullable Integer voiceCategoryKeyId,
                              @Nullable LocalDate from,
                              @Nullable LocalDate to) throws SQLException;
     }
