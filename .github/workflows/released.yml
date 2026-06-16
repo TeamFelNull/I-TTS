@@ -53,8 +53,8 @@ jobs:
           echo "$CHANGE_LOG"
           echo "---------------"
 
-          chmod +x ${{ github.action_path }}/scripts/project_verification.main.kts
-          ${{ github.action_path }}/scripts/project_verification.main.kts "$CHANGE_LOG"
+          chmod +x ./.github/workflows/scripts/project_verification.main.kts
+          ./.github/workflows/scripts/project_verification.main.kts "$CHANGE_LOG"
 
       - name: Gradle Check #Gradle動作確認
         shell: bash
