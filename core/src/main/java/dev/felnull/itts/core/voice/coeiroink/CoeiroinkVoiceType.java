@@ -56,4 +56,9 @@ public class CoeiroinkVoiceType implements VoiceType {
     public Voice createVoice(long guildId, long userId) {
         return new CoeiroinkVoice(this, manager, coeiroinkSpeaker);
     }
+
+    @Override
+    public String getStatisticsName() {
+        return coeiroinkSpeaker.speakerName();
+    }
 }

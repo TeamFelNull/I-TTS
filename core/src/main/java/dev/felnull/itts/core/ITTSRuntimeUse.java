@@ -6,6 +6,7 @@ import dev.felnull.itts.core.config.ConfigManager;
 import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.dict.DomainListManager;
 import dev.felnull.itts.core.discord.Bot;
+import dev.felnull.itts.core.statistics.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
 import org.apache.logging.log4j.Logger;
@@ -87,5 +88,14 @@ public interface ITTSRuntimeUse {
      */
     default ITTSNetworkManager getNetworkManager() {
         return getITTSRuntime().getNetworkManager();
+    }
+
+    /**
+     * 読み上げ文字数のレコーダーを取得
+     *
+     * @return TTSカウントレコーダー
+     */
+    default TTSCountRecorder getTTSCountRecorder() {
+        return getITTSRuntime().getTTSCountRecorder();
     }
 }
