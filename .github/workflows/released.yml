@@ -40,6 +40,8 @@ jobs:
       - name: Project Verification #プロジェクト検証
         shell: bash
         run: |
+          chmod +x gradlew
+          chmod -R +X gradle
           CHANGE_LOG=`./gradlew getChangelog --console=plain -q --no-header --no-summary --no-links --unreleased`
           CHANGELOG_NUM=`echo "$CHANGE_LOG" | grep -n "^###" | sed -e 's/:.*//g' | head -n 1`
           if [ -n "$CHANGELOG_NUM" ]; then
