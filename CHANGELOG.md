@@ -1,4 +1,5 @@
 # Changelog
+
 このBOTの更新を追跡するための更新ログ。   
 変更をコミットする場合は`Unreleased`に更新内容を追記してください。  
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)に従って記述をお願い致します。
@@ -6,8 +7,6 @@
 ## [Unreleased]
 
 ### Added
-- 読み上げ文字数・メッセージ数の集計機能を追加
-- サーバー単位の読み上げ統計を確認できる `/stat` コマンドを追加
 
 ### Changed
 
@@ -16,136 +15,170 @@
 ### Removed
 
 ### Fixed
-- 音声取得失敗時にしばらく読み上げない問題を修正
+
 ### Security
+
+## [2.1.4] - 2026-06-16
+
+### Added
+
+- 読み上げ文字数・メッセージ数の集計機能を追加
+- サーバー単位の読み上げ統計を確認できる `/stat` コマンドを追加
+
+### Fixed
+
+- 音声取得失敗時にしばらく読み上げない問題を修正
 
 ## [2.1.2] - 2026-05-04
 
 ### Fixed
+
 - コマンド実行時に発生する可能性があった不具合を修正
 
 ## [2.1.1] - 2026-03-23
 
 ### Changed
+
 - IANAのTLDリストを参照してドメイン省略するように変更
 
 ### Fixed
+
 - 多数の不備を修正
 - 辞書登録のバリデーションを強化
 
 ## [2.1.0] - 2026-02-11
 
 ### Added
+
 - COEIROINKの新APIに対応
 - DAVEプロトコルをサポート
 
 ### Changed
+
 - vnickコマンドで空引数時にリセット可能に
 - Java25に移行
 
 ### Fixed
+
 - 画像のみのメッセージで読み上げエラーが発生する問題を修正
 - denyコマンドの不具合を修正
 
 ## [2.0.2] - 2025-12-14
 
 ### Fixed
+
 - 日本語が含まれたURLが正しく省略されない問題を修正
 
 ## [2.0.1] - 2025-12-07
 
 ### Fixed
+
 - 不要なインテントを要求していた問題を修正
 
 ## [2.0.0] - 2025-11-29
 
 ### Added
+
 - 自動切断機能を追加
 - MySQLもしくはSQLiteを利用したデータ管理
 
 ## [2.0.0-alpha.14] - 2025-11-07
 
 ### Fixed
+
 - 「/dict show」が応答しない問題を修正
 
 ## [2.0.0-alpha.13] - 2025-10-28
 
 ### Fixed
+
 - 起動できない問題を修正
 
 ## [2.0.0-alpha.12] - 2025-10-28
 
 ### Changed
+
 - ライブラリを更新
 - ログ出力を改善
 
 ## [2.0.0-alpha.10] - 2024-04-14
 
 ### Fixed
+
 - 不要なIntentsを削除
 
 ## [2.0.0-alpha.9] - 2024-02-11
 
 ### Fixed
+
 - 起動時に読み上げチャンネルへの接続権限不足、チャンネルが消滅してた場合のログを修正、正しく保存データを更新するように変更
 
 ## [2.0.0-alpha.8] - 2023-09-21
 
 ### Fixed
+
 - サーバーニックネームが存在しない場合に、ユーザーニックネームではなくユーザーIDを読み上げていた問題を修正。
 
 ## [2.0.0-alpha.7] - 2023-09-03
 
 ### Changed
+
 - 辞書の適用順番を、省略辞書が一番最初に適用されるように変更
 
 ## [2.0.0-alpha.6] - 2023-08-29
 
 ### Fixed
+
 - スレッドが大量生成されOutOfMemoryになる問題を修正
 
 ## [2.0.0-alpha.5] - 2023-07-27
 
 ### Fixed
+
 - 返信またはピン止め時に読まれるユーザ名がI-TTSのニックネームを参照していなかった問題を修正
 
 ## [2.0.0-alpha.4] - 2023-07-26
 
 ### Fixed
+
 - VCに参加していないユーザのメンションを読み上げる際にニックネームではなくIDを読み上げる問題を修正
 
 ## [2.0.0-alpha.3] - 2023-06-09
 
 ### Fixed
+
 - タイマーの処理中にエラーが発生した場合、タイマーが停止する問題を修正
 
 ## [2.0.0-alpha.2] - 2023-06-05
 
 ### Fixed
+
 - ピン留めされた時に読み上げられるメッセージの不具合を修正
 
 ## [2.0.0-alpha.1] - 2023-06-03
 
 ### Added
+
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.4...HEAD
+[2.1.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.2...v2.1.4
 [2.1.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.14...v2.0.0
-[2.0.0-alpha.1]: https://github.com/TeamFelnull/I-TTS/commits/v2.0.0-alpha.1
-[2.0.0-alpha.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
-[2.0.0-alpha.3]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
-[2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
-[2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
-[2.0.0-alpha.6]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.5...v2.0.0-alpha.6
-[2.0.0-alpha.7]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.6...v2.0.0-alpha.7
-[2.0.0-alpha.8]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.7...v2.0.0-alpha.8
 [2.0.0-alpha.9]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.8...v2.0.0-alpha.9
-[2.0.0-alpha.10]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.9...v2.0.0-alpha.10
-[2.0.0-alpha.12]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.10...v2.0.0-alpha.12
-[2.0.0-alpha.13]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.12...v2.0.0-alpha.13
+[2.0.0-alpha.8]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.7...v2.0.0-alpha.8
+[2.0.0-alpha.7]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.6...v2.0.0-alpha.7
+[2.0.0-alpha.6]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.5...v2.0.0-alpha.6
+[2.0.0-alpha.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.4...v2.0.0-alpha.5
+[2.0.0-alpha.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
+[2.0.0-alpha.3]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
+[2.0.0-alpha.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
 [2.0.0-alpha.14]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.13...v2.0.0-alpha.14
+[2.0.0-alpha.13]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.12...v2.0.0-alpha.13
+[2.0.0-alpha.12]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.10...v2.0.0-alpha.12
+[2.0.0-alpha.10]: https://github.com/TeamFelnull/I-TTS/compare/v2.0.0-alpha.9...v2.0.0-alpha.10
+[2.0.0-alpha.1]: https://github.com/TeamFelnull/I-TTS/commits/v2.0.0-alpha.1
