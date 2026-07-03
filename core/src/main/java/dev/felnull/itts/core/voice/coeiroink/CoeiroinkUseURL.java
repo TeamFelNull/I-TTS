@@ -13,4 +13,10 @@ public interface CoeiroinkUseURL extends AutoCloseable {
      * @return CoeiroinkエンジンのURL
      */
     CIURL getCIURL();
+
+    /**
+     * URL使用状態を解除
+     */
+    @Override
+    void close();
 }
