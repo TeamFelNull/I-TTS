@@ -96,7 +96,8 @@ public class CoeiroinkManager {
 
     public List<VoiceType> getAvailableVoiceTypes() {
         return balancer.getAvailableSpeakers().stream()
-                .map(r -> (VoiceType) new CoeiroinkVoiceType(r, this))
+                .flatMap(speaker -> speaker.styles().stream()
+                        .map(style -> (VoiceType) new CoeiroinkVoiceType(speaker, style, this, speaker.styles().indexOf(style) == 0)))
                 .toList();
     }
 
@@ -137,7 +138,15 @@ public class CoeiroinkManager {
         ImmutableList.Builder<CoeiroinkSpeaker> speakerBuilder = new ImmutableList.Builder<>();
 
         for (JsonElement je : ja) {
-            speakerBuilder.add(CoeiroinkSpeaker.of(je.getAsJsonObject()));
+            try {
+                if (!je.isJsonObject()) {
+                    throw new IllegalArgumentException("Speaker entry is not object");
+                }
+
+                speakerBuilder.add(CoeiroinkSpeaker.of(je.getAsJsonObject()));
+            } catch (RuntimeException ex) {
+                ITTSRuntime.getInstance().getLogger().warn("Invalid {} speaker entry was skipped", name, ex);
+            }
         }
 
         return speakerBuilder.build();

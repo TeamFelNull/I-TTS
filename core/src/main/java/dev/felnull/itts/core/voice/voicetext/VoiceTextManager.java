@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.voice.voicetext;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNStringUtil;
@@ -15,6 +16,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -58,8 +61,14 @@ public class VoiceTextManager implements ITTSRuntimeUse {
         return getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
     }
 
+    /**
+     * VoiceTextが利用可能かどうかを取得
+     *
+     * @return 利用可能な場合はtrue
+     */
     public boolean isAvailable() {
-        return getConfigManager().getConfig().getVoiceTextConfig().isEnable();
+        String apiKey = getApiKey();
+        return getConfigManager().getConfig().getVoiceTextConfig().isEnable() && apiKey != null && !apiKey.isBlank();
     }
 
     /**
@@ -79,6 +88,7 @@ public class VoiceTextManager implements ITTSRuntimeUse {
         HttpRequest request = HttpRequest.newBuilder(URI.create(API_URL))
                 .header("Authorization", basic)
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+                .timeout(Duration.of(10, ChronoUnit.SECONDS))
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("text=%s&speaker=%s", text, speaker.getId())))
                 .build();
         HttpResponse<InputStream> res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -94,16 +104,37 @@ public class VoiceTextManager implements ITTSRuntimeUse {
             return res.body();
         }
 
-        if ("application/json".equals(content.get())) {
-            try (InputStream stream = new BufferedInputStream(res.body()); Reader reader = new InputStreamReader(stream)) {
+        if (content.get().startsWith("application/json")) {
+            try (InputStream stream = new BufferedInputStream(res.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 JsonObject jo = GSON.fromJson(reader, JsonObject.class);
-                JsonObject ejo = jo.getAsJsonObject("error");
-                throw new IOException("VoiceText error (" + ejo.get("message").getAsString() + "): " + code);
+                throw new IOException("VoiceText error (" + getErrorMessage(jo) + "): " + code);
             } catch (JsonSyntaxException ignored) {
                 // Json解析エラーの場合は無視
             }
         }
 
         throw new IOException("Not audio data: " + code);
+    }
+
+    private String getErrorMessage(JsonObject response) {
+        if (response == null) {
+            return "invalid JSON response";
+        }
+
+        JsonElement errorElement = response.get("error");
+        if (errorElement != null && errorElement.isJsonObject()) {
+            JsonObject error = errorElement.getAsJsonObject();
+            JsonElement messageElement = error.get("message");
+            if (messageElement != null && messageElement.isJsonPrimitive()) {
+                return messageElement.getAsString();
+            }
+        }
+
+        JsonElement messageElement = response.get("message");
+        if (messageElement != null && messageElement.isJsonPrimitive()) {
+            return messageElement.getAsString();
+        }
+
+        return "unknown error";
     }
 }

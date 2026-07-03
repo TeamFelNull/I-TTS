@@ -94,8 +94,14 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
     }
 
     private void check() {
+        List<CIURL> previousUrls;
         synchronized (checkLock) {
-            Pair<List<CIURL>, List<CoeiroinkSpeaker>> cr = checkAndGet();
+            previousUrls = availableUrls;
+        }
+
+        Pair<List<CIURL>, List<CoeiroinkSpeaker>> cr = checkAndGet(previousUrls);
+
+        synchronized (checkLock) {
             availableUrls = cr.getLeft();
             availableSpeakers = cr.getRight();
         }
@@ -112,10 +118,10 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
      * CoeiroinkエンジンのURLの可用性をチェックし、スピーカー情報を取得する
      *
      * @return ペアオブジェクトで、第一要素に可用なCIURLのリスト、第二要素にCoeiroinkSpeakerのリストを含む
-     *     スピーカー情報は最初の成功したリクエストから取得されたもの
+     *     スピーカー情報は成功した全リクエストから重複を除いて取得されたもの
      * @throws RuntimeException IOエラーまたは中断が発生した場合にスローされる
      */
-    private Pair<List<CIURL>, List<CoeiroinkSpeaker>> checkAndGet() {
+    private Pair<List<CIURL>, List<CoeiroinkSpeaker>> checkAndGet(List<CIURL> previousUrls) {
         List<Pair<CIURL, CompletableFuture<List<CoeiroinkSpeaker>>>> urls = enginUrls.get().stream()
                 .map(CIURL::new)
                 .map(n -> Pair.of(n, CompletableFuture.supplyAsync(() -> {
@@ -128,7 +134,7 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
                 .toList();
 
         List<CIURL> rurls = new ArrayList<>();
-        List<CoeiroinkSpeaker> rspeakers = null;
+        Map<String, CoeiroinkSpeaker> speakerByUuid = new LinkedHashMap<>();
 
         for (Pair<CIURL, CompletableFuture<List<CoeiroinkSpeaker>>> ret : urls) {
             CIURL vu = ret.getLeft();
@@ -136,25 +142,25 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
 
             try {
                 List<CoeiroinkSpeaker> r = cf.get();
-                if (rspeakers == null) {
-                    rspeakers = r;
+                for (CoeiroinkSpeaker speaker : r) {
+                    speakerByUuid.putIfAbsent(speaker.speakerUuid().toString(), speaker);
                 }
 
                 rurls.add(vu);
 
-                if (availableUrls == null || !availableUrls.contains(vu)) {
+                if (previousUrls == null || !previousUrls.contains(vu)) {
                     getITTSLogger().info("Available {} URL: {}", manager.getName(), vu.url());
                 }
 
             } catch (InterruptedException | ExecutionException e) {
-                if (availableUrls == null || availableUrls.contains(vu)) {
+                if (previousUrls == null || previousUrls.contains(vu)) {
                     getITTSLogger().warn("Unavailable {} URL: {}", manager.getName(), vu.url());
                 }
             }
 
         }
 
-        return Pair.of(rurls, rspeakers);
+        return Pair.of(rurls, List.copyOf(speakerByUuid.values()));
     }
 
     /**
@@ -164,7 +170,9 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
      * @see #enginUrls
      */
     public boolean isAvailable() {
-        return enginUrls != null && !enginUrls.get().isEmpty();
+        synchronized (checkLock) {
+            return availableUrls != null && !availableUrls.isEmpty();
+        }
     }
 
     /**
@@ -173,13 +181,16 @@ public class CoeiroinkBalancer implements ITTSRuntimeUse {
      * @return URLの使用インターフェイス
      */
     protected CoeiroinkUseURL getUseURL() {
-        if (availableUrls == null || availableUrls.isEmpty()) {
-            throw new RuntimeException("No URL available.");
-        }
+        CIURL ciurl;
+        synchronized (checkLock) {
+            if (availableUrls == null || availableUrls.isEmpty()) {
+                throw new RuntimeException("No URL available.");
+            }
 
-        CIURL ciurl = availableUrls.stream()
-                .min(Comparator.comparingInt(r -> getUseCounter(r).get()))
-                .get();
+            ciurl = availableUrls.stream()
+                    .min(Comparator.comparingInt(r -> getUseCounter(r).get()))
+                    .get();
+        }
 
         getUseCounter(ciurl).incrementAndGet();
         return new CoeiroinkUseURL() {

@@ -97,7 +97,8 @@ public class VoicevoxManager {
 
     public List<VoiceType> getAvailableVoiceTypes() {
         return balancer.getAvailableSpeakers().stream()
-                .map(r -> (VoiceType) new VoicevoxVoiceType(r, this))
+                .flatMap(speaker -> speaker.styles().stream()
+                        .map(style -> (VoiceType) new VoicevoxVoiceType(speaker, style, this, speaker.styles().indexOf(style) == 0)))
                 .toList();
     }
 
@@ -138,41 +139,45 @@ public class VoicevoxManager {
         ImmutableList.Builder<VoicevoxSpeaker> speakerBuilder = new ImmutableList.Builder<>();
 
         for (JsonElement je : ja) {
-            speakerBuilder.add(VoicevoxSpeaker.of(je.getAsJsonObject()));
+            try {
+                if (!je.isJsonObject()) {
+                    throw new IllegalArgumentException("Speaker entry is not object");
+                }
+
+                speakerBuilder.add(VoicevoxSpeaker.of(je.getAsJsonObject()));
+            } catch (RuntimeException ex) {
+                ITTSRuntime.getInstance().getLogger().warn("Invalid {} speaker entry was skipped", name, ex);
+            }
         }
 
         return speakerBuilder.build();
     }
 
-    private JsonObject getQuery(String text, int speakerId) {
+    private JsonObject getQuery(VVURL vvurl, String text, int speakerId) throws IOException, InterruptedException {
         text = URLEncoder.encode(text, StandardCharsets.UTF_8);
 
-        try (var urlUse = balancer.getUseURL()) {
-            HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
-            HttpRequest req = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .timeout(Duration.of(10, ChronoUnit.SECONDS))
-                    .build();
-            HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
+        HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
+        HttpRequest req = HttpRequest.newBuilder(vvurl.createURI(String.format("audio_query?text=%s&speaker=%d", text, speakerId)))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .timeout(Duration.of(10, ChronoUnit.SECONDS))
+                .build();
+        HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
-            int statusCode = rep.statusCode();
-            if (statusCode != 200) {
-                throw new IOException(name + " audio_query API error: HTTP " + statusCode);
-            }
-
-            JsonObject result;
-            try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-                result = GSON.fromJson(reader, JsonObject.class);
-            }
-
-            if (result == null) {
-                throw new IOException(name + " audio_query API returned invalid JSON response");
-            }
-
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        int statusCode = rep.statusCode();
+        if (statusCode != 200) {
+            throw new IOException(name + " audio_query API error: HTTP " + statusCode);
         }
+
+        JsonObject result;
+        try (InputStream stream = new BufferedInputStream(rep.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+            result = GSON.fromJson(reader, JsonObject.class);
+        }
+
+        if (result == null) {
+            throw new IOException(name + " audio_query API returned invalid JSON response");
+        }
+
+        return result;
     }
 
     /**
@@ -185,8 +190,8 @@ public class VoicevoxManager {
      * @throws InterruptedException 割り込み例外
      */
     protected InputStream openVoiceStream(String text, int speakerId) throws IOException, InterruptedException {
-        JsonObject qry = getQuery(text, speakerId);
-        try (var urlUse = balancer.getUseURL()) {
+        try (VoicevoxUseURL urlUse = balancer.getUseURL()) {
+            JsonObject qry = getQuery(urlUse.getVVURL(), text, speakerId);
             HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
             HttpRequest request = HttpRequest.newBuilder(urlUse.getVVURL().createURI(String.format("synthesis?speaker=%d", speakerId)))
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))

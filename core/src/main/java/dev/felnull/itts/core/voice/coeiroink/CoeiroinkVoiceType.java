@@ -17,6 +17,16 @@ public class CoeiroinkVoiceType implements VoiceType {
     private final CoeiroinkSpeaker coeiroinkSpeaker;
 
     /**
+     * 話者スタイル
+     */
+    private final CoeiroinkStyle coeiroinkStyle;
+
+    /**
+     * 互換性のため従来IDを使うかどうか
+     */
+    private final boolean legacyId;
+
+    /**
      * マネージャー
      */
     private final CoeiroinkManager manager;
@@ -25,21 +35,26 @@ public class CoeiroinkVoiceType implements VoiceType {
      * コンストラクタ
      *
      * @param coeiroinkSpeaker 話者
+     * @param coeiroinkStyle   話者スタイル
      * @param coeiroinkManager マネージャー
+     * @param legacyId         従来IDを使うかどうか
      */
-    public CoeiroinkVoiceType(CoeiroinkSpeaker coeiroinkSpeaker, CoeiroinkManager coeiroinkManager) {
+    public CoeiroinkVoiceType(CoeiroinkSpeaker coeiroinkSpeaker, CoeiroinkStyle coeiroinkStyle, CoeiroinkManager coeiroinkManager, boolean legacyId) {
         this.coeiroinkSpeaker = coeiroinkSpeaker;
+        this.coeiroinkStyle = coeiroinkStyle;
         this.manager = coeiroinkManager;
+        this.legacyId = legacyId;
     }
 
     @Override
     public String getName() {
-        return this.coeiroinkSpeaker.speakerName();
+        return this.legacyId ? this.coeiroinkSpeaker.speakerName() : this.coeiroinkSpeaker.speakerName() + " " + this.coeiroinkStyle.styleName();
     }
 
     @Override
     public String getId() {
-        return manager.getName() + "-" + this.coeiroinkSpeaker.speakerUuid().toString();
+        String baseId = manager.getName() + "-" + this.coeiroinkSpeaker.speakerUuid();
+        return this.legacyId ? baseId : baseId + "-" + this.coeiroinkStyle.styleId();
     }
 
     @Override
@@ -54,6 +69,6 @@ public class CoeiroinkVoiceType implements VoiceType {
 
     @Override
     public Voice createVoice(long guildId, long userId) {
-        return new CoeiroinkVoice(this, manager, coeiroinkSpeaker);
+        return new CoeiroinkVoice(this, manager, coeiroinkSpeaker, coeiroinkStyle);
     }
 }
