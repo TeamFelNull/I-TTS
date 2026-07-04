@@ -71,6 +71,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
     public void dispose() {
         stop();
         this.audioManager.setSendingHandler(null);
+        this.audioPlayer.destroy();
     }
 
     /**
@@ -115,8 +116,8 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
      * 再生を一時停止
      */
     public void stop() {
-        currentLoaded.set(null);
         audioPlayer.stopTrack();
+        currentLoaded.set(null);
     }
 
     /**
@@ -133,9 +134,11 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         Pair<LoadedSaidText, Runnable> old = currentLoaded.getAndSet(null);
-        if (old != null) {
+        if (old != null && old.getLeft().getTrack() == track) {
             old.getLeft().setAlreadyUsed(true);
-            old.getRight().run();
+            if (endReason.mayStartNext) {
+                old.getRight().run();
+            }
         }
     }
 }
