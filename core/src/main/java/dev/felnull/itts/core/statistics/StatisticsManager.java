@@ -1,6 +1,7 @@
 package dev.felnull.itts.core.statistics;
 
 import dev.felnull.itts.core.ITTSRuntime;
+import dev.felnull.itts.core.config.Config;
 import dev.felnull.itts.core.config.DataBaseConfig;
 import dev.felnull.itts.core.statistics.dao.StatisticsDAO;
 import dev.felnull.itts.core.statistics.dao.StatisticsDAOFactory;
@@ -96,13 +97,24 @@ public final class StatisticsManager {
      * 必ずコンフィグが読み込まれた後に呼び出す
      */
     public void init() {
-        StatisticsConfig statisticsConfig = ITTSRuntime.getInstance().getConfigManager().getConfig().getStatisticsConfig();
+        Config config = ITTSRuntime.getInstance().getConfigManager().getConfig();
+        StatisticsConfig statisticsConfig = config.getStatisticsConfig();
         this.enabled = statisticsConfig.isEnable();
         this.dataBaseConfig = statisticsConfig.getDataBase();
 
         if (!enabled) {
             LOGGER.info("Statistics feature is disabled");
             return;
+        }
+
+        DataBaseConfig saveDataDbConfig = config.getDataBaseConfig();
+        if (dataBaseConfig.getType() == DataBaseConfig.DataBaseType.MYSQL
+                && saveDataDbConfig.getType() == DataBaseConfig.DataBaseType.MYSQL
+                && dataBaseConfig.getHost().equals(saveDataDbConfig.getHost())
+                && dataBaseConfig.getPort() == saveDataDbConfig.getPort()
+                && dataBaseConfig.getDatabaseName().equals(saveDataDbConfig.getDatabaseName())
+        ) {
+            throw new IllegalStateException("Statistics database and save data database cannot be the same");
         }
 
         StatisticsRepository repo = StatisticsRepository.create(createDAO());
