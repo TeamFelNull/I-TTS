@@ -23,16 +23,23 @@ public class CoeiroinkVoice extends CachedVoice {
     private final CoeiroinkSpeaker speaker;
 
     /**
+     * 話者スタイル
+     */
+    private final CoeiroinkStyle style;
+
+    /**
      * コンストラクタ
      *
      * @param voiceType 声タイプ
      * @param manager   マネージャー
      * @param speaker   話者
+     * @param style     話者スタイル
      */
-    protected CoeiroinkVoice(VoiceType voiceType, CoeiroinkManager manager, CoeiroinkSpeaker speaker) {
+    protected CoeiroinkVoice(VoiceType voiceType, CoeiroinkManager manager, CoeiroinkSpeaker speaker, CoeiroinkStyle style) {
         super(voiceType);
         this.manager = manager;
         this.speaker = speaker;
+        this.style = style;
     }
 
     @Override
@@ -41,15 +48,11 @@ public class CoeiroinkVoice extends CachedVoice {
             throw new IllegalArgumentException("Text cannot be null or empty");
         }
 
-        if (speaker.styles().isEmpty()) {
-            throw new IllegalStateException("Speaker has no styles available");
-        }
-
-        return this.manager.openVoiceStream(text, speaker.styles().get(0).styleId(), speaker.speakerUuid().toString());
+        return this.manager.openVoiceStream(text, style.styleId(), speaker.speakerUuid().toString());
     }
 
     @Override
     protected String createHashCodeChars() {
-        return this.speaker.speakerUuid().toString();
+        return this.speaker.speakerUuid() + ":" + this.style.styleId();
     }
 }
