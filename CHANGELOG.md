@@ -9,16 +9,24 @@
 ### Added
 
 ### Changed
-- `info`コマンドのサブコマンド選択方式をchoicesに変更
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-- 読み上げ処理の不具合を修正
 
 ### Security
+
+## [2.1.5] - 2026-07-05
+
+### Changed
+
+- `info`コマンドのサブコマンド選択方式をchoicesに変更
+
+### Fixed
+
+- 読み上げ処理の不具合を修正
 
 ## [2.1.4] - 2026-06-16
 
@@ -118,11 +126,13 @@
 ## [2.0.0-alpha.8] - 2023-09-21
 
 ### Fixed
+
 - サーバーニックネームが存在しない場合に、ユーザーニックネームではなくユーザーIDを読み上げていた問題を修正。
 
 ## [2.0.0-alpha.7] - 2023-09-03
 
 ### Changed
+
 - 辞書の適用順番を、省略辞書が一番最初に適用されるように変更
 
 ## [2.0.0-alpha.6] - 2023-08-29
@@ -161,7 +171,8 @@
 
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.4...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.5...HEAD
+[2.1.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.2...v2.1.4
 [2.1.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.0...v2.1.1
