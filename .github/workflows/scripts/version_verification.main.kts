@@ -8,6 +8,7 @@
 @file:DependsOn("com.vdurmont:semver4j:3.1.0")
 
 import com.vdurmont.semver4j.Semver
+import com.vdurmont.semver4j.SemverException
 
 val tag = args[0]
 val allTag = args[1]
@@ -21,8 +22,26 @@ println("バージョン: $version")
 println("全バージョン: $allVersions")
 println()
 
+
+fun parseSemver(versionText: String): Semver {
+    try {
+        return Semver(versionText)
+    } catch (_: SemverException) {
+    }
+
+    // Semverを採用する前のバージョン文字列だった場合に変換を試みる (1.8 -> 1.8.0)
+    if (versionText.split(".").size == 2) {
+        try {
+            return Semver("$versionText.0")
+        } catch (_: SemverException) {
+        }
+    }
+
+    throw IllegalStateException("Semver変換失敗: ${versionText}")
+}
+
 val versionSemver = Semver(version)
-val allVersionsSemver = allVersions.map { Semver(it) }
+val allVersionsSemver = allVersions.map { parseSemver(it) }
 
 if (versionSemver.build != null) {
     throw Exception("ビルドナンバーが含まれています: ${versionSemver.build}")
