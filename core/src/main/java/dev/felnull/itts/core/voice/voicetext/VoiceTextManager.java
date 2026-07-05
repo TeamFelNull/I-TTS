@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.voice.VoiceHttpUtils;
 import dev.felnull.itts.core.voice.VoiceType;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,9 +16,8 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -88,10 +88,16 @@ public class VoiceTextManager implements ITTSRuntimeUse {
         HttpRequest request = HttpRequest.newBuilder(URI.create(API_URL))
                 .header("Authorization", basic)
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-                .timeout(Duration.of(10, ChronoUnit.SECONDS))
+                .timeout(VoiceHttpUtils.SYNTHESIS_TIMEOUT)
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("text=%s&speaker=%s", text, speaker.getId())))
                 .build();
-        HttpResponse<InputStream> res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> res;
+
+        try {
+            res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (HttpTimeoutException e) {
+            throw VoiceHttpUtils.timeoutException("VoiceText", "tts", e);
+        }
 
         Optional<String> content = res.headers().firstValue("content-type");
         int code = res.statusCode();

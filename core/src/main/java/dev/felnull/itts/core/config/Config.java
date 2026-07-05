@@ -2,6 +2,7 @@ package dev.felnull.itts.core.config;
 
 import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
+import dev.felnull.itts.core.statistics.StatisticsConfig;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -82,4 +83,12 @@ public interface Config {
      * @return DB関係のコンフィグ
      */
     DataBaseConfig getDataBaseConfig();
+
+    /**
+     * 統計機能のコンフィグ
+     *
+     * @return 統計機能のコンフィグ
+     */
+    @NotNull
+    StatisticsConfig getStatisticsConfig();
 }

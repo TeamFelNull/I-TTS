@@ -74,6 +74,7 @@ public class Bot implements ITTSRuntimeUse {
         registerCommand(new AdminCommand());
         registerCommand(new DictCommand());
         registerCommand(new SkipCommand());
+        registerCommand(new StatCommand());
     }
 
     private void registerCommand(BaseCommand command) {

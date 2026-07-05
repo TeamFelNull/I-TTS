@@ -11,9 +11,9 @@ import java.util.UUID;
 /**
  * Coeiroinkの話者
  *
- * @param speakerName   名前
- * @param speakerUuid   UUID
- * @param styles スタイル
+ * @param speakerName 名前
+ * @param speakerUuid UUID
+ * @param styles      スタイル
  * @author MORIMORI0317
  */
 public record CoeiroinkSpeaker(String speakerName, UUID speakerUuid, List<CoeiroinkStyle> styles) {

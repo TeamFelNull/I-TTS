@@ -125,22 +125,24 @@ public final class TTSInstance implements ITTSRuntimeUse {
      * 破棄
      */
     public void dispose() {
-        destroyed.set(true);
+        synchronized (updateLock) {
+            destroyed.set(true);
 
-        vcEventSaidRegulator.dispose();
+            vcEventSaidRegulator.dispose();
 
-        saidTextQueue.clear();
+            saidTextQueue.clear();
 
-        while (!loadSaidTextQueue.isEmpty()) {
-            loadSaidTextQueue.poll().dispose();
+            while (!loadSaidTextQueue.isEmpty()) {
+                loadSaidTextQueue.poll().dispose();
+            }
+
+            LoadedSaidTextEntry cst = currentSaidText.get();
+            if (cst != null) {
+                cst.dispose();
+            }
+
+            voiceAudioScheduler.dispose();
         }
-
-        LoadedSaidTextEntry cst = currentSaidText.get();
-        if (cst != null) {
-            cst.dispose();
-        }
-
-        voiceAudioScheduler.dispose();
     }
 
     /**
@@ -156,12 +158,18 @@ public final class TTSInstance implements ITTSRuntimeUse {
         if (overwriteAloud) {
             updateAloud(saidText);
         } else {
-            if (saidText instanceof VCEventSaidText vst && vcEventSaidRegulator.restrict(vst.getMember().getUser().getIdLong(), vst)) {
-                return;
-            }
+            synchronized (updateLock) {
+                if (destroyed.get()) {
+                    return;
+                }
 
-            saidTextQueue.add(saidText);
-            updateQueue();
+                if (saidText instanceof VCEventSaidText vst && vcEventSaidRegulator.restrict(vst.getMember().getUser().getIdLong(), vst)) {
+                    return;
+                }
+
+                saidTextQueue.add(saidText);
+                updateQueue();
+            }
         }
     }
 
@@ -171,37 +179,38 @@ public final class TTSInstance implements ITTSRuntimeUse {
      * @return 飛ばした数
      */
     public int skipAll() {
-        currentReadAloudUUID.set(UUID.randomUUID());
-        voiceAudioScheduler.stop();
+        synchronized (updateLock) {
+            currentReadAloudUUID.set(UUID.randomUUID());
+            voiceAudioScheduler.stop();
 
-        if (overwriteAloud) {
-            LoadedSaidTextEntry lste = currentSaidText.getAndSet(null);
-            if (lste != null) {
-                lste.dispose();
-                return 1;
+            if (overwriteAloud) {
+                LoadedSaidTextEntry lste = currentSaidText.getAndSet(null);
+                if (lste != null) {
+                    lste.dispose();
+                    return 1;
+                }
+            } else {
+                int ct = 0;
+                ct += saidTextQueue.size();
+                saidTextQueue.clear();
+
+                ct += loadSaidTextQueue.size();
+                while (!loadSaidTextQueue.isEmpty()) {
+                    loadSaidTextQueue.poll().dispose();
+                }
+
+                LoadedSaidTextEntry lste = currentSaidText.getAndSet(null);
+                if (lste != null) {
+                    lste.dispose();
+                    ct++;
+                }
+
+                next.compareAndSet(false, true);
+
+                updateQueue();
+
+                return ct;
             }
-        } else {
-            int ct = 0;
-            ct += saidTextQueue.size();
-            saidTextQueue.clear();
-
-            ct += loadSaidTextQueue.size();
-            while (!loadSaidTextQueue.isEmpty()) {
-                loadSaidTextQueue.poll().dispose();
-            }
-
-            LoadedSaidTextEntry lste = currentSaidText.getAndSet(null);
-            if (lste != null) {
-                lste.dispose();
-                ct++;
-            }
-
-            next.compareAndSet(false, true);
-
-            updateQueue();
-
-
-            return ct;
         }
 
         return 0;
@@ -257,7 +266,7 @@ public final class TTSInstance implements ITTSRuntimeUse {
                     currentSaidText.set(null);
                 }
 
-                while (!saidTextQueue.isEmpty()) {
+                while (loadSaidTextQueue.size() < LOAD_COUNT && !saidTextQueue.isEmpty()) {
                     loadSaidTextQueue.add(new LoadedSaidTextEntry(saidTextQueue.poll()));
                 }
             }

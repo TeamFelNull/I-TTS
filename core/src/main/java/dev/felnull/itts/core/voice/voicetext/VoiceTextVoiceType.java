@@ -52,6 +52,11 @@ public class VoiceTextVoiceType implements VoiceType {
         return new VoiceTextVoice(this, speakers);
     }
 
+    @Override
+    public String getStatisticsName() {
+        return speakers.getId();
+    }
+
     private VoiceTextManager getVoiceTextManager() {
         return ITTSRuntime.getInstance().getVoiceManager().getVoiceTextManager();
     }

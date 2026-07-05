@@ -8,6 +8,8 @@ import dev.felnull.itts.core.dict.DictionaryManager;
 import dev.felnull.itts.core.dict.DomainListManager;
 import dev.felnull.itts.core.discord.Bot;
 import dev.felnull.itts.core.savedata.SaveDataManager;
+import dev.felnull.itts.core.statistics.StatisticsManager;
+import dev.felnull.itts.core.statistics.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -115,6 +117,11 @@ public class ITTSRuntime {
     private final Bot bot;
 
     /**
+     * 読み上げ文字数のレコーダー
+     */
+    private final TTSCountRecorder ttsCountRecorder = new TTSCountRecorder();
+
+    /**
      * 全てのマネージャー
      */
     private final List<ITTSBaseManager> managers;
@@ -197,6 +204,7 @@ public class ITTSRuntime {
                 .forEach(CompletableFuture::join);
 
         SaveDataManager.getInstance().init();
+        StatisticsManager.getInstance().init();
 
         logger.info("Setup complete");
 
@@ -273,5 +281,14 @@ public class ITTSRuntime {
 
     public Bot getBot() {
         return bot;
+    }
+
+    /**
+     * 読み上げ文字数のレコーダーを取得
+     *
+     * @return レコーダー
+     */
+    public TTSCountRecorder getTTSCountRecorder() {
+        return ttsCountRecorder;
     }
 }

@@ -8,6 +8,7 @@ import blue.endless.jankson.api.SyntaxError;
 import com.google.common.collect.ImmutableMap;
 import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.itts.config.old.ConfigV0;
+import dev.felnull.itts.config.old.ConfigV1;
 import dev.felnull.itts.core.config.Config;
 import dev.felnull.itts.core.config.ConfigContext;
 import dev.felnull.itts.utils.Json5Utils;
@@ -59,7 +60,8 @@ public class SelfHostConfigManager implements ConfigContext {
      */
     private final Map<Integer, ConfigLoader<?>> configLoaders = ImmutableMap.of(
             0, ConfigV0.LOADER,
-            1, ConfigImpl.LOADER
+            1, ConfigV1.LOADER,
+            2, ConfigImpl.LOADER
     );
 
     /**

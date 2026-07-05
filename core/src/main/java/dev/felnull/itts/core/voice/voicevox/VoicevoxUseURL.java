@@ -13,4 +13,10 @@ public interface VoicevoxUseURL extends AutoCloseable {
      * @return VOICEVOXエンジンのURL
      */
     VVURL getVVURL();
+
+    /**
+     * URL使用状態を解除
+     */
+    @Override
+    void close();
 }

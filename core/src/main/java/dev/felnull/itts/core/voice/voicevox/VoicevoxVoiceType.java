@@ -68,6 +68,11 @@ public class VoicevoxVoiceType implements VoiceType {
     }
 
     @Override
+    public String getStatisticsName() {
+        return voicevoxSpeaker.name();
+    }
+
+    @Override
     public Voice createVoice(long guildId, long userId) {
         return new VoicevoxVoice(this, manager, voicevoxSpeaker, voicevoxStyle);
     }

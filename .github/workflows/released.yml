@@ -28,6 +28,32 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
+      - name: Version Verification #バージョン検証
+        run: |
+          TAG="${{ github.ref_name }}"
+          ALL_TAGS=`git tag`
+
+          chmod +x ./.github/workflows/scripts/version_verification.main.kts
+          ./.github/workflows/scripts/version_verification.main.kts "$TAG" "$ALL_TAGS"
+          echo "バージョン検証完了!"
+
+      - name: Project Verification #プロジェクト検証
+        shell: bash
+        run: |
+          CHANGE_LOG=`./gradlew getChangelog --console=plain -q --no-header --no-summary --no-links --unreleased`
+          CHANGELOG_NUM=`echo "$CHANGE_LOG" | grep -n "^###" | sed -e 's/:.*//g' | head -n 1`
+          if [ -n "$CHANGELOG_NUM" ]; then
+            CHANGE_LOG_TMP=`echo "$CHANGE_LOG" | tail -n +$CHANGELOG_NUM`
+            CHANGE_LOG="$CHANGE_LOG_TMP"
+          fi
+
+          echo "---ChangeLog---"
+          echo "$CHANGE_LOG"
+          echo "---------------"
+
+          chmod +x ${{ github.action_path }}/scripts/project_verification.main.kts
+          ${{ github.action_path }}/scripts/project_verification.main.kts "$CHANGE_LOG"
+
       - name: Gradle Check #Gradle動作確認
         shell: bash
         run: |
@@ -120,6 +146,6 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add ./CHANGELOG.md
-          git commit -m "変更ログを更新(${{ github.ref_name }})"
+          git commit -m "チェンジログを更新(${{ github.ref_name }})"
           git push -u origin
           echo "Commit done!"

@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.audio.loader.VoiceTrackLoader;
+import dev.felnull.itts.core.statistics.TTSCountRecorder;
 import dev.felnull.itts.core.tts.saidtext.SaidText;
 import dev.felnull.itts.core.util.TTSUtils;
 import dev.felnull.itts.core.voice.Voice;
@@ -70,6 +71,7 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
     public void dispose() {
         stop();
         this.audioManager.setSendingHandler(null);
+        this.audioPlayer.destroy();
     }
 
     /**
@@ -94,7 +96,15 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
 
                     Objects.requireNonNull(voice, "Voice is null");
 
-                    return Pair.of(TTSUtils.roundText(voice, guildId, sayText, false), voice);
+                    String finalText = TTSUtils.roundText(voice, guildId, sayText, false);
+
+                    TTSCountRecorder recorder = getTTSCountRecorder();
+                    if (recorder != null && finalText != null) {
+                        long botId = getBot().getBotId();
+                        recorder.record(botId, guildId, voice, finalText.length());
+                    }
+
+                    return Pair.of(finalText, voice);
                 }, getAsyncExecutor())
                 .thenComposeAsync((sayTextVoice) -> {
                     VoiceTrackLoader vtl = sayTextVoice.getRight().createVoiceTrackLoader(sayTextVoice.getLeft());
@@ -106,8 +116,8 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
      * 再生を一時停止
      */
     public void stop() {
-        currentLoaded.set(null);
         audioPlayer.stopTrack();
+        currentLoaded.set(null);
     }
 
     /**
@@ -124,9 +134,11 @@ public class VoiceAudioScheduler extends AudioEventAdapter implements ITTSRuntim
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         Pair<LoadedSaidText, Runnable> old = currentLoaded.getAndSet(null);
-        if (old != null) {
+        if (old != null && old.getLeft().getTrack() == track) {
             old.getLeft().setAlreadyUsed(true);
-            old.getRight().run();
+            if (endReason.mayStartNext) {
+                old.getRight().run();
+            }
         }
     }
 }

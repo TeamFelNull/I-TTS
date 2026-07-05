@@ -43,4 +43,12 @@ public interface VoiceType {
      * @return 声
      */
     Voice createVoice(long guildId, long userId);
+
+    /**
+     * 統計に記録される名前
+     * ボイスカテゴリ内で一意の文字列
+     *
+     * @return 名前
+     */
+    String getStatisticsName();
 }
