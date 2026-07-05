@@ -7,15 +7,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.felnull.itts.core.ITTSRuntime;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
+import dev.felnull.itts.core.voice.VoiceHttpUtils;
 import dev.felnull.itts.core.voice.VoiceType;
 
 import java.io.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -96,7 +96,8 @@ public class CoeiroinkManager {
 
     public List<VoiceType> getAvailableVoiceTypes() {
         return balancer.getAvailableSpeakers().stream()
-                .map(r -> (VoiceType) new CoeiroinkVoiceType(r, this))
+                .flatMap(speaker -> speaker.styles().stream()
+                        .map(style -> (VoiceType) new CoeiroinkVoiceType(speaker, style, this, speaker.styles().indexOf(style) == 0)))
                 .toList();
     }
 
@@ -115,7 +116,7 @@ public class CoeiroinkManager {
     protected List<CoeiroinkSpeaker> requestSpeakers(CIURL ciurl) throws IOException, InterruptedException {
         HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
         HttpRequest req = HttpRequest.newBuilder(ciurl.createURI("speakers"))
-                .timeout(Duration.of(3000, ChronoUnit.MILLIS))
+                .timeout(VoiceHttpUtils.SPEAKER_LIST_TIMEOUT)
                 .build();
         HttpResponse<InputStream> rep = hc.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
@@ -137,7 +138,15 @@ public class CoeiroinkManager {
         ImmutableList.Builder<CoeiroinkSpeaker> speakerBuilder = new ImmutableList.Builder<>();
 
         for (JsonElement je : ja) {
-            speakerBuilder.add(CoeiroinkSpeaker.of(je.getAsJsonObject()));
+            try {
+                if (!je.isJsonObject()) {
+                    throw new IllegalArgumentException("Speaker entry is not object");
+                }
+
+                speakerBuilder.add(CoeiroinkSpeaker.of(je.getAsJsonObject()));
+            } catch (RuntimeException ex) {
+                ITTSRuntime.getInstance().getLogger().warn("Invalid {} speaker entry was skipped", name, ex);
+            }
         }
 
         return speakerBuilder.build();
@@ -150,13 +159,15 @@ public class CoeiroinkManager {
      * @param styleId     スタイルID
      * @param speakerUuid スピーカーのUUID
      * @return 音声データのストリーム
+     * @throws IOException          IO例外
+     * @throws InterruptedException 割り込み例外
      */
-    protected InputStream openVoiceStream(String text, int styleId, String speakerUuid) {
+    protected InputStream openVoiceStream(String text, int styleId, String speakerUuid) throws IOException, InterruptedException {
         JsonObject qry = createSynthesisParam(text, styleId, speakerUuid);
-        try (var urlUse = balancer.getUseURL()) {
+        try (CoeiroinkUseURL urlUse = balancer.getUseURL()) {
             HttpClient hc = ITTSRuntime.getInstance().getNetworkManager().getHttpClient();
             HttpRequest request = HttpRequest.newBuilder(urlUse.getCIURL().createURI("synthesis"))
-                    .timeout(Duration.of(10, ChronoUnit.SECONDS))
+                    .timeout(VoiceHttpUtils.SYNTHESIS_TIMEOUT)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(qry)))
                     .build();
@@ -176,8 +187,8 @@ public class CoeiroinkManager {
             }
 
             throw new IOException("Not audio data: " + code);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (HttpTimeoutException e) {
+            throw VoiceHttpUtils.timeoutException(name, "synthesis", e);
         }
     }
 

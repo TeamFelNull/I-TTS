@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -93,8 +94,14 @@ public class VoicevoxBalancer implements ITTSRuntimeUse {
     }
 
     private void check() {
+        List<VVURL> previousUrls;
         synchronized (checkLock) {
-            Pair<List<VVURL>, List<VoicevoxSpeaker>> cr = checkAndGet();
+            previousUrls = availableUrls;
+        }
+
+        Pair<List<VVURL>, List<VoicevoxSpeaker>> cr = checkAndGet(previousUrls);
+
+        synchronized (checkLock) {
             availableUrls = cr.getLeft();
             availableSpeakers = cr.getRight();
         }
@@ -107,7 +114,7 @@ public class VoicevoxBalancer implements ITTSRuntimeUse {
         }, manager.getConfig().getCheckTime());
     }
 
-    private Pair<List<VVURL>, List<VoicevoxSpeaker>> checkAndGet() {
+    private Pair<List<VVURL>, List<VoicevoxSpeaker>> checkAndGet(List<VVURL> previousUrls) {
         List<Pair<VVURL, CompletableFuture<List<VoicevoxSpeaker>>>> urls = enginUrls.get().stream()
                 .map(VVURL::new)
                 .map(n -> Pair.of(n, CompletableFuture.supplyAsync(() -> {
@@ -120,7 +127,7 @@ public class VoicevoxBalancer implements ITTSRuntimeUse {
                 .toList();
 
         List<VVURL> rurls = new ArrayList<>();
-        List<VoicevoxSpeaker> rspeakers = null;
+        Map<String, VoicevoxSpeaker> speakerByUuid = new LinkedHashMap<>();
 
         for (Pair<VVURL, CompletableFuture<List<VoicevoxSpeaker>>> ret : urls) {
             VVURL vu = ret.getLeft();
@@ -129,29 +136,36 @@ public class VoicevoxBalancer implements ITTSRuntimeUse {
             try {
                 List<VoicevoxSpeaker> r = cf.get();
 
-                if (rspeakers == null) {
-                    rspeakers = r;
+                for (VoicevoxSpeaker speaker : r) {
+                    speakerByUuid.putIfAbsent(speaker.uuid().toString(), speaker);
                 }
 
                 rurls.add(vu);
 
-                if (availableUrls == null || !availableUrls.contains(vu)) {
+                if (previousUrls == null || !previousUrls.contains(vu)) {
                     getITTSLogger().info("Available {} URL: {}", manager.getName(), vu.url());
                 }
 
             } catch (InterruptedException | ExecutionException e) {
-                if (availableUrls == null || availableUrls.contains(vu)) {
+                if (previousUrls == null || previousUrls.contains(vu)) {
                     getITTSLogger().warn("Unavailable {} URL: {}", manager.getName(), vu.url());
                 }
             }
 
         }
 
-        return Pair.of(rurls, rspeakers);
+        return Pair.of(rurls, List.copyOf(speakerByUuid.values()));
     }
 
+    /**
+     * 利用可能なURLがあるかどうかを取得
+     *
+     * @return 利用可能なURLがある場合はtrue
+     */
     public boolean isAvailable() {
-        return enginUrls != null && !enginUrls.get().isEmpty();
+        synchronized (checkLock) {
+            return availableUrls != null && !availableUrls.isEmpty();
+        }
     }
 
     /**
@@ -160,13 +174,16 @@ public class VoicevoxBalancer implements ITTSRuntimeUse {
      * @return URLの使用インターフェイス
      */
     protected VoicevoxUseURL getUseURL() {
-        if (availableUrls == null || availableUrls.isEmpty()) {
-            throw new RuntimeException("No URL available.");
-        }
+        VVURL vvurl;
+        synchronized (checkLock) {
+            if (availableUrls == null || availableUrls.isEmpty()) {
+                throw new RuntimeException("No URL available.");
+            }
 
-        VVURL vvurl = availableUrls.stream()
-                .min(Comparator.comparingInt(r -> getUseCounter(r).get()))
-                .get();
+            vvurl = availableUrls.stream()
+                    .min(Comparator.comparingInt(r -> getUseCounter(r).get()))
+                    .get();
+        }
 
         getUseCounter(vvurl).incrementAndGet();
         return new VoicevoxUseURL() {

@@ -7,9 +7,11 @@ import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.jetbrains.annotations.NotNull;
@@ -41,14 +43,16 @@ public class InfoCommand extends BaseCommand {
         return Commands.slash("info", "情報を表示")
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS)
-                .addSubcommands(new SubcommandData("about", "BOT情報を表示"))
-                .addSubcommands(new SubcommandData("oss", "OSS情報を表示"))
-                .addSubcommands(new SubcommandData("work", "稼働情報を表示"));
+                .addOptions(new OptionData(OptionType.STRING, "type", "表示する情報の種類", true)
+                        .addChoice("BOT情報", "about")
+                        .addChoice("OSSクレジット", "oss")
+                        .addChoice("稼働情報", "work"));
     }
 
     @Override
     public void commandInteraction(SlashCommandInteractionEvent event) {
-        switch (Objects.requireNonNull(event.getSubcommandName())) {
+        OptionMapping typeOption = Objects.requireNonNull(event.getOption("type"));
+        switch (typeOption.getAsString()) {
             case "about" -> about(event);
             case "oss" -> oss(event);
             case "work" -> work(event);

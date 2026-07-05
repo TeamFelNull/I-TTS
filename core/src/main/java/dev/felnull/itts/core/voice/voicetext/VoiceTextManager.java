@@ -1,10 +1,12 @@
 package dev.felnull.itts.core.voice.voicetext;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.itts.core.ITTSRuntimeUse;
+import dev.felnull.itts.core.voice.VoiceHttpUtils;
 import dev.felnull.itts.core.voice.VoiceType;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +16,7 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -58,8 +61,14 @@ public class VoiceTextManager implements ITTSRuntimeUse {
         return getConfigManager().getConfig().getVoiceTextConfig().getApiKey();
     }
 
+    /**
+     * VoiceTextが利用可能かどうかを取得
+     *
+     * @return 利用可能な場合はtrue
+     */
     public boolean isAvailable() {
-        return getConfigManager().getConfig().getVoiceTextConfig().isEnable();
+        String apiKey = getApiKey();
+        return getConfigManager().getConfig().getVoiceTextConfig().isEnable() && apiKey != null && !apiKey.isBlank();
     }
 
     /**
@@ -79,9 +88,16 @@ public class VoiceTextManager implements ITTSRuntimeUse {
         HttpRequest request = HttpRequest.newBuilder(URI.create(API_URL))
                 .header("Authorization", basic)
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+                .timeout(VoiceHttpUtils.SYNTHESIS_TIMEOUT)
                 .POST(HttpRequest.BodyPublishers.ofString(String.format("text=%s&speaker=%s", text, speaker.getId())))
                 .build();
-        HttpResponse<InputStream> res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> res;
+
+        try {
+            res = hc.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (HttpTimeoutException e) {
+            throw VoiceHttpUtils.timeoutException("VoiceText", "tts", e);
+        }
 
         Optional<String> content = res.headers().firstValue("content-type");
         int code = res.statusCode();
@@ -94,16 +110,37 @@ public class VoiceTextManager implements ITTSRuntimeUse {
             return res.body();
         }
 
-        if ("application/json".equals(content.get())) {
-            try (InputStream stream = new BufferedInputStream(res.body()); Reader reader = new InputStreamReader(stream)) {
+        if (content.get().startsWith("application/json")) {
+            try (InputStream stream = new BufferedInputStream(res.body()); Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 JsonObject jo = GSON.fromJson(reader, JsonObject.class);
-                JsonObject ejo = jo.getAsJsonObject("error");
-                throw new IOException("VoiceText error (" + ejo.get("message").getAsString() + "): " + code);
+                throw new IOException("VoiceText error (" + getErrorMessage(jo) + "): " + code);
             } catch (JsonSyntaxException ignored) {
                 // Json解析エラーの場合は無視
             }
         }
 
         throw new IOException("Not audio data: " + code);
+    }
+
+    private String getErrorMessage(JsonObject response) {
+        if (response == null) {
+            return "invalid JSON response";
+        }
+
+        JsonElement errorElement = response.get("error");
+        if (errorElement != null && errorElement.isJsonObject()) {
+            JsonObject error = errorElement.getAsJsonObject();
+            JsonElement messageElement = error.get("message");
+            if (messageElement != null && messageElement.isJsonPrimitive()) {
+                return messageElement.getAsString();
+            }
+        }
+
+        JsonElement messageElement = response.get("message");
+        if (messageElement != null && messageElement.isJsonPrimitive()) {
+            return messageElement.getAsString();
+        }
+
+        return "unknown error";
     }
 }

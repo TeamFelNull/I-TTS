@@ -269,6 +269,7 @@ public class TTSManager implements ITTSRuntimeUse {
 
         VoiceType vt = getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) {
+            getITTSLogger().warn("No available voice type for guild {} user {}", guildId, userId);
             return;
         }
 
@@ -345,6 +346,7 @@ public class TTSManager implements ITTSRuntimeUse {
 
         VoiceType vt = getVoiceManager().getVoiceType(guildId, userId);
         if (vt == null) {
+            getITTSLogger().warn("No available voice type for guild {} user {}", guildId, userId);
             return;
         }
 

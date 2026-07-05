@@ -17,6 +17,16 @@ public class VoicevoxVoiceType implements VoiceType {
     private final VoicevoxSpeaker voicevoxSpeaker;
 
     /**
+     * 話者スタイル
+     */
+    private final VoicevoxStyle voicevoxStyle;
+
+    /**
+     * 互換性のため従来IDを使うかどうか
+     */
+    private final boolean legacyId;
+
+    /**
      * マネージャー
      */
     private final VoicevoxManager manager;
@@ -25,21 +35,26 @@ public class VoicevoxVoiceType implements VoiceType {
      * コンストラクタ
      *
      * @param voicevoxSpeaker 話者
+     * @param voicevoxStyle   話者スタイル
      * @param voicevoxManager マネージャー
+     * @param legacyId        従来IDを使うかどうか
      */
-    public VoicevoxVoiceType(VoicevoxSpeaker voicevoxSpeaker, VoicevoxManager voicevoxManager) {
+    public VoicevoxVoiceType(VoicevoxSpeaker voicevoxSpeaker, VoicevoxStyle voicevoxStyle, VoicevoxManager voicevoxManager, boolean legacyId) {
         this.voicevoxSpeaker = voicevoxSpeaker;
+        this.voicevoxStyle = voicevoxStyle;
         this.manager = voicevoxManager;
+        this.legacyId = legacyId;
     }
 
     @Override
     public String getName() {
-        return this.voicevoxSpeaker.name();
+        return this.legacyId ? this.voicevoxSpeaker.name() : this.voicevoxSpeaker.name() + " " + this.voicevoxStyle.name();
     }
 
     @Override
     public String getId() {
-        return manager.getName() + "-" + this.voicevoxSpeaker.uuid().toString();
+        String baseId = manager.getName() + "-" + this.voicevoxSpeaker.uuid();
+        return this.legacyId ? baseId : baseId + "-" + this.voicevoxStyle.id();
     }
 
     @Override
@@ -59,6 +74,6 @@ public class VoicevoxVoiceType implements VoiceType {
 
     @Override
     public Voice createVoice(long guildId, long userId) {
-        return new VoicevoxVoice(this, manager, voicevoxSpeaker);
+        return new VoicevoxVoice(this, manager, voicevoxSpeaker, voicevoxStyle);
     }
 }
