@@ -59,8 +59,6 @@ I-TTS (Integration TTS) はDiscord用の読み上げBOT。VOICEVOX、COEIROINK�
 - **repository**: ビジネスロジック向けリポジトリ層
 - **legacy**: 旧バージョンデータ移行
 
-スキーマ定義は [docs/schema-sqlite.md](docs/schema-sqlite.md) を参照。
-
 ## Discordコマンド (discord.command パッケージ)
 
 `BaseCommand`を継承してスラッシュコマンドを実装。主要コマンド:
