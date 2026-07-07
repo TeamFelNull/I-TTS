@@ -1,9 +1,7 @@
 package dev.felnull.itts.core.voice;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
@@ -37,22 +35,5 @@ public final class VoiceHttpUtils {
      */
     public static IOException timeoutException(String engineName, String apiName, HttpTimeoutException exception) {
         return new IOException(engineName + " " + apiName + " API timed out after " + SYNTHESIS_TIMEOUT.toSeconds() + " seconds", exception);
-    }
-
-    /**
-     * 返却しないHTTPレスポンスのbodyを閉じる
-     *
-     * @param response HTTPレスポンス
-     */
-    public static void closeBodyQuietly(HttpResponse<InputStream> response) {
-        if (response == null || response.body() == null) {
-            return;
-        }
-
-        try {
-            response.body().close();
-        } catch (IOException ignored) {
-            // エラー応答の破棄に失敗しても元の例外を優先する
-        }
     }
 }

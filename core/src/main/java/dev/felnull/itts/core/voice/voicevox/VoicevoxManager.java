@@ -123,7 +123,6 @@ public class VoicevoxManager {
 
         int statusCode = rep.statusCode();
         if (statusCode != 200) {
-            VoiceHttpUtils.closeBodyQuietly(rep);
             throw new IOException(name + " API error: HTTP " + statusCode);
         }
 
@@ -167,7 +166,6 @@ public class VoicevoxManager {
 
             int statusCode = rep.statusCode();
             if (statusCode != 200) {
-                VoiceHttpUtils.closeBodyQuietly(rep);
                 throw new IOException(name + " audio_query API error: HTTP " + statusCode);
             }
 
@@ -211,7 +209,6 @@ public class VoicevoxManager {
             int code = res.statusCode();
 
             if (content.isEmpty()) {
-                VoiceHttpUtils.closeBodyQuietly(res);
                 throw new IOException("Content Type does not exist: " + code);
             }
 
@@ -220,7 +217,6 @@ public class VoicevoxManager {
                 return res.body();
             }
 
-            VoiceHttpUtils.closeBodyQuietly(res);
             throw new IOException("Not audio data: " + code);
         } catch (HttpTimeoutException e) {
             throw VoiceHttpUtils.timeoutException(name, "synthesis", e);
