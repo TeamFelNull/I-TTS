@@ -22,6 +22,42 @@ public interface VoiceType {
     String getId();
 
     /**
+     * 声モデルの名前を取得
+     *
+     * @return 声モデルの名前
+     */
+    default String getModelName() {
+        return getName();
+    }
+
+    /**
+     * 声モデルのIDを取得
+     *
+     * @return 声モデルのID
+     */
+    default String getModelId() {
+        return getId();
+    }
+
+    /**
+     * 喋り型の名前を取得
+     *
+     * @return 喋り型の名前
+     */
+    default String getStyleName() {
+        return "標準";
+    }
+
+    /**
+     * 喋り型のIDを取得
+     *
+     * @return 喋り型のID
+     */
+    default String getStyleId() {
+        return getId();
+    }
+
+    /**
      * 利用可能かどうかを取得
      *
      * @return 利用可能かどうか

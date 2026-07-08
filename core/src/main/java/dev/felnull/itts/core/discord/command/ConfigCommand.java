@@ -78,9 +78,11 @@ public class ConfigCommand extends BaseCommand {
                         .addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声タイプのカテゴリ")
                                 .setAutoComplete(true)
                                 .setRequired(true))
-                        .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
+                        .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声モデル")
                                 .setAutoComplete(true)
-                                .setRequired(true)))
+                                .setRequired(true))
+                        .addOptions(new OptionData(OptionType.STRING, "voice_style", "喋り型")
+                                .setAutoComplete(true)))
                 .addSubcommands(new SubcommandData(AUTO_DISCONNECT_NAME, "自動切断")
                         .addOptions(new OptionData(OptionType.STRING, "mode", "モード")
                                 .addChoice(getAutoDisconnectModeName(AutoDisconnectMode.OFF), "off")
@@ -139,6 +141,7 @@ public class ConfigCommand extends BaseCommand {
 
         String odVc = event.getOption("voice_category", OptionMapping::getAsString);
         String odVt = event.getOption("voice_type", OptionMapping::getAsString);
+        String odVs = event.getOption("voice_style", OptionMapping::getAsString);
 
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
         LegacyServerData sd = legacySaveDataLayer.getServerData(guild.getIdLong());
@@ -150,7 +153,7 @@ public class ConfigCommand extends BaseCommand {
             return;
         }
 
-        Optional<VoiceType> vt = vm.getVoiceType(odVt);
+        Optional<VoiceType> vt = VoiceCommand.getVoiceType(cat.get(), odVt, odVs, vm.getAvailableVoiceTypes());
 
         if (vt.isEmpty()) {
             event.reply("存在しない読み上げタイプです。").setEphemeral(true).queue();
