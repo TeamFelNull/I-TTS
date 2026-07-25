@@ -4,6 +4,7 @@ import dev.felnull.itts.core.ITTSRuntimeUse;
 import dev.felnull.itts.core.ImmortalityTimer;
 import dev.felnull.itts.core.discord.command.*;
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
+import club.minnced.discord.jdave.utils.DaveLogger;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -41,6 +42,7 @@ public class Bot implements ITTSRuntimeUse {
      * BOTを開始
      */
     public void start() {
+        DaveLogger.init();
         registeringCommands();
 
         this.jda = JDABuilder.createDefault(getConfigManager().getConfig().getBotToken())
