@@ -36,13 +36,17 @@ I-TTS (Integration TTS) はDiscord用の読み上げBOT。VOICEVOX、COEIROINK�
 
 ## マネージャーパターン
 
-`ITTSRuntime`がシングルトンとして各マネージャーを保持:
+`ITTSRuntime`がシングルトンとして主要マネージャーを保持:
 - `ConfigManager`: 設定管理
 - `VoiceManager`: 音声タイプ管理
 - `TTSManager`: テキスト読み上げ処理
+- `VoiceAudioManager`: Discord音声再生管理
 - `DictionaryManager`: 辞書管理
+- `DomainListManager`: ドメインリスト管理
 - `CacheManager`: 音声キャッシュ
-- `SaveDataManager`: データ永続化
+- `ITTSNetworkManager`: HTTPクライアント管理
+
+`SaveDataManager`は独立したシングルトンとしてデータ永続化を管理する。
 
 ## 音声合成 (voice パッケージ)
 
@@ -58,8 +62,6 @@ I-TTS (Integration TTS) はDiscord用の読み上げBOT。VOICEVOX、COEIROINK�
 - **dao**: データアクセスオブジェクト。SQLite/MySQL対応
 - **repository**: ビジネスロジック向けリポジトリ層
 - **legacy**: 旧バージョンデータ移行
-
-スキーマ定義は [docs/schema-sqlite.md](docs/schema-sqlite.md) を参照。
 
 ## Discordコマンド (discord.command パッケージ)
 
