@@ -48,9 +48,11 @@ public class AdminCommand extends BaseCommand {
                                         .addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声タイプのカテゴリ")
                                                 .setAutoComplete(true)
                                                 .setRequired(true))
-                                        .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
+                                        .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声モデル")
                                                 .setAutoComplete(true)
-                                                .setRequired(true))),
+                                                .setRequired(true))
+                                        .addOptions(new OptionData(OptionType.STRING, "voice_style", "喋り型")
+                                                .setAutoComplete(true))),
                                 new SubcommandData("check", "他人の読み上げ音声タイプを確認")
                                         .addOptions(new OptionData(OptionType.USER, "user", "ユーザー指定")
                                                 .setRequired(true))));

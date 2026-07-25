@@ -58,6 +58,26 @@ public class CoeiroinkVoiceType implements VoiceType {
     }
 
     @Override
+    public String getModelName() {
+        return this.coeiroinkSpeaker.speakerName();
+    }
+
+    @Override
+    public String getModelId() {
+        return manager.getName() + "-" + this.coeiroinkSpeaker.speakerUuid();
+    }
+
+    @Override
+    public String getStyleName() {
+        return this.coeiroinkStyle.styleName();
+    }
+
+    @Override
+    public String getStyleId() {
+        return String.valueOf(this.coeiroinkStyle.styleId());
+    }
+
+    @Override
     public boolean isAvailable() {
         return manager.isAvailable() && manager.getBalancer().getAvailableSpeakers().contains(coeiroinkSpeaker);
     }

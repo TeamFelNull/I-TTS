@@ -58,6 +58,26 @@ public class VoicevoxVoiceType implements VoiceType {
     }
 
     @Override
+    public String getModelName() {
+        return this.voicevoxSpeaker.name();
+    }
+
+    @Override
+    public String getModelId() {
+        return manager.getName() + "-" + this.voicevoxSpeaker.uuid();
+    }
+
+    @Override
+    public String getStyleName() {
+        return this.voicevoxStyle.name();
+    }
+
+    @Override
+    public String getStyleId() {
+        return String.valueOf(this.voicevoxStyle.id());
+    }
+
+    @Override
     public boolean isAvailable() {
         return manager.isAvailable() && manager.getBalancer().getAvailableSpeakers().contains(voicevoxSpeaker);
     }
