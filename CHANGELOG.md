@@ -7,7 +7,7 @@
 ## [Unreleased]
 
 ### Added
-
+- 音声スタイル選択機能を追加
 ### Changed
 
 ### Deprecated
