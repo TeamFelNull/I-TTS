@@ -37,6 +37,21 @@ import java.util.*;
 public class VoiceCommand extends BaseCommand {
 
     /**
+     * 声カテゴリオプション名
+     */
+    private static final String VOICE_CATEGORY_OPTION_NAME = "voice_category";
+
+    /**
+     * 声モデルオプション名
+     */
+    private static final String VOICE_TYPE_OPTION_NAME = "voice_type";
+
+    /**
+     * 喋り型オプション名
+     */
+    private static final String VOICE_STYLE_OPTION_NAME = "voice_style";
+
+    /**
      * コンストラクタ
      */
     public VoiceCommand() {
@@ -50,12 +65,14 @@ public class VoiceCommand extends BaseCommand {
                 .setContexts(InteractionContextType.GUILD)
                 .setDefaultPermissions(MEMBERS_PERMISSIONS)
                 .addSubcommands(new SubcommandData("change", "自分の読み上げ音声タイプを変更")
-                        .addOptions(new OptionData(OptionType.STRING, "voice_category", "読み上げ音声タイプのカテゴリ")
+                        .addOptions(new OptionData(OptionType.STRING, VOICE_CATEGORY_OPTION_NAME, "読み上げ音声タイプのカテゴリ")
                                 .setAutoComplete(true)
                                 .setRequired(true))
-                        .addOptions(new OptionData(OptionType.STRING, "voice_type", "読み上げ音声タイプ")
+                        .addOptions(new OptionData(OptionType.STRING, VOICE_TYPE_OPTION_NAME, "読み上げ音声モデル")
                                 .setAutoComplete(true)
-                                .setRequired(true)))
+                                .setRequired(true))
+                        .addOptions(new OptionData(OptionType.STRING, VOICE_STYLE_OPTION_NAME, "喋り型")
+                                .setAutoComplete(true)))
                 .addSubcommands(new SubcommandData("check", "自分の読み上げ音声タイプを確認"))
                 .addSubcommands(new SubcommandData("show", "読み上げ音声タイプ一覧を表示"));
     }
@@ -122,8 +139,9 @@ public class VoiceCommand extends BaseCommand {
         LegacySaveDataLayer legacySaveDataLayer = SaveDataManager.getInstance().getLegacySaveDataLayer();
 
         LegacyServerUserData serverUserData = legacySaveDataLayer.getServerUserData(guild.getIdLong(), user.getIdLong());
-        OptionMapping odVc = Objects.requireNonNull(event.getOption("voice_category"));
-        OptionMapping odVt = Objects.requireNonNull(event.getOption("voice_type"));
+        OptionMapping odVc = Objects.requireNonNull(event.getOption(VOICE_CATEGORY_OPTION_NAME));
+        OptionMapping odVt = Objects.requireNonNull(event.getOption(VOICE_TYPE_OPTION_NAME));
+        String styleId = event.getOption(VOICE_STYLE_OPTION_NAME, OptionMapping::getAsString);
 
         VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
         Optional<VoiceCategory> cat = vm.getVoiceCategory(odVc.getAsString());
@@ -133,7 +151,7 @@ public class VoiceCommand extends BaseCommand {
             return;
         }
 
-        Optional<VoiceType> vt = vm.getVoiceType(odVt.getAsString());
+        Optional<VoiceType> vt = getVoiceType(cat.get(), odVt.getAsString(), styleId, vm.getAvailableVoiceTypes());
 
         if (vt.isEmpty()) {
             event.reply("存在しない読み上げタイプです。").setEphemeral(true).queue();
@@ -218,7 +236,7 @@ public class VoiceCommand extends BaseCommand {
         VoiceManager vm = ITTSRuntime.getInstance().getVoiceManager();
         Map<VoiceCategory, List<VoiceType>> catAndTypes = vm.getAvailableVoiceTypes();
 
-        if ("voice_category".equals(fcs.getName())) {
+        if (VOICE_CATEGORY_OPTION_NAME.equals(fcs.getName())) {
 
             event.replyChoices(catAndTypes.keySet().stream()
                     .sorted(Comparator.comparingInt(cat -> -StringUtils.getComplementPoint(cat.getName(), val)))
@@ -226,32 +244,104 @@ public class VoiceCommand extends BaseCommand {
                     .map(cat -> new Command.Choice(cat.getName(), cat.getId()))
                     .toList()).queue();
 
-        } else if ("voice_type".equals(fcs.getName())) {
+        } else if (VOICE_TYPE_OPTION_NAME.equals(fcs.getName())) {
             VoiceType currentVt = showUsed ? vm.getVoiceType(guild.getIdLong(), user.getIdLong()) : null;
 
             VoiceType defaultVt = vm.getDefaultVoiceType(guild.getIdLong());
 
-            Optional<VoiceCategory> cat = Optional.ofNullable(event.getOption("voice_category"))
+            Optional<VoiceCategory> cat = Optional.ofNullable(event.getOption(VOICE_CATEGORY_OPTION_NAME))
                     .flatMap(catOp -> vm.getVoiceCategory(catOp.getAsString()));
 
             event.replyChoices(cat.map(catAndTypes::get)
-                    .map(vts -> vts.stream()
-                            .sorted(Comparator.comparingInt(vt -> -StringUtils.getComplementPoint(vt.getName(), val)))
+                    .map(vts -> getModels(vts).stream()
+                            .sorted(Comparator.comparingInt(vt -> -StringUtils.getComplementPoint(vt.getModelName(), val)))
                             .limit(OptionData.MAX_CHOICES)
                             .map(vt -> {
-                                String name = vt.getName();
-                                if (defaultVt != null && vt.getId().equals(defaultVt.getId())) {
+                                String name = vt.getModelName();
+                                if (defaultVt != null && vt.getModelId().equals(defaultVt.getModelId())) {
                                     name += " [デフォルト]";
                                 }
 
-                                if (showUsed && currentVt != null && vt.getId().equals(currentVt.getId())) {
+                                if (showUsed && currentVt != null && vt.getModelId().equals(currentVt.getModelId())) {
                                     name += " [使用中]";
                                 }
 
-                                return new Command.Choice(name, vt.getId());
+                                return new Command.Choice(name, vt.getModelId());
                             })
                             .toList())
                     .orElseGet(ImmutableList::of)).queue();
+        } else if (VOICE_STYLE_OPTION_NAME.equals(fcs.getName())) {
+            VoiceType currentVt = showUsed ? vm.getVoiceType(guild.getIdLong(), user.getIdLong()) : null;
+
+            VoiceType defaultVt = vm.getDefaultVoiceType(guild.getIdLong());
+
+            Optional<VoiceCategory> cat = Optional.ofNullable(event.getOption(VOICE_CATEGORY_OPTION_NAME))
+                    .flatMap(catOp -> vm.getVoiceCategory(catOp.getAsString()));
+            Optional<String> modelId = Optional.ofNullable(event.getOption(VOICE_TYPE_OPTION_NAME))
+                    .map(OptionMapping::getAsString);
+
+            event.replyChoices(cat.map(catAndTypes::get)
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .filter(vt -> modelId.map(vt.getModelId()::equals).orElse(false))
+                    .sorted(Comparator.comparingInt(vt -> -StringUtils.getComplementPoint(vt.getStyleName(), val)))
+                    .limit(OptionData.MAX_CHOICES)
+                    .map(vt -> {
+                        String name = vt.getStyleName();
+                        if (defaultVt != null && vt.getId().equals(defaultVt.getId())) {
+                            name += " [デフォルト]";
+                        }
+
+                        if (showUsed && currentVt != null && vt.getId().equals(currentVt.getId())) {
+                            name += " [使用中]";
+                        }
+
+                        return new Command.Choice(name, vt.getStyleId());
+                    })
+                    .toList()).queue();
         }
+    }
+
+    /**
+     * 声タイプを取得
+     *
+     * @param category    声カテゴリ
+     * @param modelId     声モデルID
+     * @param styleId     喋り型ID
+     * @param catAndTypes カテゴリ別声タイプリスト
+     * @return 声タイプ
+     */
+    protected static Optional<VoiceType> getVoiceType(VoiceCategory category, String modelId, String styleId, Map<VoiceCategory, List<VoiceType>> catAndTypes) {
+        List<VoiceType> categoryVoiceTypes = catAndTypes.getOrDefault(category, ImmutableList.of());
+        Optional<VoiceType> exactVoiceType = categoryVoiceTypes.stream()
+                .filter(vt -> vt.getId().equals(modelId))
+                .findFirst();
+
+        if (styleId == null && exactVoiceType.isPresent()) {
+            return exactVoiceType;
+        }
+
+        List<VoiceType> modelVoiceTypes = categoryVoiceTypes.stream()
+                .filter(vt -> vt.getModelId().equals(modelId) || exactVoiceType.map(vt::equals).orElse(false))
+                .toList();
+
+        if (styleId == null) {
+            return modelVoiceTypes.stream().findFirst();
+        }
+
+        return modelVoiceTypes.stream()
+                .filter(vt -> vt.getStyleId().equals(styleId) || vt.getId().equals(styleId))
+                .findFirst();
+    }
+
+    private static List<VoiceType> getModels(List<VoiceType> voiceTypes) {
+        Map<String, VoiceType> models = new LinkedHashMap<>();
+
+        for (VoiceType voiceType : voiceTypes) {
+            models.putIfAbsent(voiceType.getModelId(), voiceType);
+        }
+
+        return models.values().stream()
+                .toList();
     }
 }
