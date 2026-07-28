@@ -7,7 +7,7 @@
 ## [Unreleased]
 
 ### Added
-- 音声スタイル選択機能を追加
+
 ### Changed
 
 ### Deprecated
@@ -17,6 +17,12 @@
 ### Fixed
 
 ### Security
+
+## [2.1.6] - 2026-07-28
+
+### Added
+
+- 音声スタイル選択機能を追加
 
 ## [2.1.5] - 2026-07-05
 
@@ -171,7 +177,8 @@
 
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.5...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.6...HEAD
+[2.1.6]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.2...v2.1.4
 [2.1.2]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.1...v2.1.2
