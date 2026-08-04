@@ -6,7 +6,10 @@ plugins {
 version = if (System.getenv("GITHUB_REF") != null && System.getenv("GITHUB_REF").startsWith("refs/tags/v")) {
     System.getenv("GITHUB_REF").substring("refs/tags/v".length)
 } else {
-    "NONE"
+    val gitHash = providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+    }.standardOutput.asText.get().trim()
+    "dev-$gitHash"
 }
 
 changelog {
