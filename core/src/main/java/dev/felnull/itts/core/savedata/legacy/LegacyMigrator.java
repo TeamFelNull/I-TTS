@@ -3,6 +3,7 @@ package dev.felnull.itts.core.savedata.legacy;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import dev.felnull.fnjl.util.FNDataUtil;
 import dev.felnull.fnjl.util.FNStringUtil;
 import dev.felnull.itts.core.dict.CustomDictionaryEntry;
@@ -47,19 +48,56 @@ public class LegacyMigrator {
      */
     private final Gson gson = new Gson();
 
+
+    /**
+     * Jsonの保存先ディレクトリ
+     */
+    private final File jsonSaveDir;
+
+    /**
+     * グローバル辞書ファイル
+     */
+    private final File globalDictFile;
+
     private LegacyMigrator() {
+        this(JSON_SAVE_DIR, GLOBAL_DICT_DIR);
     }
 
-    private void execute(DataRepository repo) {
-        migrateServerData(repo);
-        migrateServerUserData(repo);
-        migrateServerDictUseData(repo);
-        migrateServerDictData(repo);
-        migrateGlobalDictData(repo);
+    LegacyMigrator(File jsonSaveDir, File globalDictFile) {
+        this.jsonSaveDir = jsonSaveDir;
+        this.globalDictFile = globalDictFile;
+    }
+
+    void moveOldData(File moveDir) throws IOException {
+        FNDataUtil.wishMkdir(moveDir);
+
+        if (jsonSaveDir.exists()) {
+            Files.move(jsonSaveDir, new File(moveDir, jsonSaveDir.getName()));
+        }
+
+        if (globalDictFile.exists()) {
+            Files.move(globalDictFile, new File(moveDir, globalDictFile.getName()));
+        }
+    }
+
+    void execute(DataRepository repo) {
+        runMigration("ServerData", () -> migrateServerData(repo));
+        runMigration("ServerUserData", () -> migrateServerUserData(repo));
+        runMigration("ServerDictUseData", () -> migrateServerDictUseData(repo));
+        runMigration("ServerDictData", () -> migrateServerDictData(repo));
+        runMigration("GlobalDictData", () -> migrateGlobalDictData(repo));
+    }
+
+    private void runMigration(String name, Runnable migration) {
+        try {
+            migration.run();
+        } catch (Exception e) {
+            LOGGER.error("Migration failed for {}", name, e);
+        }
     }
 
     private void migrateServerData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "server");
+        File dir = new File(jsonSaveDir, "server");
         if (!dir.exists()) {
             return;
         }
@@ -70,41 +108,45 @@ public class LegacyMigrator {
         }
 
         Arrays.stream(files).forEach((file) -> {
-            String name = FNStringUtil.removeExtension(file.getName());
-            long serverId;
             try {
-                serverId = Long.parseLong(name);
-            } catch (NumberFormatException e) {
-                LOGGER.error("Invalid file name {}", file.getName());
-                return;
+                String name = FNStringUtil.removeExtension(file.getName());
+                long serverId;
+                try {
+                    serverId = Long.parseLong(name);
+                } catch (NumberFormatException e) {
+                    LOGGER.error("Invalid file name {}", file.getName());
+                    return;
+                }
+
+                JsonObject jo = loadJson(file);
+                if (jo == null) {
+                    return;
+                }
+
+                String defaultVoiceType = JsonUtils.getString(jo, "default_voice_type", null);
+                String ignoreRegex = JsonUtils.getString(jo, "ignore_regex", "(!|/|\\\\$|`).*");
+                boolean needJoin = JsonUtils.getBoolean(jo, "need_join", false);
+                boolean overwriteAloud = JsonUtils.getBoolean(jo, "overwrite_aloud", false);
+                boolean notifyMove = JsonUtils.getBoolean(jo, "notify_move", true);
+                int readLimit = JsonUtils.getInt(jo, "read_limit", 200);
+                int nameReadLimit = JsonUtils.getInt(jo, "name_read_limit", 20);
+
+                ServerData serverData = repo.getServerData(serverId);
+                serverData.setDefaultVoiceType(defaultVoiceType);
+                serverData.setIgnoreRegex(ignoreRegex);
+                serverData.setNeedJoin(needJoin);
+                serverData.setOverwriteAloud(overwriteAloud);
+                serverData.setNotifyMove(notifyMove);
+                serverData.setReadLimit(readLimit);
+                serverData.setNameReadLimit(nameReadLimit);
+            } catch (Exception e) {
+                LOGGER.error("Migration failed for file {}", file.getName(), e);
             }
-
-            JsonObject jo = loadJson(file);
-            if (jo == null) {
-                return;
-            }
-
-            String defaultVoiceType = JsonUtils.getString(jo, "default_voice_type", null);
-            String ignoreRegex = JsonUtils.getString(jo, "ignore_regex", "(!|/|\\\\$|`).*");
-            boolean needJoin = JsonUtils.getBoolean(jo, "need_join", false);
-            boolean overwriteAloud = JsonUtils.getBoolean(jo, "overwrite_aloud", false);
-            boolean notifyMove = JsonUtils.getBoolean(jo, "notify_move", true);
-            int readLimit = JsonUtils.getInt(jo, "read_limit", 200);
-            int nameReadLimit = JsonUtils.getInt(jo, "name_read_limit", 20);
-
-            ServerData serverData = repo.getServerData(serverId);
-            serverData.setDefaultVoiceType(defaultVoiceType);
-            serverData.setIgnoreRegex(ignoreRegex);
-            serverData.setNeedJoin(needJoin);
-            serverData.setOverwriteAloud(overwriteAloud);
-            serverData.setNotifyMove(notifyMove);
-            serverData.setReadLimit(readLimit);
-            serverData.setNameReadLimit(nameReadLimit);
         });
     }
 
     private void migrateServerUserData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "server_users");
+        File dir = new File(jsonSaveDir, "server_users");
         if (!dir.exists()) {
             return;
         }
@@ -115,51 +157,55 @@ public class LegacyMigrator {
         }
 
         Arrays.stream(files).forEach((file) -> {
-            String name = FNStringUtil.removeExtension(file.getName());
-            long serverId;
             try {
-                serverId = Long.parseLong(name);
-            } catch (NumberFormatException e) {
-                LOGGER.error("Invalid file name {}", file.getName());
-                return;
+                String name = FNStringUtil.removeExtension(file.getName());
+                long serverId;
+                try {
+                    serverId = Long.parseLong(name);
+                } catch (NumberFormatException e) {
+                    LOGGER.error("Invalid file name {}", file.getName());
+                    return;
+                }
+
+                JsonObject jo = loadJson(file);
+                if (jo == null) {
+                    return;
+                }
+
+                JsonObject dataJo = jo.getAsJsonObject("data");
+                if (dataJo == null) {
+                    return;
+                }
+
+                dataJo.entrySet().stream()
+                        .filter(it -> it.getValue().isJsonObject())
+                        .forEach((entry) -> {
+                            long userId;
+                            try {
+                                userId = Long.parseLong(entry.getKey());
+                            } catch (NumberFormatException e) {
+                                LOGGER.error("Invalid data name {}", entry.getKey());
+                                return;
+                            }
+                            JsonObject entryJo = entry.getValue().getAsJsonObject();
+
+                            String voiceType = JsonUtils.getString(entryJo, "voice_type", null);
+                            boolean deny = JsonUtils.getBoolean(entryJo, "deny", false);
+                            String nickName = JsonUtils.getString(entryJo, "nick_name", null);
+
+                            ServerUserData serverUserData = repo.getServerUserData(serverId, userId);
+                            serverUserData.setVoiceType(voiceType);
+                            serverUserData.setDeny(deny);
+                            serverUserData.setNickName(nickName);
+                        });
+            } catch (Exception e) {
+                LOGGER.error("Migration failed for file {}", file.getName(), e);
             }
-
-            JsonObject jo = loadJson(file);
-            if (jo == null) {
-                return;
-            }
-
-            JsonObject dataJo = jo.getAsJsonObject("data");
-            if (dataJo == null) {
-                return;
-            }
-
-            dataJo.entrySet().stream()
-                    .filter(it -> it.getValue().isJsonObject())
-                    .forEach((entry) -> {
-                        long userId;
-                        try {
-                            userId = Long.parseLong(name);
-                        } catch (NumberFormatException e) {
-                            LOGGER.error("Invalid data name {}", file.getName());
-                            return;
-                        }
-                        JsonObject entryJo = entry.getValue().getAsJsonObject();
-
-                        String voiceType = JsonUtils.getString(entryJo, "voice_type", null);
-                        boolean deny = JsonUtils.getBoolean(entryJo, "deny", false);
-                        String nickName = JsonUtils.getString(entryJo, "nick_name", null);
-
-                        ServerUserData serverUserData = repo.getServerUserData(serverId, userId);
-                        serverUserData.setVoiceType(voiceType);
-                        serverUserData.setDeny(deny);
-                        serverUserData.setNickName(nickName);
-                    });
         });
     }
 
     private void migrateServerDictUseData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "dict_use");
+        File dir = new File(jsonSaveDir, "dict_use");
         if (!dir.exists()) {
             return;
         }
@@ -170,47 +216,51 @@ public class LegacyMigrator {
         }
 
         Arrays.stream(files).forEach((file) -> {
-            String name = FNStringUtil.removeExtension(file.getName());
-            long serverId;
             try {
-                serverId = Long.parseLong(name);
-            } catch (NumberFormatException e) {
-                LOGGER.error("Invalid file name {}", file.getName());
-                return;
+                String name = FNStringUtil.removeExtension(file.getName());
+                long serverId;
+                try {
+                    serverId = Long.parseLong(name);
+                } catch (NumberFormatException e) {
+                    LOGGER.error("Invalid file name {}", file.getName());
+                    return;
+                }
+
+                JsonObject jo = loadJson(file);
+                if (jo == null) {
+                    return;
+                }
+
+                JsonObject dataJo = jo.getAsJsonObject("data");
+                if (dataJo == null) {
+                    return;
+                }
+
+                dataJo.entrySet().stream()
+                        .filter(it -> it.getValue().isJsonPrimitive())
+                        .filter(it -> it.getValue().getAsJsonPrimitive().isNumber())
+                        .forEach((entry) -> {
+                            String dictName = entry.getKey();
+                            int priority = entry.getValue().getAsInt();
+
+                            DictionaryUseData dictionaryUseData = repo.getDictionaryUseData(serverId, dictName);
+
+                            if (priority >= 0) {
+                                dictionaryUseData.setEnable(true);
+                                dictionaryUseData.setPriority(priority);
+                            } else {
+                                dictionaryUseData.setEnable(false);
+                                dictionaryUseData.setPriority(null);
+                            }
+                        });
+            } catch (Exception e) {
+                LOGGER.error("Migration failed for file {}", file.getName(), e);
             }
-
-            JsonObject jo = loadJson(file);
-            if (jo == null) {
-                return;
-            }
-
-            JsonObject dataJo = jo.getAsJsonObject("data");
-            if (dataJo == null) {
-                return;
-            }
-
-            dataJo.entrySet().stream()
-                    .filter(it -> it.getValue().isJsonPrimitive())
-                    .filter(it -> it.getValue().getAsJsonPrimitive().isNumber())
-                    .forEach((entry) -> {
-                        String dictName = entry.getKey();
-                        int priority = entry.getValue().getAsInt();
-
-                        DictionaryUseData dictionaryUseData = repo.getDictionaryUseData(serverId, dictName);
-
-                        if (priority >= 0) {
-                            dictionaryUseData.setEnable(true);
-                            dictionaryUseData.setPriority(priority);
-                        } else {
-                            dictionaryUseData.setEnable(false);
-                            dictionaryUseData.setPriority(null);
-                        }
-                    });
         });
     }
 
     private void migrateServerDictData(DataRepository repo) {
-        File dir = new File(JSON_SAVE_DIR, "server_dict");
+        File dir = new File(jsonSaveDir, "server_dict");
         if (!dir.exists()) {
             return;
         }
@@ -221,41 +271,51 @@ public class LegacyMigrator {
         }
 
         Arrays.stream(files).forEach((file) -> {
-            String name = FNStringUtil.removeExtension(file.getName());
-            long serverId;
             try {
-                serverId = Long.parseLong(name);
-            } catch (NumberFormatException e) {
-                LOGGER.error("Invalid file name {}", file.getName());
-                return;
-            }
+                String name = FNStringUtil.removeExtension(file.getName());
+                long serverId;
+                try {
+                    serverId = Long.parseLong(name);
+                } catch (NumberFormatException e) {
+                    LOGGER.error("Invalid file name {}", file.getName());
+                    return;
+                }
 
-            JsonObject jo = loadJson(file);
-            if (jo == null) {
-                return;
-            }
+                JsonObject jo = loadJson(file);
+                if (jo == null) {
+                    return;
+                }
 
-            Map<String, String> dictEntry = loadDict(jo);
-            CustomDictionaryData dictionaryData = repo.getServerCustomDictionaryData(serverId);
-            dictEntry.forEach((target, read) -> {
-                dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD));
-            });
+                Map<String, String> dictEntry = loadDict(jo);
+                CustomDictionaryData dictionaryData = repo.getServerCustomDictionaryData(serverId);
+                dictEntry.forEach((target, read) -> {
+                    if (dictionaryData.getByTarget(target).isEmpty()) {
+                        dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD));
+                    }
+                });
+            } catch (Exception e) {
+                LOGGER.error("Migration failed for file {}", file.getName(), e);
+            }
         });
     }
 
     private void migrateGlobalDictData(DataRepository repo) {
-        if (!GLOBAL_DICT_DIR.exists()) {
+        if (!globalDictFile.exists()) {
             return;
         }
 
-        JsonObject jo = loadJson(GLOBAL_DICT_DIR);
+        JsonObject jo = loadJson(globalDictFile);
         if (jo == null) {
             return;
         }
 
         Map<String, String> dictEntry = loadDict(jo);
         CustomDictionaryData dictionaryData = repo.getGlobalCustomDictionaryData();
-        dictEntry.forEach((target, read) -> dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD)));
+        dictEntry.forEach((target, read) -> {
+            if (dictionaryData.getByTarget(target).isEmpty()) {
+                dictionaryData.add(new CustomDictionaryEntry(target, read, ReplaceType.WORD));
+            }
+        });
     }
 
     private Map<String, String> loadDict(JsonObject jo) {
@@ -280,8 +340,13 @@ public class LegacyMigrator {
 
         try (Reader reader = new FileReader(file); Reader bufReader = new BufferedReader(reader)) {
             jo = gson.fromJson(bufReader, JsonObject.class);
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             LOGGER.error("Loading failed {}", file.getName(), e);
+            return null;
+        }
+
+        if (jo == null) {
+            LOGGER.error("Empty json file {}", file.getName());
             return null;
         }
 
@@ -314,9 +379,12 @@ public class LegacyMigrator {
 
         // Jsonを読み取ってDBに書き込む
         LegacyMigrator migrator = new LegacyMigrator();
-        migrator.execute(repo);
 
-        repo.dispose();
+        try {
+            migrator.execute(repo);
+        } finally {
+            repo.dispose();
+        }
 
         // 旧データを退避
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
@@ -324,14 +392,7 @@ public class LegacyMigrator {
         File moveDir = new File("old_save_data-" + timeText);
 
         try {
-            if (JSON_SAVE_DIR.exists()) {
-                Files.move(JSON_SAVE_DIR, moveDir);
-            }
-
-            if (GLOBAL_DICT_DIR.exists()) {
-                FNDataUtil.wishMkdir(moveDir);
-                Files.move(GLOBAL_DICT_DIR, new File(moveDir, "global_dict.json"));
-            }
+            migrator.moveOldData(moveDir);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to move Old SaveData", e);
         }
