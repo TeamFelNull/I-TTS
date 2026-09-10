@@ -5,7 +5,6 @@ on:
     tags:
       - 'v*'
 
-
 jobs:
   # ビルドとリリースまでの処理
   build-release:
@@ -17,18 +16,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup JDK #JDKセットアップ
+      - name: Setup JDK # JDKセットアップ
         uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
           java-version: '25'
 
-      - name: Setup Gradle #Gradleセットアップ
+      - name: Setup Gradle # Gradleセットアップ
         uses: gradle/gradle-build-action@v3
         with:
           gradle-home-cache-cleanup: true
 
-      - name: Version Verification #バージョン検証
+      - name: Version Verification # バージョン検証
         run: |
           TAG="${{ github.ref_name }}"
           ALL_TAGS=`git tag`
@@ -37,7 +36,7 @@ jobs:
           ./.github/workflows/scripts/version_verification.main.kts "$TAG" "$ALL_TAGS"
           echo "バージョン検証完了!"
 
-      - name: Project Verification #プロジェクト検証
+      - name: Project Verification # プロジェクト検証
         shell: bash
         run: |
           chmod +x gradlew
@@ -56,25 +55,25 @@ jobs:
           chmod +x ./.github/workflows/scripts/project_verification.main.kts
           ./.github/workflows/scripts/project_verification.main.kts "$CHANGE_LOG"
 
-      - name: Gradle Check #Gradle動作確認
+      - name: Gradle Check # Gradle動作確認
         shell: bash
         run: |
           chmod +x gradlew
           chmod -R +X gradle
           ./gradlew check
 
-      - name: Generate Changelog #更新ログ生成
+      - name: Generate Changelog # 更新ログ生成
         shell: bash
         run: |
           ./gradlew patchChangelog
           ./gradlew getChangelog --console=plain -q --no-header --no-summary --no-links > LATEST_CHANGELOG.md
-          
+
           CHANGELOG_NUM=`grep -n "^###" LATEST_CHANGELOG.md | sed -e 's/:.*//g' | head -n 1`
           if [ -n "$CHANGELOG_NUM" ]; then
             tail -n +$CHANGELOG_NUM LATEST_CHANGELOG.md > LATEST_CHANGELOG_TMP.md
             mv LATEST_CHANGELOG_TMP.md LATEST_CHANGELOG.md
           fi
-          
+
           echo "---ChangeLog---"
           cat LATEST_CHANGELOG.md
           echo "---------------"
@@ -86,25 +85,25 @@ jobs:
         env:
           mavenpassword: ${{ secrets.MAVEN_PASSWORD }}
 
-      - name: Collect Releases #リリースしたものを収集
+      - name: Collect Releases # リリースしたものを収集
         shell: bash
         run: |
           mkdir release
           cd release
           cp -r ../selfhost/build/libs/. ./
 
-      - name: Generate Hash #リリースするファイルのハッシュファイルを生成
+      - name: Generate Hash # リリースするファイルのハッシュファイルを生成
         uses: TeamFelnull/actions-reusable-workflows/.github/actions/hashing-directory@master
         with:
           directory_path: "${{ github.workspace }}/release"
 
-      - name: Upload Artifact #アーティファクトをアップロード
+      - name: Upload Artifact # アーティファクトをアップロード
         uses: actions/upload-artifact@v5
         with:
           name: releases
           path: release/*
 
-      - name: GitHub Releases #GiHubにリリース
+      - name: GitHub Releases # GitHubにリリース
         uses: softprops/action-gh-release@v2
         with:
           body_path: LATEST_CHANGELOG.md
@@ -121,25 +120,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup JDK #JDKセットアップ
+      - name: Setup JDK # JDKセットアップ
         uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
           java-version: '25'
 
-      - name: Setup Gradle #Gradleセットアップ
+      - name: Setup Gradle # Gradleセットアップ
         uses: gradle/gradle-build-action@v3
         with:
           gradle-home-cache-cleanup: true
 
-      - name: Gradle Check #Gradle動作確認
+      - name: Gradle Check # Gradle動作確認
         shell: bash
         run: |
           chmod +x gradlew
           chmod -R +X gradle
           ./gradlew check
 
-      - name: Generate Changelog #チェンジログ生成してコミット
+      - name: Generate Changelog # チェンジログ生成してコミット
         shell: bash
         run: |
           ./gradlew patchChangelog
