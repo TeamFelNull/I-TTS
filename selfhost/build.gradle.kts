@@ -29,10 +29,13 @@ configurations {
 }
 
 dependencies {
+    testImplementation(platform("org.junit:junit-bom:6.0.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     shadowIn(project(":core", "default"))
 
     shadowIn("blue.endless:jankson:1.2.3")
-    // shadowIn("redis.clients:jedis:4.4.0-m1")
 }
 
 tasks.getByName<Test>("test") {
@@ -46,9 +49,6 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.named<ShadowJar>("shadowJar") {
     configurations = listOf(shadowIn)
     archiveClassifier.set("")
-    dependencies {
-        // include(dependency(":core"))
-    }
 }
 
 tasks.named("build") {

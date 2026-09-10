@@ -153,7 +153,7 @@ public record ConfigV1(
             String typeText = Json5Utils.getStringOrElse(jo, "type", DataBaseType.SQLITE.getName());
             DataBaseType type = NameSerializableEnum.getByName(DataBaseType.class, typeText, DataBaseType.SQLITE);
             String host = Json5Utils.getStringOrElse(jo, "host", "");
-            int port = Json5Utils.getInt(jo, "port");
+            int port = jo.containsKey("port") ? Json5Utils.getInt(jo, "port") : 0;
             String databaseName = Json5Utils.getStringOrElse(jo, "database_name", "");
             String user = Json5Utils.getStringOrElse(jo, "user", "");
             String password = Json5Utils.getStringOrElse(jo, "password", "");
