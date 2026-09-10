@@ -24,6 +24,16 @@ import java.util.stream.Stream;
 public record MessageSaidText(Message message, Voice voice) implements SaidText, ITTSRuntimeUse {
 
     /**
+     * スポイラーの正規表現
+     */
+    private static final Pattern SPOILER_PATTERN = Pattern.compile("\\|\\|.*?\\|\\|", Pattern.DOTALL);
+
+    /**
+     * スポイラーの代替テキスト
+     */
+    private static final String SPOILER_REPLACEMENT = "スポイラー省略";
+
+    /**
      * 返信のメッセージ
      */
     private static final String REPLAY_MESSAGE = "%sに返信しました、%s";
@@ -88,7 +98,7 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
      * @return 文字列
      */
     private static String getIkisugiContentDisplay(Map<User, Member> members, Message message) {
-        String ret = message.getContentRaw();
+        String ret = replaceSpoilers(message.getContentRaw());
         for (User user : message.getMentions().getUsers()) {
             String name;
             name = members.get(user).getEffectiveName();
@@ -104,6 +114,10 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
             ret = ret.replace(mentionedRole.getAsMention(), '@' + mentionedRole.getName());
         }
         return ret;
+    }
+
+    static String replaceSpoilers(String text) {
+        return SPOILER_PATTERN.matcher(text).replaceAll(SPOILER_REPLACEMENT);
     }
 
     /**
@@ -168,7 +182,7 @@ public record MessageSaidText(Message message, Voice voice) implements SaidText,
                 replayTarget = UNKNOWN_MESSAGE;
             }
 
-            return String.format(REPLAY_MESSAGE, replayTarget, message.getContentDisplay());
+            return String.format(REPLAY_MESSAGE, replayTarget, replaceSpoilers(message.getContentDisplay()));
         }, getAsyncExecutor());
     }
 
