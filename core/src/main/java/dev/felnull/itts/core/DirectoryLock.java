@@ -1,10 +1,9 @@
 package dev.felnull.itts.core;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
+import java.nio.file.StandardOpenOption;
 
 /**
  * 二重起動防止用ディレクトリロック
@@ -19,47 +18,33 @@ public class DirectoryLock implements ITTSRuntimeUse {
     private static final File LOCK_FILE = new File("./dir.lock");
 
     /**
-     * ロック用アウトプットストリーム
-     */
-    private FileOutputStream fileOutputStream;
-
-    /**
-     * ファイルロック
-     */
-    private FileLock fileLock;
-
-    /**
      * ロックを実行
      */
     protected void lock() {
-        if (LOCK_FILE.exists() && !LOCK_FILE.delete()) {
-            throw new RuntimeException("Failed to delete old lock file");
-        }
-
+        FileChannel channel = null;
         try {
-            fileOutputStream = new FileOutputStream(LOCK_FILE);
-            fileOutputStream.write(new byte[]{0});
-            FileChannel fileChannel = fileOutputStream.getChannel();
-            fileLock = fileChannel.tryLock();
-        } catch (IOException e) {
+            // 同じファイルへのロックを維持するため、起動時も終了時も削除しない
+            channel = FileChannel.open(LOCK_FILE.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            if (channel.tryLock() == null) {
+                throw new IOException("Directory is already locked");
+            }
+        } catch (IOException | RuntimeException e) {
+            if (channel != null) {
+                try {
+                    channel.close();
+                } catch (IOException closeException) {
+                    e.addSuppressed(closeException);
+                }
+            }
             throw new RuntimeException("Failed to lock directory, directory may be locked by another process", e);
         }
 
-
+        FileChannel lockedChannel = channel;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                fileLock.release();
-            } catch (Exception ignored) {
+                lockedChannel.close();
+            } catch (IOException ignored) {
                 // ファイルロックの解放に失敗した場合は諦める
-            }
-            try {
-                fileOutputStream.close();
-            } catch (Exception ignored) {
-                // ファイルロック用アウトプットストリームを閉じることに失敗した場合も諦める
-            }
-
-            if (LOCK_FILE.exists() && !LOCK_FILE.delete()) {
-                throw new RuntimeException("Failed to delete lock file");
             }
         }));
     }
