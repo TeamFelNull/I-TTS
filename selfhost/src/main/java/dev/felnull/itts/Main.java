@@ -39,8 +39,13 @@ public class Main {
         runtime.execute();
 
         StopCommandListener.start(System.in, () -> {
-            runtime.shutdown();
-            System.exit(0);
+            try {
+                runtime.shutdown();
+            } catch (RuntimeException e) {
+                LOGGER.error("Failed to shut down cleanly", e);
+            } finally {
+                System.exit(0);
+            }
         });
     }
 }
