@@ -8,6 +8,8 @@
 
 ### Added
 
+- セルフホスト版で標準入力の`stop`によるBOT停止を追加
+
 ### Changed
 
 ### Deprecated

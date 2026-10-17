@@ -37,5 +37,10 @@ public class Main {
 
         runtime = ITTSRuntime.newRuntime(new SelfHostITTSRuntimeContext(info));
         runtime.execute();
+
+        StopCommandListener.start(System.in, () -> {
+            runtime.shutdown();
+            System.exit(0);
+        });
     }
 }

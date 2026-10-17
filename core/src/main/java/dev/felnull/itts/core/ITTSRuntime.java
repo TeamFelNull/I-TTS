@@ -211,6 +211,15 @@ public class ITTSRuntime {
         bot.start();
     }
 
+    /**
+     * ランタイムを停止
+     */
+    public void shutdown() {
+        logger.info("Stopping bot");
+        bot.stop();
+        logger.info("Bot stopped");
+    }
+
     public long getStartupTime() {
         return startupTime;
     }
