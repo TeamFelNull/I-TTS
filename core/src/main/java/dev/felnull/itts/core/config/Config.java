@@ -1,5 +1,6 @@
 package dev.felnull.itts.core.config;
 
+import dev.felnull.itts.core.config.voicetype.OpenAiTtsConfig;
 import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.statistics.StatisticsConfig;
@@ -55,6 +56,16 @@ public interface Config {
      * @return VoiceTextのコンフィグ
      */
     VoiceTextConfig getVoiceTextConfig();
+
+    /**
+     * OpenAI互換TTSのコンフィグを取得
+     *
+     * @return OpenAI互換TTSのコンフィグ
+     */
+    default OpenAiTtsConfig getOpenAiTtsConfig() {
+        return new OpenAiTtsConfig() {
+        };
+    }
 
     /**
      * VOICEVOXのコンフィグを取得

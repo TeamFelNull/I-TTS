@@ -5,6 +5,7 @@ import dev.felnull.itts.core.savedata.SaveDataManager;
 import dev.felnull.itts.core.savedata.legacy.LegacySaveDataLayer;
 import dev.felnull.itts.core.savedata.legacy.LegacyServerUserData;
 import dev.felnull.itts.core.voice.coeiroink.CoeiroinkManager;
+import dev.felnull.itts.core.voice.openai.OpenAiTtsManager;
 import dev.felnull.itts.core.voice.voicetext.VoiceTextManager;
 import dev.felnull.itts.core.voice.voicevox.VoicevoxManager;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,12 @@ public class VoiceManager implements ITTSBaseManager {
      * VoiceTextの管理
      */
     private final VoiceTextManager voiceTextManager = new VoiceTextManager();
+
+    /**
+     * OpenAI互換TTSの管理
+     */
+    private final OpenAiTtsManager openAiTtsManager = new OpenAiTtsManager(
+            () -> getConfigManager().getConfig().getOpenAiTtsConfig(), () -> getNetworkManager().getHttpClient());
 
     /**
      * VOICEVOXの管理
@@ -66,6 +73,7 @@ public class VoiceManager implements ITTSBaseManager {
                         sharevoxManager.init())
                 .thenAcceptAsync(v -> {
                     registerVoiceTypes(voiceTextManager::getVoiceTypes);
+                    registerVoiceTypes(openAiTtsManager::getVoiceTypes);
                     registerVoiceTypes(voicevoxManager::getAvailableVoiceTypes);
                     registerVoiceTypes(coeiroinkManager::getAvailableVoiceTypes);
                     registerVoiceTypes(sharevoxManager::getAvailableVoiceTypes);

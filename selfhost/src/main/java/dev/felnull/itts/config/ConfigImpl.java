@@ -5,6 +5,7 @@ import blue.endless.jankson.JsonPrimitive;
 import dev.felnull.itts.config.old.ConfigV1;
 import dev.felnull.itts.core.config.Config;
 import dev.felnull.itts.core.config.DataBaseConfig;
+import dev.felnull.itts.core.config.voicetype.OpenAiTtsConfig;
 import dev.felnull.itts.core.config.voicetype.VoiceTextConfig;
 import dev.felnull.itts.core.config.voicetype.VoicevoxConfig;
 import dev.felnull.itts.core.statistics.StatisticsConfig;
@@ -23,6 +24,7 @@ import java.util.Optional;
  * @param themeColor       テーマカラー
  * @param cacheTime        キャッシュを保持する期間
  * @param voiceTextConfig  VOICETEXT コンフィグ
+ * @param openAiTtsConfig  OpenAI互換TTS コンフィグ
  * @param voicevoxConfig   VOICEVOX コンフィグ
  * @param coeirolnkConfig  COEIROLNK コンフィグ
  * @param sharevoxConfig   SHAREVOX コンフィグ
@@ -34,6 +36,7 @@ public record ConfigImpl(
         int themeColor,
         long cacheTime,
         VoiceTextConfig voiceTextConfig,
+        OpenAiTtsConfig openAiTtsConfig,
         VoicevoxConfig voicevoxConfig,
         VoicevoxConfig coeirolnkConfig,
         VoicevoxConfig sharevoxConfig,
@@ -51,6 +54,7 @@ public record ConfigImpl(
             int themeColor = json5.getInt("theme_color", DEFAULT_THEME_COLOR);
             long cacheTime = json5.getLong("cache_time", DEFAULT_CACHE_TIME);
             VoiceTextConfig voiceTextConfig = VoiceTextConfigImpl.fromJson(Optional.ofNullable(json5.getObject("voice_text")).orElseGet(JsonObject::new));
+            OpenAiTtsConfig openAiTtsConfig = OpenAiTtsConfigImpl.fromJson(Optional.ofNullable(json5.getObject("openai_tts")).orElseGet(JsonObject::new));
             VoicevoxConfig voicevoxConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("voicevox")).orElseGet(JsonObject::new));
             VoicevoxConfig coeirolnkConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("coeirolnk")).orElseGet(JsonObject::new));
             VoicevoxConfig sharevoxConfig = VoicevoxConfigImpl.fromJson(Optional.ofNullable(json5.getObject("sharevox")).orElseGet(JsonObject::new));
@@ -62,6 +66,7 @@ public record ConfigImpl(
                     themeColor,
                     cacheTime,
                     voiceTextConfig,
+                    openAiTtsConfig,
                     voicevoxConfig,
                     coeirolnkConfig,
                     sharevoxConfig,
@@ -72,6 +77,10 @@ public record ConfigImpl(
 
         @Override
         public ConfigImpl migrate(Object oldConfig) {
+            // バージョン2から3への移行は設定項目の追加のみで、読み込み済みの値を引き継ぐ
+            if (oldConfig instanceof ConfigImpl configV2) {
+                return configV2;
+            }
             ConfigV1 configV1 = (ConfigV1) oldConfig;
             ConfigV1.DataBaseConfigV1 db = configV1.dataBaseConfig();
 
@@ -80,6 +89,7 @@ public record ConfigImpl(
                     configV1.themeColor(),
                     configV1.cacheTime(),
                     new VoiceTextConfigImpl(configV1.voiceTextConfig().enable(), configV1.voiceTextConfig().apiKey()),
+                    new OpenAiTtsConfigImpl(),
                     new VoicevoxConfigImpl(configV1.voicevoxConfig().enable(), configV1.voicevoxConfig().apiUrls(), configV1.voicevoxConfig().checkTime()),
                     new VoicevoxConfigImpl(configV1.coeirolnkConfig().enable(), configV1.coeirolnkConfig().apiUrls(), configV1.coeirolnkConfig().checkTime()),
                     new VoicevoxConfigImpl(configV1.sharevoxConfig().enable(), configV1.sharevoxConfig().apiUrls(), configV1.sharevoxConfig().checkTime()),
@@ -100,6 +110,7 @@ public record ConfigImpl(
                 DEFAULT_THEME_COLOR,
                 DEFAULT_CACHE_TIME,
                 new VoiceTextConfigImpl(),
+                new OpenAiTtsConfigImpl(),
                 new VoicevoxConfigImpl(),
                 new VoicevoxConfigImpl(),
                 new VoicevoxConfigImpl(),
@@ -116,6 +127,7 @@ public record ConfigImpl(
         json5.put("theme_color", new JsonPrimitive(this.themeColor), "テーマカラー");
         json5.put("cache_time", new JsonPrimitive(this.cacheTime), "キャッシュを保存する期間(ms)");
         json5.put("voice_text", ((VoiceTextConfigImpl) this.voiceTextConfig).toJson(), "VoiceTextのコンフィグ");
+        json5.put("openai_tts", ((OpenAiTtsConfigImpl) this.openAiTtsConfig).toJson(), "OpenAI互換TTSのコンフィグ");
         json5.put("voicevox", ((VoicevoxConfigImpl) this.voicevoxConfig).toJson(), "VOICEVOXのコンフィグ");
         json5.put("coeirolnk", ((VoicevoxConfigImpl) this.coeirolnkConfig).toJson(), "COEIROLNKのコンフィグ");
         json5.put("sharevox", ((VoicevoxConfigImpl) this.sharevoxConfig).toJson(), "SHAREVOXのコンフィグ");
@@ -141,6 +153,11 @@ public record ConfigImpl(
     @Override
     public VoiceTextConfig getVoiceTextConfig() {
         return voiceTextConfig;
+    }
+
+    @Override
+    public OpenAiTtsConfig getOpenAiTtsConfig() {
+        return openAiTtsConfig;
     }
 
     @Override

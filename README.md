@@ -18,6 +18,7 @@
 - [COEIROINK](https://coeiroink.com/)
 - [SHAREVOX](https://www.sharevox.app/)
 - [VoiceText](https://cloud.voicetext.jp/)
+- [OpenAI互換TTS](https://developers.openai.com/api/docs/guides/text-to-speech) (`POST /audio/speech`)
 
 VOICEVOXとCOEIROINK、SHAREVOXは自分でエンジンを起動しておく必要があり、VoiceTextにはAPIキーが必要です。
 
@@ -60,10 +61,36 @@ java25のディレクトリ\bin\java.exe -jar itts-selfhost-2.0.0.jar
 * "voice_text" VoiceTextに関するコンフィグ
     * "enable" VoiceTextを有効にするかどうか
     * "api_key" VoiceTextのAPIキー
+* "openai_tts" OpenAI互換TTSに関するコンフィグ
+    * "enable" 有効にするかどうか (初期値: false)
+    * "base_url" APIのベースURL (初期値: https://api.openai.com/v1)。末尾に`/audio/speech`を自動で追加
+    * "api_key" Bearer認証用のAPIキー。認証不要のサーバーでは空文字列
+    * "model" サーバーが対応する音声合成モデル名 (初期値: tts-1)
+    * "voices" サーバーが対応する話者名の一覧 (初期値: ["alloy"])
 * "voicevox"、"coeirolnk"、"sharevox" それぞれVOICEVOX系に関するコンフィグ
     * "enable" それぞれVOICEVOX系の読み上げを有効にするかどうか
     * "api_url" それぞれVOICEVOX系のエンジンのURL(複数指定可能)
     * "check_time" それぞれVOICEVOX系のエンジンが生きているか確認する間隔(ミリ秒)
+
+OpenAI互換TTSはWAV形式の音声を要求します。接続先は`response_format: "wav"`に対応している必要があります。
+既存の`config.json5`は起動時に`config_version: 2`から`3`へ移行し、`openai_tts`がない場合は無効の初期設定を追加します。
+移行前の設定は`old_config`にバックアップします。設定済みの`openai_tts`は引き継ぎます。
+話者一覧はAPIから自動取得せず、`voices`に設定した名前を`/voice change`のカテゴリ「OpenAI互換TTS」で選択できます。
+サーバーの`default-voice`には`openai_tts:話者名`を指定できます。設定変更後はBOTを再起動してください。
+
+認証不要のローカル互換サーバーを利用する設定例 (`model`と`voices`は接続先に合わせて変更):
+
+```json5
+"openai_tts": {
+    "enable": true,
+    "base_url": "http://127.0.0.1:8000/v1",
+    "api_key": "",
+    "model": "your-tts-model",
+    "voices": ["your-speaker"]
+}
+```
+
+OpenAIを利用する場合は`base_url`を`https://api.openai.com/v1`にし、`api_key`にOpenAI APIキーを設定します。
 
 ### サーバー
 

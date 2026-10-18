@@ -101,19 +101,26 @@ public class Json5Utils {
     }
 
     /**
-     * Json5からintを取得
+     * Json5からintを取得。小数・指数表記とintの範囲外の値は拒否する
      *
      * @param json5 Json
      * @param key   キー
      * @return 値
      */
     public static int getInt(JsonObject json5, String key) {
-        JsonPrimitive prim = (JsonPrimitive) json5.get(key);
+        if (json5.get(key) instanceof JsonPrimitive prim && prim.getValue() instanceof Number number) {
+            String value = number.toString();
+            if (!value.matches("[+-]?[0-9]+")) {
+                throw new IllegalStateException("Not Integer: " + key);
+            }
 
-        if (prim != null && prim.getValue() instanceof Number) {
-            return prim.asInt(0);
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("Not Integer: " + key, e);
+            }
         }
 
-        throw new IllegalStateException("Not Integer");
+        throw new IllegalStateException("Not Integer: " + key);
     }
 }
