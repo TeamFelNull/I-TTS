@@ -9,17 +9,25 @@
 ### Added
 
 ### Changed
-- ライブラリを更新
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
 
+### Security
+
+## [2.1.7] - 2026-10-18
+
+### Changed
+
+- ライブラリを更新
+
+### Fixed
+
 - VC入退室読み上げなどが失敗する問題を修正
 - 一部のエラーの原因がログファイルに残らない問題を修正
-
-### Security
 
 ## [2.1.6] - 2026-07-28
 
@@ -180,7 +188,8 @@
 
 - 初期リリース
 
-[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.6...HEAD
+[Unreleased]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.7...HEAD
+[2.1.7]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.6...v2.1.7
 [2.1.6]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/TeamFelnull/I-TTS/compare/v2.1.2...v2.1.4
