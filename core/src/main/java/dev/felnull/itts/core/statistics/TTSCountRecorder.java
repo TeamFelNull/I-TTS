@@ -9,12 +9,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 読み上げ文字数の集計を非同期で記録するレコーダー
  */
 public final class TTSCountRecorder implements ITTSRuntimeUse {
+
+    /**
+     * 完了待ちの書き込み
+     */
+    private final Set<CompletableFuture<Void>> pending = ConcurrentHashMap.newKeySet();
+
+    /**
+     * 排他用ロック
+     */
+    private final Object lock = new Object();
+
+    /**
+     * 受付停止フラグ
+     */
+    private boolean closed;
 
     /**
      * 読み上げ文字数を記録する
@@ -45,14 +65,53 @@ public final class TTSCountRecorder implements ITTSRuntimeUse {
         String capturedVoiceTypeId = voiceTypeId;
         String capturedVoiceCategoryId = voiceCategoryId;
 
-        CompletableFuture.runAsync(
-                        () -> writeToDatabase(botDiscordId, guildDiscordId, capturedVoiceTypeId, capturedVoiceCategoryId, charCount),
-                        getAsyncExecutor()
-                )
-                .exceptionally(throwable -> {
-                    getITTSLogger().warn("Failed to record TTS count", throwable);
-                    return null;
-                });
+        synchronized (lock) {
+            if (closed) {
+                return;
+            }
+
+            CompletableFuture<Void> future = CompletableFuture.runAsync(
+                            () -> writeToDatabase(botDiscordId, guildDiscordId, capturedVoiceTypeId, capturedVoiceCategoryId, charCount),
+                            getAsyncExecutor()
+                    )
+                    .handle((unused, throwable) -> {
+                        if (throwable != null) {
+                            getITTSLogger().warn("Failed to record TTS count", throwable);
+                        }
+                        return null;
+                    });
+
+            pending.add(future);
+            future.whenComplete((unused, throwable) -> pending.remove(future));
+        }
+    }
+
+    /**
+     * 新規の記録を受け付けなくし、実行中の書き込みの完了を待つ
+     *
+     * @param timeout 待機時間の上限
+     * @param unit    待機時間の単位
+     * @return 全ての書き込みが完了したらtrue、時間切れまたは中断されたらfalse
+     */
+    public boolean shutdownAndAwait(long timeout, TimeUnit unit) {
+        CompletableFuture<?>[] snapshot;
+        synchronized (lock) {
+            closed = true;
+            snapshot = pending.toArray(new CompletableFuture<?>[0]);
+        }
+
+        try {
+            CompletableFuture.allOf(snapshot).get(timeout, unit);
+            return true;
+        } catch (TimeoutException e) {
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (ExecutionException e) {
+            // handleで例外を吸収しているため到達しない
+            throw new IllegalStateException(e);
+        }
     }
 
     private void writeToDatabase(long botDiscordId,
