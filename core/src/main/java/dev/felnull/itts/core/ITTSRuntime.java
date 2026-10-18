@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * I-TTSの実行関係
@@ -29,6 +30,11 @@ import java.util.concurrent.Executors;
  * @author MORIMORI0317
  */
 public class ITTSRuntime {
+    /**
+     * 停止時に統計の書き込み完了を待つ秒数
+     */
+    private static final long STATISTICS_FLUSH_TIMEOUT_SECONDS = 10;
+
     /**
      * I-TTSのインスタンス
      */
@@ -218,6 +224,14 @@ public class ITTSRuntime {
         logger.info("Stopping bot");
         bot.stop();
         logger.info("Bot stopped");
+
+        try {
+            if (!ttsCountRecorder.shutdownAndAwait(STATISTICS_FLUSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                logger.warn("Statistics writes did not finish in time, some counts may be lost");
+            }
+        } finally {
+            StatisticsManager.getInstance().dispose();
+        }
     }
 
     public long getStartupTime() {
