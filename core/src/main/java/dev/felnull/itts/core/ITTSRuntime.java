@@ -185,6 +185,9 @@ public class ITTSRuntime {
     public void execute() {
         startupTime = System.currentTimeMillis();
 
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
+                logger.error("Uncaught exception in thread {}", thread.getName(), throwable));
+
         logger.info("The Ikisugi-TTS ({})", getVersionText());
 
         logger.info("--System info--");

@@ -278,7 +278,7 @@ public record ConfigImpl(
             String typeText = Json5Utils.getStringOrElse(jo, "type", DEFAULT_TYPE.getName());
             DataBaseType type = NameSerializableEnum.getByName(DataBaseType.class, typeText, DEFAULT_TYPE);
             String host = Json5Utils.getStringOrElse(jo, "host", DEFAULT_HOST);
-            int port = Json5Utils.getInt(jo, "port");
+            int port = jo.containsKey("port") ? Json5Utils.getInt(jo, "port") : DEFAULT_PORT;
             String databaseName = Json5Utils.getStringOrElse(jo, "database_name", DEFAULT_DATABASE_NAME);
             String user = Json5Utils.getStringOrElse(jo, "user", DEFAULT_USER);
             String password = Json5Utils.getStringOrElse(jo, "password", DEFAULT_PASSWORD);

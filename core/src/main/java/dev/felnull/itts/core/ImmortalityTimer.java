@@ -63,7 +63,7 @@ public class ImmortalityTimer implements ITTSRuntimeUse {
             public void run() {
                 try {
                     ImmortalityTimerTask.this.run();
-                } catch (Exception ex) {
+                } catch (Throwable ex) {
                     ITTSRuntime.getInstance().getLogger().error("An error occurred while processing the timer", ex);
                 }
             }

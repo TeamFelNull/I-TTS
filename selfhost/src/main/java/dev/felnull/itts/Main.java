@@ -13,6 +13,7 @@ import java.util.Objects;
  * @author MORIMORI0317
  */
 public class Main {
+
     /**
      * ロガー
      */
@@ -29,9 +30,8 @@ public class Main {
     /**
      * main関数
      *
-     * @param args プログラム引数
      */
-    public static void main(String[] args) {
+    static void main() {
         String implV = Main.class.getPackage().getImplementationVersion();
         RuntimeInfo info = new RuntimeInfo(implV == null, Objects.requireNonNullElse(implV, "None"));
 
