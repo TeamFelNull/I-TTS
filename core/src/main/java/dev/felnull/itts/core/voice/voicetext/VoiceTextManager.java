@@ -103,6 +103,7 @@ public class VoiceTextManager implements ITTSRuntimeUse {
         int code = res.statusCode();
 
         if (content.isEmpty()) {
+            VoiceHttpUtils.closeBodyQuietly(res);
             throw new IOException("Content Type does not exist: " + code);
         }
 
@@ -119,6 +120,7 @@ public class VoiceTextManager implements ITTSRuntimeUse {
             }
         }
 
+        VoiceHttpUtils.closeBodyQuietly(res);
         throw new IOException("Not audio data: " + code);
     }
 
