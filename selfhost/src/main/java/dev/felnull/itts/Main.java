@@ -37,5 +37,15 @@ public class Main {
 
         runtime = ITTSRuntime.newRuntime(new SelfHostITTSRuntimeContext(info));
         runtime.execute();
+
+        StopCommandListener.start(System.in, () -> {
+            try {
+                runtime.shutdown();
+            } catch (RuntimeException e) {
+                LOGGER.error("Failed to shut down cleanly", e);
+            } finally {
+                System.exit(0);
+            }
+        });
     }
 }

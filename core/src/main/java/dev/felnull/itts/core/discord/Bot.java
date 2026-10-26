@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * BOT管理
@@ -62,6 +63,29 @@ public class Bot implements ITTSRuntimeUse {
                 updateActivityAsync();
             }
         }, 0, 1000 * 10);
+    }
+
+    /**
+     * BOTを停止
+     */
+    public void stop() {
+        getImmortalityTimer().cancel();
+
+        if (this.jda == null) {
+            return;
+        }
+
+        this.jda.shutdown();
+
+        try {
+            if (!this.jda.awaitShutdown(10, TimeUnit.SECONDS)) {
+                getITTSRuntime().getLogger().warn("JDA did not shut down in time, forcing shutdown");
+                this.jda.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            this.jda.shutdownNow();
+        }
     }
 
     private void registeringCommands() {

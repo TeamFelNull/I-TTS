@@ -12,16 +12,20 @@ import dev.felnull.itts.core.statistics.StatisticsManager;
 import dev.felnull.itts.core.statistics.TTSCountRecorder;
 import dev.felnull.itts.core.tts.TTSManager;
 import dev.felnull.itts.core.voice.VoiceManager;
+import dev.felnull.itts.core.watchdog.Watchdog;
+import dev.felnull.itts.core.watchdog.WatchdogPolicy;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * I-TTSの実行関係
@@ -29,6 +33,21 @@ import java.util.concurrent.Executors;
  * @author MORIMORI0317
  */
 public class ITTSRuntime {
+    /**
+     * 停止時に統計の書き込み完了を待つ秒数
+     */
+    private static final long STATISTICS_FLUSH_TIMEOUT_SECONDS = 10;
+
+    /**
+     * Discordとの接続が切れたままの状態を許容する時間
+     */
+    private static final Duration WATCHDOG_DISCONNECT_LIMIT = Duration.ofMinutes(5);
+
+    /**
+     * スレッド数が上限のこの割合に達したら終了する
+     */
+    private static final double WATCHDOG_THREAD_USAGE_LIMIT = 0.95;
+
     /**
      * I-TTSのインスタンス
      */
@@ -122,6 +141,11 @@ public class ITTSRuntime {
     private final TTSCountRecorder ttsCountRecorder = new TTSCountRecorder();
 
     /**
+     * 動作不能になった時に自ら終了する監視
+     */
+    private final Watchdog watchdog;
+
+    /**
      * 全てのマネージャー
      */
     private final List<ITTSBaseManager> managers;
@@ -154,6 +178,9 @@ public class ITTSRuntime {
         this.cacheManager = new CacheManager(runtimeContext.getGlobalCacheAccessFactory());
 
         this.managers = ImmutableList.of(configManager, voiceManager, domainListManager);
+
+        this.watchdog = new Watchdog(this.logger, new WatchdogPolicy(WATCHDOG_DISCONNECT_LIMIT, WATCHDOG_THREAD_USAGE_LIMIT),
+                this.bot::getJDA, this.ttsManager::getTTSCount);
     }
 
     /**
@@ -200,6 +227,9 @@ public class ITTSRuntime {
         logger.info("Available Processors: {}", Runtime.getRuntime().availableProcessors());
         logger.info("---------------");
 
+        // スレッドを作れなくなる前に、監視用のスレッドを確保しておく
+        watchdog.start();
+
         logger.info("Start setup");
 
         managers.stream()
@@ -212,6 +242,26 @@ public class ITTSRuntime {
         logger.info("Setup complete");
 
         bot.start();
+    }
+
+    /**
+     * ランタイムを停止
+     */
+    public void shutdown() {
+        // 通常の停止中に、監視が誤って強制終了しないようにする
+        watchdog.stop();
+
+        logger.info("Stopping bot");
+        bot.stop();
+        logger.info("Bot stopped");
+
+        try {
+            if (!ttsCountRecorder.shutdownAndAwait(STATISTICS_FLUSH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                logger.warn("Statistics writes did not finish in time, some counts may be lost");
+            }
+        } finally {
+            StatisticsManager.getInstance().dispose();
+        }
     }
 
     public long getStartupTime() {
